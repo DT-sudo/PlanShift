@@ -1,8 +1,16 @@
 import os
 from pathlib import Path
 
+from .env import env_bool, env_list, load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = BASE_DIR.parent
+
+load_dotenv(PROJECT_ROOT / ".env")
+
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-me")
+DEBUG = env_bool("DEBUG", True)
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
 
 INSTALLED_APPS = [
     "django.contrib.auth",
@@ -35,6 +43,7 @@ DATABASES = {
         "PORT": os.environ.get("DB_PORT", ""),
     }
 }
+TIME_ZONE = os.environ.get("TIME_ZONE", "UTC")
 USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
