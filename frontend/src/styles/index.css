@@ -1,0 +1,20 @@
+@import 'tailwindcss';
+
+@import './tokens.css';
+
+@source '../';
+
+@layer base {
+  html {
+    overflow-y: scroll;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+}
