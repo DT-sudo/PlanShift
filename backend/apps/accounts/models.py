@@ -15,6 +15,13 @@ class UserRole(models.TextChoices):
 class User(AbstractUser):
     role = models.CharField(max_length=20, choices=UserRole.choices, default=UserRole.EMPLOYEE)
     employee_id = models.CharField(max_length=20, unique=True, default=generate_employee_id, editable=False)
+    position = models.ForeignKey(
+        "scheduling.Position",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="employees",
+    )
     @property
     def display_name(self) -> str:
         return self.get_full_name() or self.username
