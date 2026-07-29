@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 class Position(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -37,6 +41,20 @@ class Shift(models.Model):
 
     class Meta:
         ordering = ["date", "start_time"]
+
+    def clean(self) -> None:
+        errors = {}
+        if self.start_time and self.end_time and self.start_time >= self.end_time:
+            errors["end_time"] = "End time must be after start time."
+        if self.capacity is not None and self.capacity < 1:
+            errors["capacity"] = "Capacity must be at least 1."
+        if errors:
+            raise ValidationError(errors)
+
+    @property
+    def is_past(self) -> bool:
+        dt_end = datetime.combine(self.date, self.end_time, tzinfo=timezone.get_current_timezone())
+        return dt_end < timezone.now()
 
 class Assignment(models.Model):
 
