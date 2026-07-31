@@ -35,6 +35,13 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "config.urls"
 
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [PROJECT_ROOT / "frontend" / "templates"],
+    }
+]
+
 DATABASES = {
     "default": {
         "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.sqlite3"),
@@ -59,4 +66,7 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+FRONTEND_DIST_DIR = PROJECT_ROOT / "frontend" / "dist"
+
 STATIC_URL = "/static/"
+STATICFILES_DIRS = [FRONTEND_DIST_DIR]
