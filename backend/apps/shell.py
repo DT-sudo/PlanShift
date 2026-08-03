@@ -24,6 +24,16 @@ from django.urls import reverse
 VITE_ENTRY = "src/main.jsx"
 
 
+def first_form_error(form, default: str) -> str:
+    """First error message on a form, for flows that redirect instead of re-rendering."""
+    return next((errors[0] for errors in form.errors.values() if errors), default)
+
+
+def field_errors(form) -> dict[str, str]:
+    """Flatten a form's field errors into {field: first message} for React."""
+    return {name: errors[0] for name, errors in form.errors.items() if errors}
+
+
 @lru_cache(maxsize=1)
 def _vite_manifest() -> dict:
     path = settings.FRONTEND_DIST_DIR / ".vite" / "manifest.json"
@@ -72,6 +82,7 @@ def render_app(request: HttpRequest, *, page: str, title: str, data: dict[str, A
         "user": _user_context(request.user),
         "nav": _nav_links(request.user, nav_active),
         "urls": {
+            "logout": reverse("logout"),
         },
         "messages": [{"level": message.level_tag, "text": message.message} for message in get_messages(request)],
         "data": data or {},
