@@ -24,6 +24,11 @@ from django.urls import reverse
 VITE_ENTRY = "src/main.jsx"
 
 
+def first_form_error(form, default: str) -> str:
+    """First error message on a form, for flows that redirect instead of re-rendering."""
+    return next((errors[0] for errors in form.errors.values() if errors), default)
+
+
 def field_errors(form) -> dict[str, str]:
     """Flatten a form's field errors into {field: first message} for React."""
     return {name: errors[0] for name, errors in form.errors.items() if errors}
