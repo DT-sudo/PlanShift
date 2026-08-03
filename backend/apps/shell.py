@@ -77,6 +77,7 @@ def render_app(request: HttpRequest, *, page: str, title: str, data: dict[str, A
         "user": _user_context(request.user),
         "nav": _nav_links(request.user, nav_active),
         "urls": {
+            "logout": reverse("logout"),
         },
         "messages": [{"level": message.level_tag, "text": message.message} for message in get_messages(request)],
         "data": data or {},
