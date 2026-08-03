@@ -24,6 +24,11 @@ from django.urls import reverse
 VITE_ENTRY = "src/main.jsx"
 
 
+def field_errors(form) -> dict[str, str]:
+    """Flatten a form's field errors into {field: first message} for React."""
+    return {name: errors[0] for name, errors in form.errors.items() if errors}
+
+
 @lru_cache(maxsize=1)
 def _vite_manifest() -> dict:
     path = settings.FRONTEND_DIST_DIR / ".vite" / "manifest.json"
