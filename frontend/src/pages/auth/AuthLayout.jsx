@@ -1,3 +1,4 @@
+import { Footer } from '../../components/AppShell.jsx';
 
 export function AuthLayout({ title, subtitle, messages = [], children }) {
   return (

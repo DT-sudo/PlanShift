@@ -1,0 +1,93 @@
+/* ============================================================
+   App shell: header nav, manager calendar layout
+   ============================================================ */
+
+@layer components {
+
+  .nav-link {
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radius-card);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-muted-foreground);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .nav-link:hover {
+    background-color: var(--color-muted);
+    color: var(--color-foreground);
+  }
+
+  .nav-link-active {
+    background-color: transparent;
+    color: var(--color-foreground);
+    border-bottom: 2px solid var(--color-primary);
+    border-radius: 0;
+  }
+
+  .manager-calendar-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+  }
+
+  /* Calendar cards (and the manager sidebar) fill the viewport left by the
+     header, toolbar, pinned footer and page gaps (≈ 10.5rem together). */
+  .calendar-fill {
+    height: max(400px, calc(100dvh - 10.5rem));
+    display: flex;
+    flex-direction: column;
+  }
+
+  @media (max-width: 1024px) {
+    .manager-calendar-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .manager-calendar-layout > .calendar-fill:first-child {
+      height: auto;
+      min-height: 0;
+    }
+  }
+
+  .employee-sidebar-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background-color: var(--color-card);
+    width: 100%;
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .employee-sidebar-item-active {
+    border-color: hsl(38 92% 50% / 0.55);
+    box-shadow: 0 0 0 3px hsl(38 92% 50% / 0.12);
+  }
+
+  .employee-sidebar-unavailable {
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-destructive-hover);
+  }
+
+  /* A live change from an employee briefly outlines their row. */
+  .employee-sidebar-item-updated {
+    border-color: var(--color-primary);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .employee-sidebar-item-updated {
+      animation: employee-sidebar-flash 1.6s ease-out;
+    }
+  }
+
+}
+
