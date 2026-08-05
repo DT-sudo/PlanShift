@@ -1,5 +1,6 @@
 import { getBootstrap } from '../app/http.js';
 import { Dropdown } from './Menus.jsx';
+import { ToastProvider } from './Notifications.jsx';
 
 function Header({ user, nav, urls }) {
   return (

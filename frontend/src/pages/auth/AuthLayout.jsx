@@ -1,4 +1,5 @@
 import { Footer } from '../../components/AppShell.jsx';
+import { ToastProvider } from '../../components/Notifications.jsx';
 
 export function AuthLayout({ title, subtitle, messages = [], children }) {
   return (

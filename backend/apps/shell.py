@@ -12,16 +12,23 @@ from typing import Any
 from urllib.parse import quote
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.messages import get_messages
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.templatetags.static import static
 from django.urls import reverse
 
 
 VITE_ENTRY = "src/main.jsx"
+
+
+def flash_redirect(request: HttpRequest, level: int, text: str, to: str) -> HttpResponse:
+    """Add a flash message and redirect; the message arrives as a toast."""
+    messages.add_message(request, level, text)
+    return redirect(to)
 
 
 def first_form_error(form, default: str) -> str:
