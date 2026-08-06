@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from apps.accounts.models import User, UserRole
 from apps.scheduling.models import EmployeeUnavailability, Position, Shift, ShiftStatus
+from apps.scheduling.services import assign_employees_to_shift
 
 DEMO_PASSWORD = "demo12345!"
 DEMO_MANAGER_EMAIL = "manager_demo@example.com"
