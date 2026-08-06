@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils.formats import date_format
 
 from apps.accounts.models import User, UserRole
+from apps.shell import first_form_error
+
+from .forms import ShiftForm
 from .models import Assignment, EmployeeUnavailability, Shift
 
 
@@ -54,3 +58,35 @@ def _check_no_overlap(shift: Shift, employee_ids: list[int]) -> None:
                 "day": date_format(other.date, "j M"),
             }
         )
+
+
+def assign_employees_to_shift(shift: Shift, employee_ids: list[int]) -> None:
+    """Replace the shift's assignments after running the four scheduling rules."""
+    employee_ids = list(dict.fromkeys(employee_ids))
+    if employee_ids:
+        _check_position_match(shift, employee_ids)
+        _check_capacity(shift, employee_ids)
+        _check_availability(shift, employee_ids)
+        _check_no_overlap(shift, employee_ids)
+    Assignment.objects.filter(shift=shift).delete()
+    Assignment.objects.bulk_create([Assignment(shift=shift, employee_id=eid) for eid in employee_ids])
+
+
+STALE_SHIFT = "Someone else changed this shift while you were editing it. Your changes were not saved."
+
+
+def save_shift(shift: Shift, post_data) -> Shift:
+    """Validate the posted form, then save the shift and its assignments in one transaction.
+
+    Raises ValidationError with a user-facing message when either step rejects, or when
+    the shift was edited by someone else since the form was opened.
+    """
+    form = ShiftForm(post_data, instance=shift)
+    if not form.is_valid():
+        raise ValidationError(first_form_error(form, "Please check the form fields."))
+    employee_ids = [int(value) for value in post_data.getlist("employee_ids") if value.isdigit()]
+
+    with transaction.atomic():
+        saved = form.save()
+        assign_employees_to_shift(saved, employee_ids)
+    return saved
