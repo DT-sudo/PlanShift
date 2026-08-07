@@ -1,0 +1,86 @@
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+
+import { groupShiftsByDate } from '../../app/shifts.js';
+import { MonthCalendar } from '../../components/Calendar.jsx';
+
+function ChipButton({ shift, editors, highlighted, variant, style, onSelect, children }) {
+  const isDraft = shift.status === 'draft';
+  const className = [
+    'shift-chip',
+    variant,
+    shift.is_past ? 'shift-chip-past' : 'shift-chip-future',
+    isDraft ? 'shift-chip-draft' : 'position-color',
+    highlighted ? 'shift-chip-highlight' : '',
+  ].join(' ');
+
+  return (
+    <button
+      type="button"
+      className={className}
+      style={{ ...(isDraft ? null : positionPalette(shift.position_id)), ...style }}
+      onClick={(event) => {
+        event.stopPropagation();
+        onSelect(shift.id);
+      }}
+      title={`${shift.position} ${shift.start_time}-${shift.end_time}${editors ? ` (${`${editors.join(', ')} editing`})` : ''}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+const Staffing = ({ shift, editors, className }) => (
+  <span className={className}>
+    {editors ? <span aria-label={`${editors.join(', ')} editing`}>✎ </span> : null}
+    {shift.assigned_employee_ids.length}/{shift.capacity}
+  </span>
+);
+
+function ShiftChip({ shift, editors, ...rest }) {
+  return (
+    <ChipButton shift={shift} editors={editors} variant="month-shift-chip" {...rest}>
+      <span className="flex min-w-0 items-center justify-between gap-1.5">
+        <span className="inline-flex min-w-0 flex-auto items-center gap-1 overflow-hidden">
+          <span className="shift-chip-truncate text-[0.7rem] font-semibold">{shift.position}</span>
+          <span className="month-shift-sep shrink-0 opacity-75">•</span>
+          <span className="month-shift-time shift-chip-truncate text-[0.7rem] opacity-90">
+            {shift.start_time}-{shift.end_time}
+          </span>
+        </span>
+        <Staffing shift={shift} editors={editors} className="month-shift-qty shrink-0 text-[0.7rem] font-bold" />
+      </span>
+    </ChipButton>
+  );
+}
+
+export function MonthGrid({ anchorISO, todayISO, shifts, editors, highlightedShiftIds, onSelectShift, onCreateSlot }) {
+  const byDate = useMemo(() => groupShiftsByDate(shifts), [shifts]);
+
+  return (
+    <MonthCalendar
+      anchorISO={anchorISO}
+      todayISO={todayISO}
+      ariaLabel="Month schedule"
+      onDayClick={(day) => (day.inMonth ? onCreateSlot(day.iso) : navigateWith({ date: day.iso }))}
+      renderDay={(day) => {
+        const dayShifts = byDate.get(day.iso);
+        if (!dayShifts) return null;
+
+        return (
+          <div className="month-cell-shifts">
+            {dayShifts.map((shift) => (
+              <ShiftChip
+                key={shift.id}
+                shift={shift}
+                editors={editors[shift.id]}
+                highlighted={highlightedShiftIds.has(shift.id)}
+                onSelect={onSelectShift}
+              />
+            ))}
+          </div>
+        );
+      }}
+    />
+  );
+}
+
