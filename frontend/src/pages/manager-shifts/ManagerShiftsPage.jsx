@@ -1,0 +1,148 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+import { getBootstrap } from '../../app/http.js';
+import { AppShell } from '../../components/AppShell.jsx';
+import { ConfirmModal } from '../../components/Modal.jsx';
+import { MonthGrid } from './ShiftGrids.jsx';
+
+const NEW_SHIFT = { date: '', start_time: '09:00', end_time: '17:00', capacity: 1, position_id: '', assigned_employee_ids: [] };
+
+const oneHourLater = (time) => `${pad2((Number(time.slice(0, 2)) + 1) % 24)}:00`;
+
+export function ManagerShiftsPage() {
+  const data = useLivePageData(getBootstrap().data);
+
+  return (
+    <AppShell footer={<PositionLegend positions={data.positions} shifts={data.shifts} />}>
+      <ManagerShiftsContent data={data} />
+    </AppShell>
+  );
+}
+
+function ManagerShiftsContent({ data }) {
+  const { view, anchor, start, end, today, shifts, employees, positions, urls } = data;
+
+  const [detailsShiftId, setDetailsShiftId] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [shiftForm, setShiftForm] = useState(null);
+  const [highlightedEmployeeId, setHighlightedEmployeeId] = useState(null);
+  const highlightedShiftIds = useMemo(
+    () => new Set(shifts.filter((shift) => shift.assigned_employee_ids.includes(highlightedEmployeeId)).map((shift) => shift.id)),
+    [shifts, highlightedEmployeeId],
+  );
+
+  // A page restored from the back/forward cache would show stale shifts.
+  useEffect(() => {
+    const onPageShow = (event) => event.persisted && window.location.reload();
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
+  const { availability, flashedEmployeeId } = useLiveAvailability(data.unavailability);
+
+  const editingId = shiftForm?.shift.id ?? null;
+  const people = usePresence(anchor.slice(0, 7), editingId);
+  const editors = {};
+  for (const person of people) if (person.editing) (editors[person.editing] ??= []).push(person.name);
+  // The live data no longer holds the version the form was opened on: someone else saved or deleted it.
+  const stale = editingId !== null && shifts.find((shift) => shift.id === editingId)?.version !== shiftForm.shift.version;
+
+  const detailsShift = shifts.find((shift) => shift.id === detailsShiftId) || null;
+  const detailsNames = employees.filter((e) => detailsShift?.assigned_employee_ids.includes(e.id)).map((e) => e.name);
+
+  const openCreateForm = (date = '', startTime = '') =>
+    setShiftForm({
+      shift: { ...NEW_SHIFT, date, ...(startTime && { start_time: startTime, end_time: oneHourLater(startTime) }) },
+      action: urls.create,
+    });
+
+  const openEditForm = (shift) => {
+    setDetailsShiftId(null);
+    setShiftForm({ shift, action: urlFromTemplate(urls.update, shift.id) });
+  };
+
+  return (
+    <>
+      <main className="p-4 pt-0">
+        <ShiftsToolbar data={data} onCreateShift={() => openCreateForm()} />
+
+        <div className="manager-calendar-layout">
+          <EmployeeSidebar
+            employees={employees}
+            availability={availability}
+            periodStart={start}
+            periodEnd={end}
+            flashedEmployeeId={flashedEmployeeId}
+            highlightedEmployeeId={highlightedEmployeeId}
+            onToggleEmployee={(id) => setHighlightedEmployeeId((current) => (current === id ? null : id))}
+          />
+
+          <div className="card calendar-fill mt-3">
+            {view === 'week' ? (
+              <WeekGrid
+                startISO={start}
+                todayISO={today}
+                shifts={shifts}
+                editors={editors}
+                highlightedShiftIds={highlightedShiftIds}
+                onSelectShift={setDetailsShiftId}
+                onCreateSlot={openCreateForm}
+              />
+            ) : (
+              <MonthGrid
+                anchorISO={anchor}
+                todayISO={today}
+                shifts={shifts}
+                editors={editors}
+                highlightedShiftIds={highlightedShiftIds}
+                onSelectShift={setDetailsShiftId}
+                onCreateSlot={openCreateForm}
+              />
+            )}
+          </div>
+        </div>
+      </main>
+
+      {shiftForm ? (
+        <ShiftFormModal
+          shift={shiftForm.shift}
+          action={shiftForm.action}
+          positions={positions}
+          employees={employees}
+          availability={availability}
+          stale={stale}
+          editors={editors[editingId] || []}
+          onClose={() => setShiftForm(null)}
+        />
+      ) : null}
+
+      {detailsShift ? (
+        <ShiftDetailsModal
+          shift={detailsShift}
+          assignedNames={detailsNames}
+          editors={editors[detailsShift.id] || []}
+          onClose={() => setDetailsShiftId(null)}
+          onEdit={() => openEditForm(detailsShift)}
+          onPublish={() => submitPost(urlFromTemplate(urls.publish, detailsShift.id))}
+          onDelete={() =>
+            setPendingDelete({
+              id: detailsShift.id,
+              label: `${detailsShift.position} • ${detailsShift.start_time}-${detailsShift.end_time} • ${formatDate(detailsShift.date)}`,
+            })
+          }
+        />
+      ) : null}
+
+      {pendingDelete ? (
+        <ConfirmModal
+          title="Delete shift"
+          message="Delete this shift:"
+          detail={pendingDelete.label}
+          confirmText="Yes, delete"
+          destructive
+          onCancel={() => setPendingDelete(null)}
+          onConfirm={() => submitPost(urlFromTemplate(urls.delete, pendingDelete.id))}
+        />
+      ) : null}
+    </>
+  );
+}

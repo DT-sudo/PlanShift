@@ -4,9 +4,11 @@ import { createRoot } from 'react-dom/client';
 import './styles/index.css';
 import { getBootstrap } from './app/http.js';
 import { LoginPage } from './pages/auth/LoginPage.jsx';
+import { ManagerShiftsPage } from './pages/manager-shifts/ManagerShiftsPage.jsx';
 
 const PAGES = {
   login: LoginPage,
+  'manager-shifts': ManagerShiftsPage,
 };
 
 const Page = PAGES[getBootstrap().page];

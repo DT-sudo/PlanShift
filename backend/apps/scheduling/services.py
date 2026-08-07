@@ -1,16 +1,32 @@
 """Scheduling rules and writes. Views parse requests and render; the rules live here."""
 
 from __future__ import annotations
+from datetime import date
 
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import models, transaction
 from django.utils.formats import date_format
 
 from apps.accounts.models import User, UserRole
 from apps.shell import first_form_error
 
 from .forms import ShiftForm
-from .models import Assignment, EmployeeUnavailability, Shift
+from .models import Assignment, EmployeeUnavailability, Position, Shift, ShiftStatus
+
+
+def position_options() -> list[dict]:
+    """Every position as `{id, name}`, for the React selects."""
+    return [{"id": p.id, "name": p.name} for p in Position.objects.order_by("name")]
+
+
+def shift_fields(shift: Shift) -> dict:
+    """The fields every shift payload shares: its day, HH:MM times and position name."""
+    return {
+        "date": shift.date.isoformat(),
+        "start_time": shift.start_time.strftime("%H:%M"),
+        "end_time": shift.end_time.strftime("%H:%M"),
+        "position": shift.position.name,
+    }
 
 
 def _check_position_match(shift: Shift, employee_ids: list[int]) -> None:
@@ -90,3 +106,26 @@ def save_shift(shift: Shift, post_data) -> Shift:
         saved = form.save()
         assign_employees_to_shift(saved, employee_ids)
     return saved
+
+
+def shifts_for_manager(
+    *,
+    manager_id: int,
+    start: date | None = None,
+    end: date | None = None,
+    position_id: int | None = None,
+    status: str | None = None,
+    understaffed_only: bool = False,
+):
+    qs = Shift.objects.filter(created_by_id=manager_id).select_related("position")
+    if start:
+        qs = qs.filter(date__gte=start)
+    if end:
+        qs = qs.filter(date__lte=end)
+    if position_id:
+        qs = qs.filter(position_id=position_id)
+    if status in (ShiftStatus.DRAFT, ShiftStatus.PUBLISHED):
+        qs = qs.filter(status=status)
+    if understaffed_only:
+        qs = qs.annotate(assigned_total=models.Count("assignments")).filter(assigned_total__lt=models.F("capacity"))
+    return qs
