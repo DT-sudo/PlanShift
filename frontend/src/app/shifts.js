@@ -1,3 +1,18 @@
+export const statusOptions = () => [
+  { id: 'draft', name: "Draft" },
+  { id: 'published', name: "Published" },
+];
+
+
+export function positionPalette(positionId) {
+  const hue = (positionId * 47) % 360;
+  return {
+    '--position-bg': `hsl(${hue} 80% 92%)`,
+    '--position-border': `hsl(${hue} 70% 45%)`,
+    '--position-fg': `hsl(${hue} 60% 20%)`,
+  };
+}
+
 // ── Calendar layout ─────────────────────────────────────────────────────────
 
 export function groupShiftsByDate(shifts) {

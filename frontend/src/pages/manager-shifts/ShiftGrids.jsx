@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { groupShiftsByDate } from '../../app/shifts.js';
+import { groupShiftsByDate, positionPalette } from '../../app/shifts.js';
 import { MonthCalendar } from '../../components/Calendar.jsx';
 
 function ChipButton({ shift, editors, highlighted, variant, style, onSelect, children }) {
