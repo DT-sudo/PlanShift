@@ -7,6 +7,26 @@ export function getBootstrap() {
   return bootstrap;
 }
 
+export const urlFromTemplate = (template, id) => template.replace('/0/', `/${id}/`);
+
+export function submitPost(action, fields = {}) {
+  const form = document.createElement('form');
+  form.method = 'post';
+  form.action = action;
+  form.hidden = true;
+
+  for (const [name, value] of Object.entries({ csrfmiddlewaretoken: getBootstrap().csrfToken, ...fields })) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    form.append(input);
+  }
+
+  document.body.append(form);
+  form.submit();
+}
+
 export function pageDataUrl() {
   const url = new URL(window.location.href);
   url.searchParams.set('format', 'json');

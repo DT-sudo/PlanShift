@@ -108,6 +108,24 @@ def save_shift(shift: Shift, post_data) -> Shift:
     return saved
 
 
+def publish_shift(shift: Shift) -> None:
+    shift.status = ShiftStatus.PUBLISHED
+    shift.save(update_fields=["status"])
+
+
+def publish_shifts_in_period(*, manager_id: int, start: date, end: date) -> list[Shift]:
+    """Publish the manager's draft shifts in the period; returns them, with their assignments prefetched."""
+    drafts = list(
+        Shift.objects.filter(created_by_id=manager_id, status=ShiftStatus.DRAFT, date__gte=start, date__lte=end)
+        .select_related("position")
+        .prefetch_related("assignments")
+    )
+    Shift.objects.filter(pk__in=[shift.pk for shift in drafts]).update(status=ShiftStatus.PUBLISHED)
+    for shift in drafts:
+        shift.status = ShiftStatus.PUBLISHED
+    return drafts
+
+
 def shifts_for_manager(
     *,
     manager_id: int,
