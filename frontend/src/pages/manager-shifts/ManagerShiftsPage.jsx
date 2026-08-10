@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { getBootstrap } from '../../app/http.js';
+import { getBootstrap, submitPost, urlFromTemplate } from '../../app/http.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { ConfirmModal } from '../../components/Modal.jsx';
 import { MonthGrid } from './ShiftGrids.jsx';
+import { ShiftDetailsModal } from './ShiftDetailsModal.jsx';
+import { ShiftFormModal } from './ShiftFormModal.jsx';
 
 const NEW_SHIFT = { date: '', start_time: '09:00', end_time: '17:00', capacity: 1, position_id: '', assigned_employee_ids: [] };
 

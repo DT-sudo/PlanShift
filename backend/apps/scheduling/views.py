@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 from datetime import date, datetime, timedelta
+
+from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.views import manager_required
 from apps.accounts.models import User, UserRole
-from apps.shell import render_app
+from apps.shell import flash_redirect, render_app
 from .models import EmployeeUnavailability, Shift
-from .services import position_options, shift_fields, shifts_for_manager
+from .services import position_options, save_shift, shift_fields, shifts_for_manager
 
 # Open calendars and analytics dashboards re-fetch their data when a shift is written.
 SHIFTS_CHANGED = {"type": "shifts.changed"}
@@ -147,6 +150,31 @@ def manager_shifts(request: HttpRequest) -> HttpResponse:
             "shifts": _shift_payload(shift_qs),
             "filters": {"position": position_id or "", "status": status, "understaffed": understaffed},
             "urls": {
+                "create": reverse("create_shift"),
+                "update": reverse("update_shift", args=[0]),
+                "delete": reverse("delete_shift", args=[0]),
             },
         },
     )
+
+
+@manager_required
+@require_POST
+def save_shift_view(request: HttpRequest, shift_id: int | None = None) -> HttpResponse:
+    is_update = shift_id is not None
+    shift = _manager_shift_or_404(request, shift_id) if is_update else Shift(created_by=request.user)
+    try:
+        saved = save_shift(shift, request.POST)
+    except ValidationError as exc:
+        return flash_redirect(request, messages.ERROR, " ".join(exc.messages), "manager_shifts")
+    return flash_redirect(
+        request, messages.SUCCESS, "Shift updated." if is_update else "Shift created.", _calendar_url(saved)
+    )
+
+
+@manager_required
+@require_POST
+def delete_shift(request: HttpRequest, shift_id: int) -> HttpResponse:
+    shift = _manager_shift_or_404(request, shift_id)
+    shift.delete()
+    return flash_redirect(request, messages.SUCCESS, "Shift deleted.", "manager_shifts")
