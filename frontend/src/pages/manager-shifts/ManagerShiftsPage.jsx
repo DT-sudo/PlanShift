@@ -6,6 +6,7 @@ import { ConfirmModal } from '../../components/Modal.jsx';
 import { MonthGrid } from './ShiftGrids.jsx';
 import { ShiftDetailsModal } from './ShiftDetailsModal.jsx';
 import { ShiftFormModal } from './ShiftFormModal.jsx';
+import { ShiftsToolbar } from './ShiftsToolbar.jsx';
 
 const NEW_SHIFT = { date: '', start_time: '09:00', end_time: '17:00', capacity: 1, position_id: '', assigned_employee_ids: [] };
 

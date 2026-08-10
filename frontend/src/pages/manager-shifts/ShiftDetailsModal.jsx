@@ -1,4 +1,5 @@
 import { Modal } from '../../components/Modal.jsx';
+import { ShiftStatusBadge } from '../../components/ShiftStatusBadge.jsx';
 
 export function ShiftDetailsModal({ shift, assignedNames, editors, onClose, onEdit, onDelete, onPublish }) {
   const isDraft = shift.status === 'draft';

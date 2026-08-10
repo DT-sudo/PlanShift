@@ -15,7 +15,14 @@ from apps.accounts.views import manager_required
 from apps.accounts.models import User, UserRole
 from apps.shell import flash_redirect, render_app
 from .models import EmployeeUnavailability, Shift
-from .services import position_options, save_shift, shift_fields, shifts_for_manager
+from .services import (
+    position_options,
+    publish_shift,
+    publish_shifts_in_period,
+    save_shift,
+    shift_fields,
+    shifts_for_manager,
+)
 
 # Open calendars and analytics dashboards re-fetch their data when a shift is written.
 SHIFTS_CHANGED = {"type": "shifts.changed"}
@@ -153,6 +160,8 @@ def manager_shifts(request: HttpRequest) -> HttpResponse:
                 "create": reverse("create_shift"),
                 "update": reverse("update_shift", args=[0]),
                 "delete": reverse("delete_shift", args=[0]),
+                "publish": reverse("publish_shift", args=[0]),
+                "publishAll": reverse("publish_all_shifts"),
             },
         },
     )
@@ -178,3 +187,24 @@ def delete_shift(request: HttpRequest, shift_id: int) -> HttpResponse:
     shift = _manager_shift_or_404(request, shift_id)
     shift.delete()
     return flash_redirect(request, messages.SUCCESS, "Shift deleted.", "manager_shifts")
+
+
+@manager_required
+@require_POST
+def publish_shift_view(request: HttpRequest, shift_id: int) -> HttpResponse:
+    shift = _manager_shift_or_404(request, shift_id)
+    publish_shift(shift)
+    return flash_redirect(request, messages.SUCCESS, "Shift published.", _calendar_url(shift))
+
+
+@manager_required
+@require_POST
+def publish_all_shifts(request: HttpRequest) -> HttpResponse:
+    """Publish all draft shifts in the visible month or week."""
+    start, end = _period(_calendar_view(request), _parse_date(request.POST.get("date"), timezone.localdate()))
+    published = publish_shifts_in_period(manager_id=request.user.id, start=start, end=end)
+    if published:
+        count = len(published)
+        text = ("Published %(count)d shift." if count == 1 else "Published %(count)d shifts.") % {"count": count}
+        return flash_redirect(request, messages.SUCCESS, text, "manager_shifts")
+    return flash_redirect(request, messages.INFO, "No draft shifts to publish.", "manager_shifts")
