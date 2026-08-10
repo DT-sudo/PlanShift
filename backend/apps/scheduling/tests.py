@@ -64,3 +64,24 @@ class HardConstraintTests(TestCase):
         shift = self._shift()
         with self.assertRaises(ValidationError):
             assign_employees_to_shift(shift, [self.alice.id])
+
+    def test_overlapping_shifts_are_rejected(self):
+        morning = self._shift(start=time(9, 0), end=time(13, 0))
+        assign_employees_to_shift(morning, [self.alice.id])
+
+        overlapping = self._shift(start=time(12, 0), end=time(18, 0))
+        with self.assertRaises(ValidationError):
+            assign_employees_to_shift(overlapping, [self.alice.id])
+
+    def test_back_to_back_shifts_are_allowed(self):
+        morning = self._shift(start=time(9, 0), end=time(13, 0))
+        assign_employees_to_shift(morning, [self.alice.id])
+
+        afternoon = self._shift(start=time(13, 0), end=time(18, 0))
+        assign_employees_to_shift(afternoon, [self.alice.id])
+        self.assertEqual(Assignment.objects.filter(employee=self.alice).count(), 2)
+
+    def test_duplicate_ids_are_deduplicated_before_capacity_check(self):
+        shift = self._shift(capacity=1)
+        assign_employees_to_shift(shift, [self.alice.id, self.alice.id])
+        self.assertEqual(Assignment.objects.filter(shift=shift).count(), 1)
