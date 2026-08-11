@@ -35,3 +35,15 @@ class User(AbstractUser):
     @property
     def is_employee(self) -> bool:
         return self.role == UserRole.EMPLOYEE
+    def managed_users(self) -> models.QuerySet[User]:
+        """The accounts on this user's Team page: every other account for an admin, employees for a manager.
+
+        Nobody manages their own account there, so an admin can't demote or delete themselves
+        (their own data is under "Privacy & my data").
+        """
+        if not self.is_manager:
+            return User.objects.none()
+        accounts = User.objects.filter(role=UserRole.EMPLOYEE)
+        return accounts.exclude(pk=self.pk)
+    def manages(self, other: User) -> bool:
+        return self.managed_users().filter(pk=other.pk).exists()
