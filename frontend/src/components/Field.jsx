@@ -69,3 +69,13 @@ export function FilterSelect({ id, label, options, ...selectProps }) {
   );
 }
 
+export function SelectField({ id, label, placeholder, options, required = false, ...selectProps }) {
+  return (
+    <div className="mb-4">
+      <Label id={id} label={label} required={required} />
+      <select id={id} className="form-select" required={required} {...selectProps}>
+        <Options emptyLabel={placeholder} options={options} />
+      </select>
+    </div>
+  );
+}
