@@ -133,6 +133,7 @@ def manager_employees(request: HttpRequest) -> HttpResponse:
                 "create": reverse("manager_employees_create"),
                 "update": reverse("employee_update", args=[0]),
                 "delete": reverse("employee_delete", args=[0]),
+                "resetPassword": reverse("reset_employee_password", args=[0]),
             },
         },
     )
@@ -159,6 +160,14 @@ def employee_update(request: HttpRequest, user_id: int) -> HttpResponse:
         return _back(request, messages.ERROR, first_form_error(form, "Could not update the account."))
     account = form.save()
     return _back(request, messages.SUCCESS, "%(role)s updated." % {"role": account.get_role_display()})
+
+
+@manager_required
+@require_POST
+def reset_employee_password(request: HttpRequest, user_id: int) -> HttpResponse:
+    employee = _managed_user_or_404(request, user_id)
+    _set_generated_password(request, employee)
+    return _back(request, messages.SUCCESS, "Password reset.")
 
 
 @manager_required

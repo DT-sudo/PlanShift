@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import secrets
+import string
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 def generate_employee_id() -> str:
     return f"EMP-{secrets.randbelow(900000) + 100000}"
@@ -47,3 +49,7 @@ class User(AbstractUser):
         return accounts.exclude(pk=self.pk)
     def manages(self, other: User) -> bool:
         return self.managed_users().filter(pk=other.pk).exists()
+    @staticmethod
+    def generate_password(length: int = 14) -> str:
+        alphabet = string.ascii_letters + string.digits
+        return "".join(secrets.choice(alphabet) for _ in range(length))

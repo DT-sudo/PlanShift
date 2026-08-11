@@ -9,5 +9,6 @@ urlpatterns = [
     path("manager/employees/", views.manager_employees, name="manager_employees"),
     path("manager/employees/create/", views.manager_employees_create, name="manager_employees_create"),
     path("manager/employees/<int:user_id>/update/", views.employee_update, name="employee_update"),
+    path("manager/employees/<int:user_id>/reset-password/", views.reset_employee_password, name="reset_employee_password"),
     path("manager/employees/<int:user_id>/delete/", views.employee_delete, name="employee_delete"),
 ]
