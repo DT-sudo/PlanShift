@@ -134,6 +134,8 @@ def manager_employees(request: HttpRequest) -> HttpResponse:
                 "update": reverse("employee_update", args=[0]),
                 "delete": reverse("employee_delete", args=[0]),
                 "resetPassword": reverse("reset_employee_password", args=[0]),
+                "positionCreate": reverse("position_create"),
+                "positionDelete": reverse("position_delete", args=[0]),
             },
         },
     )

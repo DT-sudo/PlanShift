@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db.models.deletion import ProtectedError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -13,8 +14,10 @@ from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.views import manager_required
 from apps.accounts.models import User, UserRole
-from apps.shell import flash_redirect, render_app
-from .models import EmployeeUnavailability, Shift
+from apps.shell import first_form_error, flash_redirect, render_app
+
+from .forms import PositionForm
+from .models import EmployeeUnavailability, Position, Shift
 from .services import (
     position_options,
     publish_shift,
@@ -208,3 +211,31 @@ def publish_all_shifts(request: HttpRequest) -> HttpResponse:
         text = ("Published %(count)d shift." if count == 1 else "Published %(count)d shifts.") % {"count": count}
         return flash_redirect(request, messages.SUCCESS, text, "manager_shifts")
     return flash_redirect(request, messages.INFO, "No draft shifts to publish.", "manager_shifts")
+
+
+# ── Positions ───────────────────────────────────────────────────────────────
+
+
+@manager_required
+@require_POST
+def position_create(request: HttpRequest) -> HttpResponse:
+    form = PositionForm(request.POST)
+    if not form.is_valid():
+        return flash_redirect(request, messages.ERROR, first_form_error(form, "Could not create position."), "manager_employees")
+    position = form.save()
+    notify(managers(), "position.created", actor=request.user, name=position.name)
+    return flash_redirect(request, messages.SUCCESS, "Position created: %(name)s." % {"name": position.name}, "manager_employees")
+
+
+@manager_required
+@require_POST
+def position_delete(request: HttpRequest, position_id: int) -> HttpResponse:
+    position = get_object_or_404(Position, pk=position_id)
+    try:
+        position.delete()
+    except ProtectedError:
+        return flash_redirect(
+            request, messages.ERROR, "Cannot delete position: it is referenced by existing data.", "manager_employees"
+        )
+    notify(managers(), "position.deleted", actor=request.user, level="warning", name=position.name)
+    return flash_redirect(request, messages.SUCCESS, "Position deleted: %(name)s." % {"name": position.name}, "manager_employees")
