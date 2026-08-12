@@ -2,12 +2,22 @@ from __future__ import annotations
 
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+
+from .models import User
 
 
 def _split_full_name(full_name: str) -> tuple[str, str]:
     first, _, last = (full_name or "").strip().partition(" ")
     return first, last.strip()
+
+
+def clean_full_name(value: str | None) -> str:
+    full_name = " ".join((value or "").split())
+    if len(full_name) < 2:
+        raise ValidationError("Enter your full name.")
+    return full_name
 
 
 class EmailAuthenticationForm(AuthenticationForm):
@@ -23,3 +33,39 @@ class EmailAuthenticationForm(AuthenticationForm):
 
     def clean_username(self) -> str:
         return (self.cleaned_data.get("username") or "").strip().lower()
+
+
+class AccountForm(forms.ModelForm):
+    """Base for forms that set an account's name and email; the email doubles as the login username."""
+
+    full_name = forms.CharField(label="Full name", max_length=150)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["email"].required = True
+
+    def clean_email(self) -> str:
+        email = (self.cleaned_data.get("email") or "").strip().lower()
+        if User.objects.filter(username=email).exclude(pk=self.instance.pk).exists():
+            raise ValidationError("An account with this email already exists.")
+        return email
+
+    def save(self, commit=True) -> User:
+        user = super().save(commit=False)
+        user.first_name, user.last_name = _split_full_name(self.cleaned_data["full_name"])
+        user.username = self.cleaned_data["email"]
+        if commit:
+            user.save()
+        return user
+
+
+class EmployeeForm(AccountForm):
+    """Manager-side create/edit of an employee (the model's default role); the view sets the password."""
+
+    class Meta:
+        model = User
+        fields = ["email", "position"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["position"].required = True
