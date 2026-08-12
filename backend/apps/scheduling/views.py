@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
-from apps.accounts.views import manager_required
+from apps.accounts.views import employee_required, manager_required
 from apps.accounts.models import User, UserRole
 from apps.shell import first_form_error, flash_redirect, render_app
 
@@ -24,6 +24,7 @@ from .services import (
     publish_shifts_in_period,
     save_shift,
     shift_fields,
+    shifts_for_employee,
     shifts_for_manager,
 )
 
@@ -239,3 +240,31 @@ def position_delete(request: HttpRequest, position_id: int) -> HttpResponse:
         )
     notify(managers(), "position.deleted", actor=request.user, level="warning", name=position.name)
     return flash_redirect(request, messages.SUCCESS, "Position deleted: %(name)s." % {"name": position.name}, "manager_employees")
+
+
+@employee_required
+@require_GET
+def employee_shifts_view(request: HttpRequest) -> HttpResponse:
+    today = timezone.localdate()
+    anchor = _parse_date(request.GET.get("date"), today)
+    start, end = _month_bounds(anchor)
+
+    unavailable = EmployeeUnavailability.objects.filter(
+        employee_id=request.user.id, date__gte=start, date__lte=end
+    ).values_list("date", flat=True)
+
+    return render_app(
+        request,
+        page="employee-shifts",
+        title="My Shifts",
+        nav_active="employee_shifts",
+        data={
+            "anchor": anchor.isoformat(),
+            "today": today.isoformat(),
+            "shifts": [
+                {"id": s.id, **shift_fields(s), "is_past": s.is_past}
+                for s in shifts_for_employee(employee_id=request.user.id, start=start, end=end)
+            ],
+            "unavailable": [day.isoformat() for day in unavailable],
+        },
+    )
