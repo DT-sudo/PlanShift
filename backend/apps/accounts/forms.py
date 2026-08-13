@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, BaseUserCreationForm
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -33,6 +33,30 @@ class EmailAuthenticationForm(AuthenticationForm):
 
     def clean_username(self) -> str:
         return (self.cleaned_data.get("username") or "").strip().lower()
+
+
+class SignUpForm(BaseUserCreationForm):
+    """Public registration of a manager account.
+
+    Employees are provisioned by their manager, so the only account someone can
+    open for themselves is a manager account. Django's creation form handles the
+    two password fields and runs the password validators against the instance.
+    """
+
+    full_name = forms.CharField(label="Full name", max_length=150)
+
+    class Meta:
+        model = User
+        fields = ["email"]
+
+    def clean_full_name(self) -> str:
+        return clean_full_name(self.cleaned_data.get("full_name"))
+
+    def clean_email(self) -> str:
+        email = self.cleaned_data["email"].strip().lower()
+        if User.objects.filter(username=email).exists():
+            raise ValidationError("An account with this email already exists.")
+        return email
 
 
 class AccountForm(forms.ModelForm):
