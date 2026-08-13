@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from datetime import date, time
+from datetime import date, time, timedelta
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from apps.accounts.models import User, UserRole
 
 from .models import Assignment, EmployeeUnavailability, Position, Shift
-from .services import assign_employees_to_shift
+from .services import assign_employees_to_shift, shifts_for_employee
 
 
 class HardConstraintTests(TestCase):
@@ -85,3 +85,42 @@ class HardConstraintTests(TestCase):
         shift = self._shift(capacity=1)
         assign_employees_to_shift(shift, [self.alice.id, self.alice.id])
         self.assertEqual(Assignment.objects.filter(shift=shift).count(), 1)
+
+
+class ShiftVisibilityTests(TestCase):
+    """Drafts must stay invisible to employees until they are published."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.barista = Position.objects.create(name="Barista")
+        cls.manager = User.objects.create_user(
+            username="manager2@example.com", password="x", role=UserRole.MANAGER
+        )
+        cls.alice = User.objects.create_user(
+            username="alice2@example.com", password="x", role=UserRole.EMPLOYEE, position=cls.barista
+        )
+        cls.day = date(2030, 6, 3)
+        cls.shift = Shift.objects.create(
+            date=cls.day,
+            start_time=time(9, 0),
+            end_time=time(17, 0),
+            capacity=1,
+            position=cls.barista,
+            created_by=cls.manager,
+        )
+        assign_employees_to_shift(cls.shift, [cls.alice.id])
+
+    def _visible(self):
+        return shifts_for_employee(
+            employee_id=self.alice.id,
+            start=self.day - timedelta(days=1),
+            end=self.day + timedelta(days=1),
+        )
+
+    def test_draft_shift_is_hidden_from_employee(self):
+        self.assertEqual(self._visible().count(), 0)
+
+    def test_published_shift_is_visible_to_employee(self):
+        self.shift.status = "published"
+        self.shift.save(update_fields=["status"])
+        self.assertEqual(self._visible().count(), 1)

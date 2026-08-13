@@ -147,3 +147,15 @@ def shifts_for_manager(
     if understaffed_only:
         qs = qs.annotate(assigned_total=models.Count("assignments")).filter(assigned_total__lt=models.F("capacity"))
     return qs
+
+
+def shifts_for_employee(*, employee_id: int, start: date, end: date):
+    return (
+        Shift.objects.filter(
+            assignments__employee_id=employee_id,
+            date__gte=start,
+            date__lte=end,
+            status=ShiftStatus.PUBLISHED,
+        )
+        .select_related("position")
+    )
