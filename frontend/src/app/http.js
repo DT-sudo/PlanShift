@@ -35,3 +35,19 @@ export function pageDataUrl() {
 
 export const getPageData = () => getJSON(pageDataUrl());
 
+export async function postForm(url, data) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      Accept: 'application/json',
+      'X-CSRFToken': getBootstrap().csrfToken,
+    },
+    body: new URLSearchParams(data),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (response.ok) return payload;
+
+  throw new Error(payload.error || '');
+}
