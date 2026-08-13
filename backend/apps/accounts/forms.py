@@ -5,7 +5,7 @@ from django.contrib.auth.forms import AuthenticationForm, BaseUserCreationForm
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from .models import User
+from .models import User, UserRole
 
 
 def _split_full_name(full_name: str) -> tuple[str, str]:
@@ -57,6 +57,12 @@ class SignUpForm(BaseUserCreationForm):
         if User.objects.filter(username=email).exists():
             raise ValidationError("An account with this email already exists.")
         return email
+
+    def _post_clean(self) -> None:
+        self.instance.first_name, self.instance.last_name = _split_full_name(self.cleaned_data.get("full_name", ""))
+        self.instance.username = self.cleaned_data.get("email", "")
+        self.instance.role = UserRole.MANAGER
+        super()._post_clean()
 
 
 class AccountForm(forms.ModelForm):
