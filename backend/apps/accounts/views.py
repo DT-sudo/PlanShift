@@ -16,7 +16,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 from apps.shell import field_errors, first_form_error, flash_redirect, render_app
 from apps.scheduling.services import position_options
 
-from .forms import EmailAuthenticationForm, EmployeeForm
+from .forms import EmailAuthenticationForm, EmployeeForm, SignUpForm
 from .models import User
 
 
@@ -66,6 +66,36 @@ def login_view(request: HttpRequest) -> HttpResponse:
             "error": " ".join(form.non_field_errors()),
             "fieldErrors": errors,
             "urls": urls,
+        },
+    )
+
+
+@require_http_methods(["GET", "POST"])
+def signup_view(request: HttpRequest) -> HttpResponse:
+    """Open a manager account: email + password, hashed by Django's PBKDF2."""
+    if request.user.is_authenticated:
+        return redirect("home")
+
+    posted = request.method == "POST"
+    form = SignUpForm(request.POST or None)
+    if posted and form.is_valid():
+        user = form.save()
+        login(request, user)
+        messages.success(request, "Welcome, %(name)s. Your account is ready." % {"name": user.get_full_name()})
+        return redirect("home")
+
+    return render_app(
+        request,
+        page="signup",
+        title="Create account",
+        data={
+            "values": {
+                "fullName": request.POST.get("full_name", ""),
+                "email": request.POST.get("email", ""),
+            },
+            "error": " ".join(form.non_field_errors()) if posted else "",
+            "fieldErrors": field_errors(form) if posted else {},
+            "urls": {"signup": reverse("signup"), "login": reverse("login")},
         },
     )
 
