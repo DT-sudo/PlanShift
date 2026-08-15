@@ -1,0 +1,38 @@
+services:
+  web:
+    build: .
+    expose:
+      - "8000"
+    environment:
+      SECRET_KEY: "${SECRET_KEY:-dev-secret-key-change-me}"
+      DEBUG: "${DEBUG:-1}"
+      ALLOWED_HOSTS: "${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,web}"
+      CSRF_TRUSTED_ORIGINS: "${CSRF_TRUSTED_ORIGINS:-https://localhost:8443,https://127.0.0.1:8443}"
+      TIME_ZONE: "${TIME_ZONE:-Europe/Prague}"
+      DB_NAME: "/app/data/db.sqlite3"
+      MEDIA_ROOT: "/app/data/media"
+      SEED_DEMO_DATA: "${SEED_DEMO_DATA:-1}"
+      ENABLE_DEMO_LOGIN: "${ENABLE_DEMO_LOGIN:-1}"
+      SECURE_COOKIES: "${SECURE_COOKIES:-1}"
+      HTTPS_PORT: "${HTTPS_PORT:-8443}"
+      REDIS_URL: "redis://redis:6379/0"
+      EMAIL_BACKEND: "${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}"
+      EMAIL_HOST: "${EMAIL_HOST:-}"
+      EMAIL_PORT: "${EMAIL_PORT:-587}"
+      EMAIL_HOST_USER: "${EMAIL_HOST_USER:-}"
+      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD:-}"
+      EMAIL_USE_TLS: "${EMAIL_USE_TLS:-1}"
+      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL:-privacy@planshift.example}"
+    depends_on:
+      - redis
+    volumes:
+      - db_data:/app/data
+    networks:
+      - planshift
+    restart: unless-stopped
+
+networks:
+  planshift:
+
+volumes:
+  db_data:
