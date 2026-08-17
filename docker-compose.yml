@@ -31,8 +31,27 @@ services:
       - planshift
     restart: unless-stopped
 
+  proxy:
+    image: nginx:1.27-alpine
+    depends_on:
+      - web
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+      - "${HTTPS_PORT:-8443}:443"
+    environment:
+      HTTPS_PORT: "${HTTPS_PORT:-8443}"
+    volumes:
+      - ./docker/nginx/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
+      - ./docker/nginx/entrypoint.sh:/docker-entrypoint-init.sh:ro
+      - tls_certs:/etc/nginx/certs
+    entrypoint: ["/bin/sh", "/docker-entrypoint-init.sh"]
+    networks:
+      - planshift
+    restart: unless-stopped
+
 networks:
   planshift:
 
 volumes:
   db_data:
+  tls_certs:
