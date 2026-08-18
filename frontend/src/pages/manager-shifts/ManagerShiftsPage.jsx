@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getBootstrap, submitPost, urlFromTemplate } from '../../app/http.js';
+import { availabilityFromPayload, positionPalette, withAvailabilityChange } from '../../app/shifts.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { ConfirmModal } from '../../components/Modal.jsx';
 import { EmployeeSidebar } from './EmployeeSidebar.jsx';
@@ -12,6 +13,29 @@ import { ShiftsToolbar } from './ShiftsToolbar.jsx';
 const NEW_SHIFT = { date: '', start_time: '09:00', end_time: '17:00', capacity: 1, position_id: '', assigned_employee_ids: [] };
 
 const oneHourLater = (time) => `${pad2((Number(time.slice(0, 2)) + 1) % 24)}:00`;
+
+function PositionLegend({ positions, shifts }) {
+  const published = new Set(shifts.filter((shift) => shift.status !== 'draft').map((shift) => shift.position_id));
+
+  return (
+    <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs" aria-label="Position colours">
+      {shifts.some((shift) => shift.status === 'draft') ? (
+        <li className="inline-flex items-center gap-1.5">
+          <span className="position-swatch position-swatch-draft" aria-hidden="true" />
+          Draft
+        </li>
+      ) : null}
+      {positions
+        .filter((position) => published.has(position.id))
+        .map((position) => (
+          <li key={position.id} className="inline-flex items-center gap-1.5">
+            <span className="position-swatch position-color" style={positionPalette(position.id)} aria-hidden="true" />
+            {position.name}
+          </li>
+        ))}
+    </ul>
+  );
+}
 
 export function ManagerShiftsPage() {
   const data = useLivePageData(getBootstrap().data);

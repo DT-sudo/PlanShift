@@ -72,4 +72,11 @@
     container-type: inline-size;
   }
 
+  @container (max-width: 150px) {
+    .month-shift-sep,
+    .month-shift-time {
+      display: none;
+    }
+  }
+
 }
