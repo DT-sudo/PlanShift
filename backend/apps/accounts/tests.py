@@ -178,3 +178,30 @@ class EmployeeFormValidationTests(TestCase):
         self._create(full_name="Other Person")
 
         self.assertEqual(User.objects.filter(email="pat@example.com").count(), 1)
+
+
+class LegalPageTests(TestCase):
+    """Privacy Policy and Terms of Service are public and are not placeholders."""
+
+    def test_pages_are_reachable_without_logging_in(self):
+        for name in ("privacy_policy", "terms_of_service"):
+            with self.subTest(page=name):
+                response = self.client.get(reverse(name))
+                self.assertEqual(response.status_code, 200)
+
+    def test_pages_carry_real_content(self):
+        for name in ("privacy_policy", "terms_of_service"):
+            with self.subTest(page=name):
+                document = self.client.get(reverse(name)).context["bootstrap"]["data"]["document"]
+
+                self.assertTrue(document["title"])
+                self.assertGreaterEqual(len(document["sections"]), 8)
+                for section in document["sections"]:
+                    self.assertTrue(section["heading"])
+                    self.assertTrue(section.get("paragraphs") or section.get("bullets"))
+
+    def test_every_page_links_to_both_documents(self):
+        urls = self.client.get(reverse("login")).context["bootstrap"]["urls"]
+
+        self.assertEqual(urls["privacy"], reverse("privacy_policy"))
+        self.assertEqual(urls["terms"], reverse("terms_of_service"))
