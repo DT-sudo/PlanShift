@@ -1,4 +1,5 @@
 import { positionPalette, unavailableDaysBetween } from '../../app/shifts.js';
+import { Avatar } from '../../components/Avatar.jsx';
 
 const MAX_LISTED_DAYS = 3;
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { getBootstrap, submitPost, urlFromTemplate } from '../../app/http.js';
 import { AppShell } from '../../components/AppShell.jsx';
+import { Avatar } from '../../components/Avatar.jsx';
 import { Plus } from '../../components/Icons.jsx';
 import { ConfirmModal } from '../../components/Modal.jsx';
 import { CredentialsModal, EmployeeFormModal, PositionsModal } from './EmployeeModals.jsx';
