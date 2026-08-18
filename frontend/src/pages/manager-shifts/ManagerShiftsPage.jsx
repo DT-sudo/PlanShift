@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { getBootstrap, submitPost, urlFromTemplate } from '../../app/http.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { ConfirmModal } from '../../components/Modal.jsx';
+import { EmployeeSidebar } from './EmployeeSidebar.jsx';
 import { MonthGrid } from './ShiftGrids.jsx';
 import { ShiftDetailsModal } from './ShiftDetailsModal.jsx';
 import { ShiftFormModal } from './ShiftFormModal.jsx';
