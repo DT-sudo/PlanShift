@@ -32,7 +32,6 @@ class Shift(models.Model):
         choices=ShiftStatus.choices, 
         default=ShiftStatus.DRAFT
     )
-    updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
