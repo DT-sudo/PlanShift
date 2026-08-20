@@ -13,6 +13,7 @@ DEBUG = env_bool("DEBUG", True)
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", ["localhost", "127.0.0.1"])
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -21,6 +22,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.legal",
     "apps.scheduling",
+    "apps.realtime",
 ]
 
 MIDDLEWARE = [
@@ -42,6 +44,19 @@ TEMPLATES = [
         "DIRS": [PROJECT_ROOT / "frontend" / "templates"],
     }
 ]
+
+ASGI_APPLICATION = "config.asgi.application"
+
+REDIS_URL = os.environ.get("REDIS_URL", "")
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {"hosts": [{"address": REDIS_URL, "socket_timeout": 15}]},
+        }
+    }
+else:
+    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
 DATABASES = {
     "default": {
