@@ -15,6 +15,7 @@ from django.views.decorators.http import require_GET, require_POST
 from apps.accounts.views import employee_required, manager_required
 from apps.accounts.models import User, UserRole
 from apps.shell import first_form_error, flash_redirect, render_app
+from apps.realtime.events import notify_managers
 
 from .forms import PositionForm
 from .models import Assignment, EmployeeUnavailability, Position, Shift
@@ -291,4 +292,13 @@ def employee_unavailability_toggle(request: HttpRequest) -> JsonResponse:
     else:
         existing.delete()
 
+    notify_managers(
+        {
+            "type": "unavailability.changed",
+            "employeeId": request.user.id,
+            "employeeName": request.user.display_name,
+            "date": day.isoformat(),
+            "unavailable": unavailable,
+        }
+    )
     return JsonResponse({"ok": True, "date": day.isoformat(), "unavailable": unavailable})

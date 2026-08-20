@@ -10,9 +10,31 @@ import { ShiftDetailsModal } from './ShiftDetailsModal.jsx';
 import { ShiftFormModal } from './ShiftFormModal.jsx';
 import { ShiftsToolbar } from './ShiftsToolbar.jsx';
 
+const FLASH_MS = 1600;
+
 const NEW_SHIFT = { date: '', start_time: '09:00', end_time: '17:00', capacity: 1, position_id: '', assigned_employee_ids: [] };
 
 const oneHourLater = (time) => `${pad2((Number(time.slice(0, 2)) + 1) % 24)}:00`;
+
+function useLiveAvailability(initial) {
+  const [availability, setAvailability] = useState(() => availabilityFromPayload(initial));
+  const [flashedEmployeeId, setFlashedEmployeeId] = useState(null);
+  const flashTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(flashTimer.current), []);
+
+  useLiveEvents((event) => {
+    if (event.type !== 'unavailability.changed') return;
+
+    setAvailability((current) => withAvailabilityChange(current, event));
+
+    clearTimeout(flashTimer.current);
+    setFlashedEmployeeId(String(event.employeeId));
+    flashTimer.current = setTimeout(() => setFlashedEmployeeId(null), FLASH_MS);
+  });
+
+  return { availability, flashedEmployeeId };
+}
 
 function PositionLegend({ positions, shifts }) {
   const published = new Set(shifts.filter((shift) => shift.status !== 'draft').map((shift) => shift.position_id));
