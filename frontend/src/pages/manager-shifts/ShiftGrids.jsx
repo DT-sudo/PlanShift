@@ -1,5 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 
+import { navigateWith } from '../../app/dates.js';
 import { groupShiftsByDate, positionPalette } from '../../app/shifts.js';
 import { MonthCalendar } from '../../components/Calendar.jsx';
 
