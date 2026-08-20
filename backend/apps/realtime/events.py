@@ -7,6 +7,7 @@ from typing import Any
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
@@ -23,3 +24,8 @@ def _send(group: str, event: dict[str, Any]) -> None:
 def user_group(user_id: int) -> str:
     """The pages one user has open, for events addressed to them alone."""
     return f"user_{user_id}"
+
+
+def notify_managers(event: dict[str, Any]) -> None:
+    """Send `event` to every connected manager once the current transaction commits."""
+    transaction.on_commit(lambda: _send(MANAGERS_GROUP, event))
