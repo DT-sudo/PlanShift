@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.db.models.deletion import ProtectedError
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -25,6 +26,7 @@ from .services import (
     publish_shifts_in_period,
     save_shift,
     shift_fields,
+    shift_rows,
     shifts_for_employee,
     shifts_for_manager,
 )
@@ -241,6 +243,65 @@ def position_delete(request: HttpRequest, position_id: int) -> HttpResponse:
         )
     notify(managers(), "position.deleted", actor=request.user, level="warning", name=position.name)
     return flash_redirect(request, messages.SUCCESS, "Position deleted: %(name)s." % {"name": position.name}, "manager_employees")
+
+
+# ── Search and analytics ────────────────────────────────────────────────────
+
+FILTER_PARAMS = ("q", "position", "worker", "status", "date_from", "date_to")
+SEARCH_PAGE_SIZE = 25
+SEARCH_SORTS = {
+    "date": lambda row: (row["date"], row["start_time"]),
+    "time": lambda row: (row["start_time"], row["date"]),
+    "position": lambda row: (row["position"].lower(), row["date"]),
+    # Unassigned shifts sort after every name.
+    "worker": lambda row: (row["workers"][0]["name"].lower() if row["workers"] else "￿", row["date"]),
+}
+ANALYTICS_DEFAULT_DAYS = 30
+
+
+def _shift_filters(request: HttpRequest) -> dict:
+    """The filter bar shared by search and analytics, as `shift_rows()` arguments."""
+    return {
+        "position_id": _parse_id(request.GET.get("position")),
+        "worker_id": _parse_id(request.GET.get("worker")),
+        "status": (request.GET.get("status") or "").lower() or None,
+        "start": _parse_date(request.GET.get("date_from"), None),
+        "end": _parse_date(request.GET.get("date_to"), None),
+    }
+
+
+def _filter_bar(request: HttpRequest, **values: str) -> dict:
+    """Options for the filter bar, and its current values echoed from the query string."""
+    return {
+        "positions": position_options(),
+        "workers": [{"id": w.id, "name": w.display_name} for w in _active_employees()],
+        "filters": {**{param: request.GET.get(param, "") for param in FILTER_PARAMS}, **values},
+    }
+
+
+@manager_required
+@require_GET
+def manager_shift_search(request: HttpRequest) -> HttpResponse:
+    rows = shift_rows(manager_id=request.user.id, query=request.GET.get("q", "").strip(), **_shift_filters(request))
+    sort = request.GET.get("sort") if request.GET.get("sort") in SEARCH_SORTS else "date"
+    direction = "desc" if request.GET.get("dir") == "desc" else "asc"
+    rows.sort(key=SEARCH_SORTS[sort], reverse=direction == "desc")
+    page = Paginator(rows, SEARCH_PAGE_SIZE).get_page(request.GET.get("page"))
+
+    return render_app(
+        request,
+        page="manager-shift-search",
+        title="Search Shifts",
+        nav_active="manager_shift_search",
+        data={
+            **_filter_bar(request, sort=sort, dir=direction),
+            "results": page.object_list,
+            "total": page.paginator.count,
+            "page": page.number,
+            "totalPages": page.paginator.num_pages,
+            "urls": {"calendar": reverse("manager_shifts")},
+        },
+    )
 
 
 @employee_required
