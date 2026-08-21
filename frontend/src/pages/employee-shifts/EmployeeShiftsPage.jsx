@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { navigateWith } from '../../app/dates.js';
 import { getBootstrap, postForm } from '../../app/http.js';
 import { groupShiftsByDate } from '../../app/shifts.js';
 import { AppShell } from '../../components/AppShell.jsx';

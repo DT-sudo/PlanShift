@@ -1,7 +1,7 @@
 """Scheduling rules and writes. Views parse requests and render; the rules live here."""
 
 from __future__ import annotations
-from datetime import date
+from datetime import date, datetime
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
@@ -159,3 +159,38 @@ def shifts_for_employee(*, employee_id: int, start: date, end: date):
         )
         .select_related("position")
     )
+
+
+def _hours(shift: Shift) -> float:
+    duration = datetime.combine(shift.date, shift.end_time) - datetime.combine(shift.date, shift.start_time)
+    return duration.total_seconds() / 3600
+
+
+def shift_rows(*, manager_id: int, query: str = "", worker_id: int | None = None, **filters) -> list[dict]:
+    """The manager's shifts with their workers, as plain dicts, for search and analytics.
+
+    `filters` are those of `shifts_for_manager`. `query` matches the position or an
+    assigned worker's name, case-insensitively.
+    """
+    shifts = shifts_for_manager(manager_id=manager_id, **filters).prefetch_related(
+        models.Prefetch("assignments", queryset=Assignment.objects.select_related("employee"))
+    )
+    if worker_id:
+        shifts = shifts.filter(assignments__employee_id=worker_id)
+
+    rows = []
+    for shift in shifts:
+        workers = [{"id": a.employee_id, "name": a.employee.display_name} for a in shift.assignments.all()]
+        if query.lower() not in " ".join([shift.position.name, *(w["name"] for w in workers)]).lower():
+            continue
+        rows.append(
+            {
+                "id": shift.id,
+                **shift_fields(shift),
+                "status": shift.status,
+                "capacity": shift.capacity,
+                "hours": _hours(shift),
+                "workers": workers,
+            }
+        )
+    return rows
