@@ -18,8 +18,8 @@ from apps.shell import field_errors, first_form_error, flash_redirect, render_ap
 from apps.scheduling.management.commands.seed_demo import DEMO_ACCOUNTS, DEMO_EMPLOYEE_EMAIL
 from apps.scheduling.services import position_options
 
-from .forms import EmailAuthenticationForm, EmployeeForm, SignUpForm
-from .models import User
+from .forms import EmailAuthenticationForm, EmployeeForm, SignUpForm, UserForm
+from .models import User, UserRole
 
 
 def _role_required(attr: str, other_home: str):
@@ -138,7 +138,7 @@ def _managed_user_or_404(request: HttpRequest, user_id: int) -> User:
 
 def _account_form(request: HttpRequest):
     """Admins also pick the role; a manager's form always makes an employee (the model's default role)."""
-    return EmployeeForm
+    return UserForm if request.user.is_admin else EmployeeForm
 
 
 def _set_generated_password(request: HttpRequest, employee: User) -> None:
@@ -156,10 +156,12 @@ def _back(request: HttpRequest, level: int, text: str) -> HttpResponse:
 @manager_required
 @require_GET
 def manager_employees(request: HttpRequest) -> HttpResponse:
+    is_admin = request.user.is_admin
+
     return render_app(
         request,
         page="manager-employees",
-        title="Employee Management",
+        title="User Management" if is_admin else "Employee Management",
         nav_active="manager_employees",
         data={
             "employees": [
@@ -175,7 +177,7 @@ def manager_employees(request: HttpRequest) -> HttpResponse:
                 }
                 for e in request.user.managed_users().select_related("position")
             ],
-            "roles": None,
+            "roles": [{"id": value, "name": label} for value, label in UserRole.choices] if is_admin else None,
             "positions": position_options(),
             "credentials": request.session.pop("one_time_credentials", None),
             "urls": {
