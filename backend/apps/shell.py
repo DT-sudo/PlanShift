@@ -65,7 +65,7 @@ def _nav_links(user, active: str) -> list[dict[str, Any]]:
         items = [
             ("manager_shifts", "shifts"),
             ("manager_shift_search", "search"),
-            ("manager_employees", "team"),
+            ("manager_employees", "users" if user.is_admin else "team"),
         ]
     else:
         items = [("employee_shifts", "myShifts")]

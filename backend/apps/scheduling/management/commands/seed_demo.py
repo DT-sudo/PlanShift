@@ -13,9 +13,10 @@ from apps.scheduling.models import EmployeeUnavailability, Position, Shift, Shif
 from apps.scheduling.services import assign_employees_to_shift
 
 DEMO_PASSWORD = "demo12345!"
+DEMO_ADMIN_EMAIL = "admin_demo@example.com"
 DEMO_MANAGER_EMAIL = "manager_demo@example.com"
 DEMO_EMPLOYEE_EMAIL = "employee_demo@example.com"
-DEMO_ACCOUNTS = {"manager": DEMO_MANAGER_EMAIL, "employee": DEMO_EMPLOYEE_EMAIL}
+DEMO_ACCOUNTS = {"admin": DEMO_ADMIN_EMAIL, "manager": DEMO_MANAGER_EMAIL, "employee": DEMO_EMPLOYEE_EMAIL}
 
 EMPLOYEES = [
     ("Demo", "Employee", "Barista"),
@@ -52,6 +53,7 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options) -> None:
+        _user(DEMO_ADMIN_EMAIL, "Demo", "Admin", UserRole.ADMIN, None, DEMO_PASSWORD)
         manager = _user(DEMO_MANAGER_EMAIL, "Demo", "Manager", UserRole.MANAGER, None, DEMO_PASSWORD)
         positions = {name: Position.objects.get_or_create(name=name)[0] for _, _, name in EMPLOYEES}
 

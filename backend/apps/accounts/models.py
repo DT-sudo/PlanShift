@@ -11,8 +11,12 @@ def generate_employee_id() -> str:
     return f"EMP-{secrets.randbelow(900000) + 100000}"
 
 class UserRole(models.TextChoices):
+    ADMIN = "admin", "Admin"
     MANAGER = "manager", "Manager"
     EMPLOYEE = "employee", "Employee"
+
+
+MANAGER_ROLES = (UserRole.ADMIN, UserRole.MANAGER)
 
 class User(AbstractUser):
     role = models.CharField(max_length=20, choices=UserRole.choices, default=UserRole.EMPLOYEE)
@@ -32,8 +36,12 @@ class User(AbstractUser):
         """The line under a name: an employee's position, otherwise the role."""
         return self.position.name if self.is_employee and self.position else str(self.get_role_display())
     @property
+    def is_admin(self) -> bool:
+        return self.role == UserRole.ADMIN
+    @property
     def is_manager(self) -> bool:
-        return self.role == UserRole.MANAGER
+        """Runs the schedule: managers and admins."""
+        return self.role in MANAGER_ROLES
     @property
     def is_employee(self) -> bool:
         return self.role == UserRole.EMPLOYEE
@@ -45,7 +53,7 @@ class User(AbstractUser):
         """
         if not self.is_manager:
             return User.objects.none()
-        accounts = User.objects.filter(role=UserRole.EMPLOYEE)
+        accounts = User.objects.all() if self.is_admin else User.objects.filter(role=UserRole.EMPLOYEE)
         return accounts.exclude(pk=self.pk)
     def manages(self, other: User) -> bool:
         return self.managed_users().filter(pk=other.pk).exists()

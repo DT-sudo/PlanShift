@@ -99,3 +99,30 @@ class EmployeeForm(AccountForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["position"].required = True
+
+
+class UserForm(EmployeeForm):
+    """Admin-side create/edit of any account: the role is picked too, and only employees have a position."""
+
+    class Meta(EmployeeForm.Meta):
+        fields = ["email", "role", "position"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["position"].required = False
+
+    def clean(self) -> dict:
+        cleaned = super().clean()
+        role = cleaned.get("role")
+        if role == UserRole.EMPLOYEE:
+            if not cleaned.get("position"):
+                self.add_error("position", "Employees need a position.")
+        elif role:
+            cleaned["position"] = None
+
+        # Managers own shifts and employees are assigned to them; switching sides would strand those shifts.
+        # (`self.instance` still holds the saved role here: the posted one is copied onto it after clean().)
+        switches_side = self.instance.pk and role and (role == UserRole.EMPLOYEE) != self.instance.is_employee
+        if switches_side and (self.instance.created_shifts.exists() or self.instance.assignments.exists()):
+            raise ValidationError("Reassign or remove this user's shifts before switching between employee and manager roles.")
+        return cleaned
