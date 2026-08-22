@@ -1,7 +1,7 @@
 import { getBootstrap, submitPost } from '../app/http.js';
 import { Avatar } from './Avatar.jsx';
 import { Dropdown } from './Menus.jsx';
-import { ToastProvider } from './Notifications.jsx';
+import { NotificationBell, ToastProvider } from './Notifications.jsx';
 
 function Header({ user, nav, urls }) {
   return (

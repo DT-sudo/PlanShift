@@ -1,6 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+
 import { postForm } from '../app/http.js';
+import { Bell } from './Icons.jsx';
+import { Modal } from './Modal.jsx';
+
 const ToastContext = createContext(() => {});
+const HistoryContext = createContext(null);
+
 export const useToast = () => useContext(ToastContext);
 
 export function ToastProvider({ initialMessages = [], notifications = null, children }) {
@@ -84,3 +91,59 @@ export function ToastProvider({ initialMessages = [], notifications = null, chil
   );
 }
 
+export function NotificationBell() {
+  const { history, markAllRead, clear } = useContext(HistoryContext);
+  const [open, setOpen] = useState(false);
+  const unread = history.filter((entry) => !entry.read).length;
+
+  return (
+    <>
+      <button
+        className="btn btn-ghost btn-icon relative"
+        type="button"
+        aria-label={unread ? (unread === 1 ? `Notifications, ${unread} unread` : `Notifications, ${unread} unread`) : "Notifications"}
+        onClick={() => {
+          setOpen(true);
+          markAllRead();
+        }}
+      >
+        <Bell />
+        {unread ? <span className="notification-badge">{unread > 99 ? '99+' : unread}</span> : null}
+      </button>
+
+      {/* Portalled: the sticky header is a stacking context the modal must not be trapped in. */}
+      {open
+        ? createPortal(
+            <Modal
+              title="Notifications"
+              onClose={() => setOpen(false)}
+              footer={
+                history.length ? (
+                  <button className="btn btn-outline" type="button" onClick={clear}>
+                    Clear history
+                  </button>
+                ) : null
+              }
+            >
+              {history.length ? (
+                <ul className="modal-body p-0">
+                  {history.map((entry) => (
+                    <li key={entry.id} className={`notification-item toast-${entry.level}`}>
+                      <div className="toast-dot" aria-hidden="true" />
+                      <NotificationText entry={entry} />
+                      <time className="ms-auto shrink-0 text-xs text-muted-foreground" dateTime={entry.time}>
+                        {timeAgo(entry.time)}
+                      </time>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="modal-body text-center text-sm text-muted-foreground">No notifications yet.</p>
+              )}
+            </Modal>,
+            document.body,
+          )
+        : null}
+    </>
+  );
+}
