@@ -1,6 +1,8 @@
 """Manager calendar and shift/position writes; employee calendar and availability."""
 
 from __future__ import annotations
+
+import csv
 from datetime import date, datetime, timedelta
 
 from django.contrib import messages
@@ -19,7 +21,7 @@ from apps.shell import first_form_error, flash_redirect, render_app
 from apps.realtime.events import notify_managers
 
 from .forms import PositionForm
-from .models import Assignment, EmployeeUnavailability, Position, Shift
+from .models import Assignment, EmployeeUnavailability, Position, Shift, ShiftStatus
 from .services import (
     position_options,
     publish_shift,
@@ -326,8 +328,38 @@ def manager_analytics(request: HttpRequest) -> HttpResponse:
         data={
             **_filter_bar(request, date_from=filters["start"].isoformat(), date_to=filters["end"].isoformat()),
             "analytics": shift_analytics(rows, worker_id=filters["worker_id"]),
+            "urls": {"exportCsv": reverse("manager_analytics_export_csv")},
         },
     )
+
+
+@manager_required
+@require_GET
+def manager_analytics_export_csv(request: HttpRequest) -> HttpResponse:
+    """The shifts behind the dashboard, one per row."""
+    filters, rows = _analytics_rows(request)
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="shifts-{filters["start"]}-to-{filters["end"]}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(
+        ["Date", "Start", "End", "Position", "Status", "Capacity", "Assigned", "Worker hours", "Workers"]
+    )
+    for row in rows:
+        writer.writerow(
+            [
+                row["date"],
+                row["start_time"],
+                row["end_time"],
+                row["position"],
+                ShiftStatus(row["status"]).label,
+                row["capacity"],
+                len(row["workers"]),
+                round(row["hours"] * len(row["workers"]), 2),
+                "; ".join(worker["name"] for worker in row["workers"]),
+            ]
+        )
+    return response
 
 
 @employee_required
