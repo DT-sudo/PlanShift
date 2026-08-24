@@ -1,0 +1,66 @@
+/* ============================================================
+   Search and analytics: filter bars, KPI cards, charts, and
+   the print-to-PDF report
+   ============================================================ */
+
+@layer components {
+
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+  }
+
+  .sort-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font: inherit;
+    color: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    cursor: pointer;
+  }
+
+  .sort-button:hover {
+    color: var(--color-foreground);
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .kpi-card {
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--color-border);
+    border-inline-start: 3px solid var(--kpi-accent);
+    border-radius: var(--radius-card);
+    background-color: var(--color-card);
+  }
+
+  .kpi-card-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted-foreground);
+  }
+
+  .kpi-card-value {
+    margin-top: 0.25rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+}
+
