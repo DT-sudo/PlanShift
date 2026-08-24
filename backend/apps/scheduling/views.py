@@ -25,6 +25,7 @@ from .services import (
     publish_shift,
     publish_shifts_in_period,
     save_shift,
+    shift_analytics,
     shift_fields,
     shift_rows,
     shifts_for_employee,
@@ -300,6 +301,31 @@ def manager_shift_search(request: HttpRequest) -> HttpResponse:
             "page": page.number,
             "totalPages": page.paginator.num_pages,
             "urls": {"calendar": reverse("manager_shifts")},
+        },
+    )
+
+
+def _analytics_rows(request: HttpRequest) -> tuple[dict, list[dict]]:
+    """The filters, with the date range defaulting to the 30 days up to today, and the rows they select."""
+    filters = _shift_filters(request)
+    end = filters["end"] or timezone.localdate()
+    start = filters["start"] or end - timedelta(days=ANALYTICS_DEFAULT_DAYS - 1)
+    filters["start"], filters["end"] = min(start, end), max(start, end)
+    return filters, shift_rows(manager_id=request.user.id, **filters)
+
+
+@manager_required
+@require_GET
+def manager_analytics(request: HttpRequest) -> HttpResponse:
+    filters, rows = _analytics_rows(request)
+    return render_app(
+        request,
+        page="manager-analytics",
+        title="Workforce Analytics",
+        nav_active="manager_analytics",
+        data={
+            **_filter_bar(request, date_from=filters["start"].isoformat(), date_to=filters["end"].isoformat()),
+            "analytics": shift_analytics(rows, worker_id=filters["worker_id"]),
         },
     )
 
