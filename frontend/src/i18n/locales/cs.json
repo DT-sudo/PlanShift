@@ -1,0 +1,147 @@
+{
+  "common": {
+    "cancel": "Zrušit",
+    "save": "Uložit",
+    "delete": "Smazat",
+    "edit": "Upravit",
+    "done": "Hotovo",
+    "yes": "Ano",
+    "no": "Ne",
+    "yesDelete": "Ano, smazat",
+    "close": "Zavřít",
+    "all": "Vše",
+    "apply": "Použít",
+    "search": "Hledat",
+    "clear": "Vymazat",
+    "or": "nebo",
+    "requestFailed": "Něco se pokazilo. Zkuste to prosím znovu."
+  },
+  "language": {
+    "label": "Jazyk"
+  },
+  "nav": {
+    "primary": "Hlavní navigace",
+    "shifts": "Směny",
+    "search": "Hledání",
+    "analytics": "Analýza",
+    "users": "Uživatelé",
+    "team": "Tým",
+    "myShifts": "Moje směny",
+    "friends": "Přátelé"
+  },
+  "header": {
+    "userMenu": "Uživatelská nabídka",
+    "myProfile": "Můj profil",
+    "accountSettings": "Nastavení účtu",
+    "privacy": "Soukromí a moje údaje",
+    "logout": "Odhlásit se"
+  },
+  "footer": {
+    "tagline": "© {year} PlanShift — plánování směn pro týmy placené po hodinách.",
+    "legal": "Právní informace",
+    "privacyPolicy": "Zásady ochrany osobních údajů",
+    "terms": "Podmínky používání"
+  },
+  "toast": {
+    "success": "Hotovo",
+    "error": "Chyba",
+    "warning": "Upozornění",
+    "info": "Informace"
+  },
+  "notifications": {
+    "title": "Oznámení",
+    "unread": {
+      "one": "Oznámení, {count} nepřečtené",
+      "few": "Oznámení, {count} nepřečtená",
+      "many": "Oznámení, {count} nepřečteného",
+      "other": "Oznámení, {count} nepřečtených"
+    },
+    "clear": "Vymazat historii",
+    "empty": "Zatím žádná oznámení.",
+    "saveFailed": "Oznámení se nepodařilo aktualizovat."
+  },
+  "presence": {
+    "online": "Online",
+    "offline": "Offline",
+    "lastSeen": "Naposledy online {time}"
+  },
+  "dates": {
+    "justNow": "právě teď"
+  },
+  "status": {
+    "draft": "Koncept",
+    "published": "Zveřejněno"
+  },
+  "calendar": {
+    "previousMonth": "Předchozí měsíc",
+    "nextMonth": "Další měsíc",
+    "previousWeek": "Předchozí týden",
+    "nextWeek": "Další týden",
+    "today": "Dnes"
+  },
+  "filters": {
+    "position": "Pozice:",
+    "worker": "Pracovník:",
+    "status": "Stav:",
+    "show": "Zobrazit:",
+    "understaffed": "Nedostatečně obsazené",
+    "from": "Od",
+    "to": "do"
+  },
+  "login": {
+    "title": "Vítejte zpět",
+    "subtitle": "Přihlaste se ke svému účtu",
+    "demoAdmin": "Ukázka: přihlásit jako administrátor",
+    "demoManager": "Ukázka: přihlásit jako manažer",
+    "demoEmployee": "Ukázka: přihlásit jako zaměstnanec",
+    "email": "E-mail",
+    "emailPlaceholder": "vy@example.com",
+    "password": "Heslo",
+    "passwordPlaceholder": "Zadejte heslo",
+    "submit": "Přihlásit se",
+    "newHere": "Jste tu poprvé?",
+    "createManager": "Vytvořit účet manažera"
+  },
+  "signup": {
+    "title": "Vytvořte si účet",
+    "subtitle": "Založte si účet manažera a začněte plánovat směny svého týmu",
+    "fullName": "Celé jméno",
+    "fullNamePlaceholder": "Jana Nováková",
+    "emailHint": "Touto adresou se budete přihlašovat.",
+    "passwordPlaceholder": "Alespoň 8 znaků",
+    "passwordHint": "Alespoň 8 znaků, ne jen číslice a nepodobné vašemu jménu ani e-mailu.",
+    "confirmPassword": "Potvrzení hesla",
+    "confirmPlaceholder": "Zopakujte heslo",
+    "submit": "Vytvořit účet",
+    "agree": "Vytvořením účtu přijímáte dokumenty {terms} a {privacy}.",
+    "haveAccount": "Už máte účet?",
+    "signIn": "Přihlásit se",
+    "employeesNote": "Zaměstnanci se zde neregistrují — účet vám vytvoří váš manažer a předá vám heslo."
+  },
+  "twoFactorLogin": {
+    "title": "Dvoufázové ověření",
+    "subtitleApp": "Zadejte šestimístný kód z ověřovací aplikace",
+    "subtitleRecovery": "Zadejte jeden ze svých záložních kódů",
+    "signingInAs": "Přihlašujete se jako {email}",
+    "recoveryCode": "Záložní kód",
+    "recoveryHint": "Každý záložní kód funguje jen jednou.",
+    "appCode": "Ověřovací kód",
+    "sixDigits": "6 číslic, které zobrazuje vaše aplikace",
+    "verify": "Ověřit",
+    "useApp": "Použít ověřovací aplikaci",
+    "useRecovery": "Ztratili jste telefon? Použijte záložní kód"
+  },
+  "legal": {
+    "lastUpdated": "Naposledy aktualizováno: {date}"
+  },
+  "privacy": {
+    "title": "Soukromí a moje údaje",
+    "subtitle": "Jaké údaje o vašem účtu PlanShift uchovává a jaká k nim máte práva podle GDPR.",
+    "holdTitle": "Co o vás uchováváme",
+    "holdManager": "Vaše jméno, e-mail, ID zaměstnance a roli, profilovou fotografii a popis, vaše přátele, kdy jste byli naposledy online, jazyk, který používáte, a směny, které jste vytvořili.",
+    "holdEmployee": "Vaše jméno, e-mail, ID zaměstnance a roli, profilovou fotografii a popis, vaše přátele, kdy jste byli naposledy online, jazyk, který používáte, a také vaše přiřazení ke směnám a dny, které jste označili jako nedostupné.",
+    "holdMore": "Proč se jednotlivé údaje shromažďují a kdo je vidí, najdete v dokumentu {policy}.",
+    "requestTitle": "Vyžádat si své údaje",
+    "requestText": "Stáhněte si vše výše uvedené jako jeden soubor JSON – čitelný v jakémkoli textovém editoru nebo tabulkovém programu, který umí JSON importovat. Zároveň vám pošleme potvrzení e-mailem, abyste věděli, kdyby si kopii vašich údajů někdy stáhl někdo jiný."
+  }
+}

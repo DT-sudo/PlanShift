@@ -1,6 +1,8 @@
 """Manager calendar and shift/position writes; employee calendar and availability."""
 
 from __future__ import annotations
+
+import csv
 from datetime import date, datetime, timedelta
 
 from django.contrib import messages
@@ -19,12 +21,13 @@ from apps.shell import first_form_error, flash_redirect, render_app
 from apps.realtime.events import notify_managers
 
 from .forms import PositionForm
-from .models import Assignment, EmployeeUnavailability, Position, Shift
+from .models import Assignment, EmployeeUnavailability, Position, Shift, ShiftStatus
 from .services import (
     position_options,
     publish_shift,
     publish_shifts_in_period,
     save_shift,
+    shift_analytics,
     shift_fields,
     shift_rows,
     shifts_for_employee,
@@ -302,6 +305,61 @@ def manager_shift_search(request: HttpRequest) -> HttpResponse:
             "urls": {"calendar": reverse("manager_shifts")},
         },
     )
+
+
+def _analytics_rows(request: HttpRequest) -> tuple[dict, list[dict]]:
+    """The filters, with the date range defaulting to the 30 days up to today, and the rows they select."""
+    filters = _shift_filters(request)
+    end = filters["end"] or timezone.localdate()
+    start = filters["start"] or end - timedelta(days=ANALYTICS_DEFAULT_DAYS - 1)
+    filters["start"], filters["end"] = min(start, end), max(start, end)
+    return filters, shift_rows(manager_id=request.user.id, **filters)
+
+
+@manager_required
+@require_GET
+def manager_analytics(request: HttpRequest) -> HttpResponse:
+    filters, rows = _analytics_rows(request)
+    return render_app(
+        request,
+        page="manager-analytics",
+        title="Workforce Analytics",
+        nav_active="manager_analytics",
+        data={
+            **_filter_bar(request, date_from=filters["start"].isoformat(), date_to=filters["end"].isoformat()),
+            "analytics": shift_analytics(rows, worker_id=filters["worker_id"]),
+            "urls": {"exportCsv": reverse("manager_analytics_export_csv")},
+        },
+    )
+
+
+@manager_required
+@require_GET
+def manager_analytics_export_csv(request: HttpRequest) -> HttpResponse:
+    """The shifts behind the dashboard, one per row."""
+    filters, rows = _analytics_rows(request)
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="shifts-{filters["start"]}-to-{filters["end"]}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(
+        ["Date", "Start", "End", "Position", "Status", "Capacity", "Assigned", "Worker hours", "Workers"]
+    )
+    for row in rows:
+        writer.writerow(
+            [
+                row["date"],
+                row["start_time"],
+                row["end_time"],
+                row["position"],
+                ShiftStatus(row["status"]).label,
+                row["capacity"],
+                len(row["workers"]),
+                round(row["hours"] * len(row["workers"]), 2),
+                "; ".join(worker["name"] for worker in row["workers"]),
+            ]
+        )
+    return response
 
 
 @employee_required

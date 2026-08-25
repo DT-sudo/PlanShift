@@ -187,3 +187,19 @@ class SearchAndAnalyticsTests(TestCase):
         )
         data = self._search(page=2)
         self.assertEqual((data["total"], data["page"], data["totalPages"], len(data["results"])), (30, 2, 2, 5))
+
+    def test_analytics_worker_filter_counts_only_that_worker(self):
+        url = reverse("manager_analytics")
+        everyone = self.client.get(url, {"format": "json"}).json()["analytics"]["kpis"]
+        alice_only = self.client.get(url, {"format": "json", "worker": self.alice.id}).json()["analytics"]["kpis"]
+
+        self.assertEqual(everyone, {"shifts": 2, "hours": 16.0, "workers": 2, "open_shifts": 1})
+        self.assertEqual(alice_only, {"shifts": 1, "hours": 8.0, "workers": 1, "open_shifts": 0})
+
+    def test_csv_export_lists_each_shift(self):
+        response = self.client.get(reverse("manager_analytics_export_csv"))
+
+        self.assertEqual(response["Content-Type"], "text/csv")
+        lines = response.content.decode().strip().splitlines()
+        self.assertEqual(len(lines), 3)
+        self.assertIn("Alice Novak; Bob Marek", lines[1])

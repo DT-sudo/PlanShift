@@ -1,6 +1,8 @@
 """Scheduling rules and writes. Views parse requests and render; the rules live here."""
 
 from __future__ import annotations
+
+from collections import Counter
 from datetime import date, datetime
 
 from django.core.exceptions import ValidationError
@@ -194,3 +196,46 @@ def shift_rows(*, manager_id: int, query: str = "", worker_id: int | None = None
             }
         )
     return rows
+
+
+def shift_analytics(rows: list[dict], *, worker_id: int | None = None) -> dict:
+    """KPIs and chart series over `shift_rows()` output.
+
+    Shift counts describe whole shifts. Hours and workers count only the filtered
+    worker, so a colleague on the same shift does not add to their numbers.
+    """
+    by_date: Counter[str] = Counter()
+    by_position: Counter[str] = Counter()
+    by_status = Counter(dict.fromkeys(ShiftStatus.values, 0))
+    hours: Counter[int] = Counter()
+    shift_count: Counter[int] = Counter()
+    names: dict[int, str] = {}
+    open_shifts = 0
+
+    for row in rows:
+        by_date[row["date"]] += 1
+        by_position[row["position"]] += 1
+        by_status[row["status"]] += 1
+        open_shifts += len(row["workers"]) < row["capacity"]
+        for worker in row["workers"]:
+            if worker_id and worker["id"] != worker_id:
+                continue
+            hours[worker["id"]] += row["hours"]
+            shift_count[worker["id"]] += 1
+            names[worker["id"]] = worker["name"]
+
+    ranked = sorted(hours, key=lambda wid: (hours[wid], shift_count[wid]), reverse=True)
+    return {
+        "kpis": {
+            "shifts": len(rows),
+            "hours": round(sum(hours.values()), 1),
+            "workers": len(hours),
+            "open_shifts": open_shifts,
+        },
+        "by_date": [{"date": day, "count": count} for day, count in sorted(by_date.items())],
+        "by_position": [{"position": name, "count": count} for name, count in sorted(by_position.items())],
+        "by_status": [{"status": status, "count": count} for status, count in by_status.items()],
+        "top_workers": [
+            {"worker": names[wid], "hours": round(hours[wid], 1), "shifts": shift_count[wid]} for wid in ranked[:10]
+        ],
+    }

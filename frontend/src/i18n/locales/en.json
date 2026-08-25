@@ -1,0 +1,69 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "done": "Done",
+    "yes": "Yes",
+    "no": "No",
+    "yesDelete": "Yes, delete",
+    "close": "Close",
+    "all": "All",
+    "apply": "Apply",
+    "search": "Search",
+    "clear": "Clear",
+    "or": "or",
+    "requestFailed": "Something went wrong. Please try again."
+  },
+  "language": {
+    "label": "Language"
+  },
+  "nav": {
+    "primary": "Primary",
+    "shifts": "Shifts",
+    "search": "Search",
+    "analytics": "Analytics",
+    "users": "Users",
+    "team": "Team",
+    "myShifts": "My Shifts",
+    "friends": "Friends"
+  },
+  "header": {
+    "userMenu": "User menu",
+    "myProfile": "My profile",
+    "accountSettings": "Account settings",
+    "privacy": "Privacy & my data",
+    "logout": "Logout"
+  },
+  "footer": {
+    "tagline": "© {year} PlanShift — shift scheduling for hourly teams.",
+    "legal": "Legal",
+    "privacyPolicy": "Privacy Policy",
+    "terms": "Terms of Service"
+  },
+  "toast": {
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unread": {
+      "one": "Notifications, {count} unread",
+      "other": "Notifications, {count} unread"
+    },
+    "clear": "Clear history",
+    "empty": "No notifications yet.",
+    "saveFailed": "Could not update notifications."
+  },
+  "presence": {
+    "online": "Online",
+    "offline": "Offline",
+    "lastSeen": "Last seen {time}"
+  },
+  "dates": {
+    "justNow": "just now"
+  }
+}
