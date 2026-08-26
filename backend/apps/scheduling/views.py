@@ -17,6 +17,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.views import employee_required, manager_required
 from apps.accounts.models import User, UserRole
+from apps.notifications.services import managers, notify
 from apps.shell import first_form_error, flash_redirect, render_app
 from apps.realtime.events import notify_managers, push_to_user
 

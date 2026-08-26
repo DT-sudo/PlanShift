@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "apps.legal",
     "apps.scheduling",
     "apps.realtime",
+    "apps.notifications",
 ]
 
 MIDDLEWARE = [
