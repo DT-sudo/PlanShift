@@ -27,6 +27,12 @@ export function submitPost(action, fields = {}) {
   form.submit();
 }
 
+export async function getJSON(url) {
+  const response = await fetch(url, { headers: { Accept: 'application/json' } });
+  if (!response.ok) throw new Error();
+  return response.json();
+}
+
 export function pageDataUrl() {
   const url = new URL(window.location.href);
   url.searchParams.set('format', 'json');

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { navigateWith } from '../../app/dates.js';
 import { getBootstrap, postForm } from '../../app/http.js';
+import { useLivePageData } from '../../app/live.js';
 import { groupShiftsByDate } from '../../app/shifts.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { CalendarNav, MonthCalendar } from '../../components/Calendar.jsx';
