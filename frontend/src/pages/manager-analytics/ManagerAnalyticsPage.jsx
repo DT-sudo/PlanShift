@@ -1,5 +1,6 @@
 import { formatHours } from '../../app/dates.js';
 import { getBootstrap } from '../../app/http.js';
+import { useLivePageData } from '../../app/live.js';
 import { statusOptions } from '../../app/shifts.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { DateRangeFields, ShiftFilterSelects } from '../../components/Field.jsx';

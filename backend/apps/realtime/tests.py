@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import timedelta
+from datetime import time, timedelta
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.accounts.models import User, UserRole
-from apps.scheduling.models import EmployeeUnavailability, Position
+from apps.scheduling.models import EmployeeUnavailability, Position, Shift
 
 from .consumers import ScheduleConsumer
 from .events import MANAGERS_GROUP, user_group
@@ -146,6 +146,17 @@ class LiveAvailabilityTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(callbacks, [])
+
+    def test_shift_write_reaches_managers(self):
+        shift = Shift.objects.create(
+            date=self.day, start_time=time(9, 0), end_time=time(17, 0), position=self.barista, created_by=self.manager
+        )
+        self.client.force_login(self.manager)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(reverse("delete_shift", args=[shift.id]))
+
+        self.assertEqual(self._next_event(), {"type": "shifts.changed"})
 
     def test_manager_page_lists_unavailable_days_per_employee(self):
         EmployeeUnavailability.objects.create(employee=self.alice, date=self.day)

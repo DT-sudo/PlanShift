@@ -18,7 +18,7 @@ from django.views.decorators.http import require_GET, require_POST
 from apps.accounts.views import employee_required, manager_required
 from apps.accounts.models import User, UserRole
 from apps.shell import first_form_error, flash_redirect, render_app
-from apps.realtime.events import notify_managers
+from apps.realtime.events import notify_managers, push_to_user
 
 from .forms import PositionForm
 from .models import Assignment, EmployeeUnavailability, Position, Shift, ShiftStatus
@@ -177,6 +177,17 @@ def manager_shifts(request: HttpRequest) -> HttpResponse:
     )
 
 
+def _assigned_ids(shift: Shift) -> set[int]:
+    return {assignment.employee_id for assignment in shift.assignments.all()}
+
+
+def _shifts_changed(employee_ids=()) -> None:
+    """Open manager pages re-fetch, and so do the calendars of employees whose published shifts changed."""
+    notify_managers(SHIFTS_CHANGED)
+    for employee_id in employee_ids:
+        push_to_user(employee_id, SHIFTS_CHANGED)
+
+
 @manager_required
 @require_POST
 def save_shift_view(request: HttpRequest, shift_id: int | None = None) -> HttpResponse:
@@ -186,6 +197,7 @@ def save_shift_view(request: HttpRequest, shift_id: int | None = None) -> HttpRe
         saved = save_shift(shift, request.POST)
     except ValidationError as exc:
         return flash_redirect(request, messages.ERROR, " ".join(exc.messages), "manager_shifts")
+    _shifts_changed()
     return flash_redirect(
         request, messages.SUCCESS, "Shift updated." if is_update else "Shift created.", _calendar_url(saved)
     )
@@ -195,7 +207,9 @@ def save_shift_view(request: HttpRequest, shift_id: int | None = None) -> HttpRe
 @require_POST
 def delete_shift(request: HttpRequest, shift_id: int) -> HttpResponse:
     shift = _manager_shift_or_404(request, shift_id)
+    employee_ids = _assigned_ids(shift) if shift.status == ShiftStatus.PUBLISHED else set()
     shift.delete()
+    _shifts_changed(employee_ids)
     return flash_redirect(request, messages.SUCCESS, "Shift deleted.", "manager_shifts")
 
 
