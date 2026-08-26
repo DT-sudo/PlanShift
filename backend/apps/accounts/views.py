@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
+from apps.notifications.services import managers, notify
 from apps.shell import field_errors, first_form_error, flash_redirect, render_app
 from apps.scheduling.management.commands.seed_demo import DEMO_ACCOUNTS, DEMO_EMPLOYEE_EMAIL
 from apps.scheduling.services import position_options
@@ -201,6 +202,7 @@ def manager_employees_create(request: HttpRequest) -> HttpResponse:
 
     account = form.save(commit=False)
     _set_generated_password(request, account)
+    notify(managers(), "account.added", actor=request.user, role=account.role, name=account.display_name)
     return _back(request, messages.SUCCESS, "%(role)s created." % {"role": account.get_role_display()})
 
 
@@ -212,6 +214,13 @@ def employee_update(request: HttpRequest, user_id: int) -> HttpResponse:
     if not form.is_valid():
         return _back(request, messages.ERROR, first_form_error(form, "Could not update the account."))
     account = form.save()
+    if form.has_changed():
+        actor = request.user
+        notify(managers(), "account.updated", actor=actor, role=account.role, name=account.display_name)
+        if "role" in form.changed_data:
+            notify([account], "account.role_changed", actor=actor, by=actor.display_name, role=account.role)
+        else:
+            notify([account], "account.details_updated", actor=actor, by=actor.display_name)
     return _back(request, messages.SUCCESS, "%(role)s updated." % {"role": account.get_role_display()})
 
 
@@ -220,6 +229,7 @@ def employee_update(request: HttpRequest, user_id: int) -> HttpResponse:
 def reset_employee_password(request: HttpRequest, user_id: int) -> HttpResponse:
     employee = _managed_user_or_404(request, user_id)
     _set_generated_password(request, employee)
+    notify([employee], "account.password_reset", actor=request.user, level="warning", by=request.user.display_name)
     return _back(request, messages.SUCCESS, "Password reset.")
 
 
@@ -241,4 +251,5 @@ def employee_delete(request: HttpRequest, user_id: int) -> HttpResponse:
         account.delete()
     except ProtectedError:
         return _back(request, messages.ERROR, "Cannot delete %(name)s: they still have shifts. Reassign or delete them first." % {"name": label})
+    notify(managers(), "account.deleted", actor=request.user, level="warning", role=role, name=label)
     return _back(request, messages.SUCCESS, "Deleted %(role)s: %(name)s." % {"role": role_label.lower(), "name": label})

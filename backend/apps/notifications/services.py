@@ -9,6 +9,7 @@ from django.utils import translation
 from apps.accounts.models import MANAGER_ROLES, User
 from apps.realtime.events import push_to_user
 
+from .messages import render
 from .models import Notification
 
 HISTORY_LIMIT = 50
