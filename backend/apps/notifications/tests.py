@@ -92,6 +92,25 @@ class RecipientTests(NotificationTestCase):
             self._received(), {self.alice: ["2 new shifts published"], self.bob: ["New shift published"]}
         )
 
+    def test_editing_a_draft_notifies_nobody(self):
+        shift = self._shift(status=ShiftStatus.DRAFT, employees=[self.alice])
+
+        self._post(self.manager, "update_shift", shift.id, data=self._shift_form(shift, [self.bob], start="10:00"))
+
+        self.assertEqual(self._received(), {})
+
+    def test_editing_a_published_shift_tells_each_employee_what_changed_for_them(self):
+        shift = self._shift(employees=[self.alice, self.bob])
+
+        self._post(
+            self.manager, "update_shift", shift.id, data=self._shift_form(shift, [self.alice, self.carol], start="10:00")
+        )
+
+        self.assertEqual(
+            self._received(),
+            {self.alice: ["Shift changed"], self.bob: ["Removed from a shift"], self.carol: ["New shift assigned"]},
+        )
+
     def test_deleting_a_published_shift_notifies_its_employees(self):
         shift = self._shift(employees=[self.alice])
 
