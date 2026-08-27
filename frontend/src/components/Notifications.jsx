@@ -11,6 +11,18 @@ const HistoryContext = createContext(null);
 
 export const useToast = () => useContext(ToastContext);
 
+function NotificationText({ entry }) {
+  return (
+    <div className="min-w-0">
+      <div className="font-bold">
+        {entry.title}
+        {entry.count > 1 ? <span className="notification-count"> ×{entry.count}</span> : null}
+      </div>
+      {entry.description ? <div className="mt-0.5 text-sm text-muted-foreground">{entry.description}</div> : null}
+    </div>
+  );
+}
+
 export function ToastProvider({ initialMessages = [], notifications = null, children }) {
   const [toasts, setToasts] = useState([]);
   const [history, setHistory] = useState(notifications?.items ?? []);

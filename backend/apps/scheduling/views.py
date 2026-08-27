@@ -17,6 +17,8 @@ from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.views import employee_required, manager_required
 from apps.accounts.models import User, UserRole
+from apps.notifications.messages import shift_params
+from apps.notifications.services import managers, notify
 from apps.shell import first_form_error, flash_redirect, render_app
 from apps.realtime.events import notify_managers, push_to_user
 
@@ -188,16 +190,41 @@ def _shifts_changed(employee_ids=()) -> None:
         push_to_user(employee_id, SHIFTS_CHANGED)
 
 
+def _notify_published(actor: User, shifts: list[Shift]) -> None:
+    """Refresh open calendars, then one notification per assigned employee, however many of their shifts were published."""
+    published: dict[int, list[dict]] = {}
+    for shift in shifts:
+        for employee_id in _assigned_ids(shift):
+            published.setdefault(employee_id, []).append(shift_params(shift))
+    _shifts_changed(published)
+    for employee_id, theirs in published.items():
+        notify([employee_id], "shift.published", actor=actor, shifts=theirs)
+
+
+def _notify_published_shift_edited(actor: User, shift: Shift, before_ids: set[int], before: dict) -> None:
+    after_ids, after = _assigned_ids(shift), shift_params(shift)
+    _shifts_changed(before_ids | after_ids)
+    notify(after_ids - before_ids, "shift.assigned", actor=actor, shift=after)
+    notify(before_ids - after_ids, "shift.removed", actor=actor, level="warning", shift=before)
+    if after != before:
+        notify(after_ids & before_ids, "shift.changed", actor=actor, before=before, after=after)
+
+
 @manager_required
 @require_POST
 def save_shift_view(request: HttpRequest, shift_id: int | None = None) -> HttpResponse:
     is_update = shift_id is not None
     shift = _manager_shift_or_404(request, shift_id) if is_update else Shift(created_by=request.user)
+    was_published = shift.status == ShiftStatus.PUBLISHED
+    before_ids, before = (_assigned_ids(shift), shift_params(shift)) if was_published else (set(), None)
     try:
         saved = save_shift(shift, request.POST)
     except ValidationError as exc:
         return flash_redirect(request, messages.ERROR, " ".join(exc.messages), "manager_shifts")
-    _shifts_changed()
+    if was_published:
+        _notify_published_shift_edited(request.user, saved, before_ids, before)
+    else:
+        _shifts_changed()
     return flash_redirect(
         request, messages.SUCCESS, "Shift updated." if is_update else "Shift created.", _calendar_url(saved)
     )
@@ -208,8 +235,10 @@ def save_shift_view(request: HttpRequest, shift_id: int | None = None) -> HttpRe
 def delete_shift(request: HttpRequest, shift_id: int) -> HttpResponse:
     shift = _manager_shift_or_404(request, shift_id)
     employee_ids = _assigned_ids(shift) if shift.status == ShiftStatus.PUBLISHED else set()
+    details = shift_params(shift)
     shift.delete()
     _shifts_changed(employee_ids)
+    notify(employee_ids, "shift.cancelled", actor=request.user, level="warning", shift=details)
     return flash_redirect(request, messages.SUCCESS, "Shift deleted.", "manager_shifts")
 
 
@@ -217,7 +246,10 @@ def delete_shift(request: HttpRequest, shift_id: int) -> HttpResponse:
 @require_POST
 def publish_shift_view(request: HttpRequest, shift_id: int) -> HttpResponse:
     shift = _manager_shift_or_404(request, shift_id)
+    was_draft = shift.status == ShiftStatus.DRAFT
     publish_shift(shift)
+    if was_draft:
+        _notify_published(request.user, [shift])
     return flash_redirect(request, messages.SUCCESS, "Shift published.", _calendar_url(shift))
 
 
@@ -228,6 +260,7 @@ def publish_all_shifts(request: HttpRequest) -> HttpResponse:
     start, end = _period(_calendar_view(request), _parse_date(request.POST.get("date"), timezone.localdate()))
     published = publish_shifts_in_period(manager_id=request.user.id, start=start, end=end)
     if published:
+        _notify_published(request.user, published)
         count = len(published)
         text = ("Published %(count)d shift." if count == 1 else "Published %(count)d shifts.") % {"count": count}
         return flash_redirect(request, messages.SUCCESS, text, "manager_shifts")
@@ -433,5 +466,13 @@ def employee_unavailability_toggle(request: HttpRequest) -> JsonResponse:
             "date": day.isoformat(),
             "unavailable": unavailable,
         }
+    )
+    notify(
+        managers(),
+        "availability.changed",
+        actor=request.user,
+        name=request.user.display_name,
+        date=day.isoformat(),
+        unavailable=unavailable,
     )
     return JsonResponse({"ok": True, "date": day.isoformat(), "unavailable": unavailable})
