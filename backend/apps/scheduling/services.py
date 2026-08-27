@@ -105,6 +105,11 @@ def save_shift(shift: Shift, post_data) -> Shift:
     employee_ids = [int(value) for value in post_data.getlist("employee_ids") if value.isdigit()]
 
     with transaction.atomic():
+        if shift.pk:
+            current = Shift.objects.select_for_update().values_list("version", flat=True).get(pk=shift.pk)
+            if post_data.get("version") != str(current):
+                raise ValidationError(STALE_SHIFT)
+            shift.version = current + 1
         saved = form.save()
         assign_employees_to_shift(saved, employee_ids)
     return saved
