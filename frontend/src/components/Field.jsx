@@ -1,5 +1,6 @@
 import { getBootstrap } from '../app/http.js';
 import { statusOptions } from '../app/shifts.js';
+import { t } from '../i18n/index.js';
 
 export function CsrfInput() {
   return <input type="hidden" name="csrfmiddlewaretoken" value={getBootstrap().csrfToken} readOnly />;
@@ -64,7 +65,7 @@ export function FilterSelect({ id, label, options, ...selectProps }) {
         {label}
       </label>
       <select id={id} className="form-select w-auto" {...selectProps}>
-        <Options emptyLabel="All" options={options} />
+        <Options emptyLabel={t('common.all')} options={options} />
       </select>
     </div>
   );
@@ -73,9 +74,9 @@ export function FilterSelect({ id, label, options, ...selectProps }) {
 export function ShiftFilterSelects({ filters, positions, workers }) {
   return (
     <>
-      <FilterSelect id="positionFilter" name="position" label="Position:" options={positions} defaultValue={filters.position} onChange={submitForm} />
-      <FilterSelect id="workerFilter" name="worker" label="Worker:" options={workers} defaultValue={filters.worker} onChange={submitForm} />
-      <FilterSelect id="statusFilter" name="status" label="Status:" options={statusOptions()} defaultValue={filters.status} onChange={submitForm} />
+      <FilterSelect id="positionFilter" name="position" label={t('filters.position')} options={positions} defaultValue={filters.position} onChange={submitForm} />
+      <FilterSelect id="workerFilter" name="worker" label={t('filters.worker')} options={workers} defaultValue={filters.worker} onChange={submitForm} />
+      <FilterSelect id="statusFilter" name="status" label={t('filters.status')} options={statusOptions()} defaultValue={filters.status} onChange={submitForm} />
     </>
   );
 }
@@ -84,11 +85,11 @@ export function DateRangeFields({ from, to }) {
   return (
     <div className="flex items-center gap-2">
       <label className="form-label mb-0" htmlFor="dateFrom">
-        From
+        {t('filters.from')}
       </label>
       <input id="dateFrom" name="date_from" type="date" className="form-input w-auto" defaultValue={from} />
       <label className="form-label mb-0" htmlFor="dateTo">
-        to
+        {t('filters.to')}
       </label>
       <input id="dateTo" name="date_to" type="date" className="form-input w-auto" defaultValue={to} />
     </div>

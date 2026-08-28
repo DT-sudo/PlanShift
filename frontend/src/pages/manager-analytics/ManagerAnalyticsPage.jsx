@@ -6,6 +6,7 @@ import { AppShell } from '../../components/AppShell.jsx';
 import { DateRangeFields, ShiftFilterSelects } from '../../components/Field.jsx';
 import { ChevronDown } from '../../components/Icons.jsx';
 import { Dropdown } from '../../components/Menus.jsx';
+import { t } from '../../i18n/index.js';
 import { DonutChart, EmptyChart, XYChart } from './Charts.jsx';
 
 const KPIS = [

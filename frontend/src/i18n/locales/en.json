@@ -65,5 +65,115 @@
   },
   "dates": {
     "justNow": "just now"
+  },
+  "status": {
+    "draft": "Draft",
+    "published": "Published"
+  },
+  "calendar": {
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "today": "Today"
+  },
+  "filters": {
+    "position": "Position:",
+    "worker": "Worker:",
+    "status": "Status:",
+    "show": "Show:",
+    "understaffed": "Understaffed",
+    "from": "From",
+    "to": "to"
+  },
+  "login": {
+    "title": "Welcome back",
+    "subtitle": "Sign in to your account",
+    "demoAdmin": "Demo: Admin login",
+    "demoManager": "Demo: Manager login",
+    "demoEmployee": "Demo: Employee login",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "submit": "Sign in",
+    "newHere": "New here?",
+    "createManager": "Create a manager account"
+  },
+  "signup": {
+    "title": "Create your account",
+    "subtitle": "Set up a manager account and start scheduling your team",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "Jane Doe",
+    "emailHint": "You will use this address to sign in.",
+    "passwordPlaceholder": "At least 8 characters",
+    "passwordHint": "Minimum 8 characters, not entirely numeric, and not similar to your name or email.",
+    "confirmPassword": "Confirm password",
+    "confirmPlaceholder": "Repeat your password",
+    "submit": "Create account",
+    "agree": "By creating an account you agree to our {terms} and {privacy}.",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "employeesNote": "Employees do not sign up here — your manager creates your account and gives you your password."
+  },
+  "twoFactorLogin": {
+    "title": "Two-factor authentication",
+    "subtitleApp": "Enter the 6-digit code from your authenticator app",
+    "subtitleRecovery": "Enter one of your recovery codes",
+    "signingInAs": "Signing in as {email}",
+    "recoveryCode": "Recovery code",
+    "recoveryHint": "Each recovery code works only once.",
+    "appCode": "Authentication code",
+    "sixDigits": "The 6 digits your app shows",
+    "verify": "Verify",
+    "useApp": "Use your authenticator app",
+    "useRecovery": "Lost your phone? Use a recovery code"
+  },
+  "legal": {
+    "lastUpdated": "Last updated: {date}"
+  },
+  "privacy": {
+    "title": "Privacy & my data",
+    "subtitle": "What PlanShift holds about your account, and your GDPR rights over it.",
+    "holdTitle": "What we hold about you",
+    "holdManager": "Your name, email, employee ID and role, your profile picture and bio, your friends, when you were last online, the language you use, and the shifts you have created.",
+    "holdEmployee": "Your name, email, employee ID and role, your profile picture and bio, your friends, when you were last online, the language you use, plus your shift assignments and the days you have marked yourself unavailable.",
+    "holdMore": "See the full {policy} for why each piece is collected and who can see it.",
+    "requestTitle": "Request your data",
+    "requestText": "Download everything above as a single JSON file - readable in any text editor or spreadsheet tool that imports JSON. We also email you a confirmation so you know if a copy of your data was ever downloaded without you.",
+    "download": "Download my data",
+    "deleteTitle": "Delete your account",
+    "deleteManager": "Permanently deletes your account. If you've created shifts still on the schedule, reassign or remove them first - the schedule keeps a record of who created a published shift, so it can't be deleted out from under it.",
+    "deleteEmployee": "Permanently deletes your account, your shift assignments and your unavailability records.",
+    "deleteFinal": "This cannot be undone and there is no archive copy. A confirmation email is sent once it's done.",
+    "deleteButton": "Delete my account",
+    "modalConfirm": "Permanently delete my account",
+    "modalText": "This permanently deletes your account, your shift assignments and your unavailability records. There is no undo and no archive copy - see the {policy} (section 4) for exactly what that means.",
+    "typeEmail": "Type your email ({email}) to confirm",
+    "confirmPassword": "Confirm your password"
+  },
+  "employeeShifts": {
+    "calendar": "Month calendar",
+    "markedUnavailable": "Marked unavailable",
+    "markedAvailable": "Marked available",
+    "cannotMark": "Cannot mark unavailable"
+  },
+  "shifts": {
+    "employees": "Employees",
+    "highlightShifts": "Highlight shifts for {name}",
+    "unavailableDays": "Unavailable: {days}",
+    "legend": "Position colours",
+    "monthSchedule": "Month schedule",
+    "weekSchedule": "Week schedule",
+    "editing": "{names} editing",
+    "calendarView": "Calendar view",
+    "week": "Week",
+    "month": "Month",
+    "add": "Add",
+    "publishAll": "Publish all",
+    "deleteTitle": "Delete shift",
+    "deleteMessage": "Delete this shift:",
+    "detailsTitle": "Shift details",
+    "publish": "Publish"
   }
 }
