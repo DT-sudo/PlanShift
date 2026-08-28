@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { onLanguageChange } from '../i18n/index.js';
 import { getBootstrap, getPageData } from './http.js';
 
 const SOCKET_PATH = '/ws/schedule/';

@@ -4,6 +4,7 @@ import { AppShell } from '../../components/AppShell.jsx';
 import { DateRangeFields, ShiftFilterSelects } from '../../components/Field.jsx';
 import { ChevronLeft, ChevronRight } from '../../components/Icons.jsx';
 import { ShiftStatusBadge } from '../../components/ShiftStatusBadge.jsx';
+import { t } from '../../i18n/index.js';
 
 const COLUMNS = [
   { id: 'date', sort: 'date' },

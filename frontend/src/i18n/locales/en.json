@@ -65,5 +65,62 @@
   },
   "dates": {
     "justNow": "just now"
+  },
+  "status": {
+    "draft": "Draft",
+    "published": "Published"
+  },
+  "calendar": {
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "today": "Today"
+  },
+  "filters": {
+    "position": "Position:",
+    "worker": "Worker:",
+    "status": "Status:",
+    "show": "Show:",
+    "understaffed": "Understaffed",
+    "from": "From",
+    "to": "to"
+  },
+  "login": {
+    "title": "Welcome back",
+    "subtitle": "Sign in to your account",
+    "demoAdmin": "Demo: Admin login",
+    "demoManager": "Demo: Manager login",
+    "demoEmployee": "Demo: Employee login",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "submit": "Sign in",
+    "newHere": "New here?",
+    "createManager": "Create a manager account"
+  },
+  "signup": {
+    "title": "Create your account",
+    "subtitle": "Set up a manager account and start scheduling your team",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "Jane Doe",
+    "emailHint": "You will use this address to sign in.",
+    "passwordPlaceholder": "At least 8 characters",
+    "passwordHint": "Minimum 8 characters, not entirely numeric, and not similar to your name or email.",
+    "confirmPassword": "Confirm password",
+    "confirmPlaceholder": "Repeat your password",
+    "submit": "Create account",
+    "agree": "By creating an account you agree to our {terms} and {privacy}.",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "employeesNote": "Employees do not sign up here — your manager creates your account and gives you your password."
+  },
+  "twoFactorLogin": {
+    "title": "Two-factor authentication",
+    "subtitleApp": "Enter the 6-digit code from your authenticator app",
+    "subtitleRecovery": "Enter one of your recovery codes",
+    "signingInAs": "Signing in as {email}",
+    "recoveryCode": "Recovery code"
   }
 }
