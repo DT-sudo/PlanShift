@@ -37,6 +37,7 @@ class Shift(models.Model):
         on_delete=models.PROTECT,
         related_name="created_shifts",
     )
+    version = models.PositiveIntegerField(default=1)
 
     class Meta:
         ordering = ["date", "start_time"]
