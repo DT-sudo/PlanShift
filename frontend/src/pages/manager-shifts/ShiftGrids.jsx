@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { formatDuration, navigateWith, pad2, shiftDurationMinutes, weekDays } from '../../app/dates.js';
-import { groupShiftsByDate, positionPalette } from '../../app/shifts.js';
+import { computeLaneLayout, groupShiftsByDate, positionPalette, timedChipStyle } from '../../app/shifts.js';
 import { MonthCalendar } from '../../components/Calendar.jsx';
 import { useLanguage } from '../../i18n/index.js';
 
