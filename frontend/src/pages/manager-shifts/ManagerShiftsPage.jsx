@@ -7,7 +7,7 @@ import { availabilityFromPayload, positionPalette, withAvailabilityChange } from
 import { AppShell } from '../../components/AppShell.jsx';
 import { ConfirmModal } from '../../components/Modal.jsx';
 import { EmployeeSidebar } from './EmployeeSidebar.jsx';
-import { MonthGrid } from './ShiftGrids.jsx';
+import { MonthGrid, WeekGrid } from './ShiftGrids.jsx';
 import { ShiftDetailsModal } from './ShiftDetailsModal.jsx';
 import { ShiftFormModal } from './ShiftFormModal.jsx';
 import { ShiftsToolbar } from './ShiftsToolbar.jsx';
