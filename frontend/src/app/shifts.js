@@ -1,3 +1,5 @@
+import { minutesOf, shiftDurationMinutes } from './dates.js';
+
 export const statusOptions = () => [
   { id: 'draft', name: "Draft" },
   { id: 'published', name: "Published" },
@@ -46,3 +48,27 @@ export function groupShiftsByDate(shifts) {
   return byDate;
 }
 
+export function computeLaneLayout(shifts) {
+  const laneEnds = [];
+  const laneById = new Map();
+  for (const shift of shifts) {
+    const start = minutesOf(shift.start_time);
+    let lane = laneEnds.findIndex((end) => start >= end);
+    if (lane === -1) lane = laneEnds.length;
+    laneEnds[lane] = minutesOf(shift.end_time);
+    laneById.set(shift.id, lane);
+  }
+  return { laneById, laneCount: Math.max(1, laneEnds.length) };
+}
+
+const LANE_GAP_PX = 4;
+
+export function timedChipStyle(shift, lane, laneCount, hourHeightPx) {
+  const width = 100 / laneCount;
+  return {
+    top: `${(minutesOf(shift.start_time) / 60) * hourHeightPx}px`,
+    height: `${Math.max(18, (shiftDurationMinutes(shift) / 60) * hourHeightPx)}px`,
+    insetInlineStart: `calc(${lane * width}% + ${LANE_GAP_PX}px)`,
+    width: `calc(${width}% - ${LANE_GAP_PX * 2}px)`,
+  };
+}
