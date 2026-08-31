@@ -38,6 +38,40 @@ function useLiveAvailability(initial) {
   return { availability, flashedEmployeeId };
 }
 
+function usePresence(month, editing) {
+  const [others, setOthers] = useState({});
+  const mine = useRef({ month, editing });
+  const announce = (hello = false) => sendLive({ type: 'presence', ...mine.current, hello });
+
+  useEffect(() => {
+    mine.current = { month, editing };
+    announce();
+  }, [month, editing]);
+
+  useLiveEvents(
+    (event) => {
+      if (event.type === 'presence') {
+        setOthers((current) => ({ ...current, [event.id]: event }));
+        if (event.hello) announce();
+      } else if (event.type === 'presence.leave') {
+        setOthers((current) => {
+          const next = { ...current };
+          delete next[event.id];
+          return next;
+        });
+      }
+    },
+    {
+      onOpen: () => {
+        setOthers({});
+        announce(true);
+      },
+    },
+  );
+
+  return Object.values(others);
+}
+
 function PositionLegend({ positions, shifts }) {
   const published = new Set(shifts.filter((shift) => shift.status !== 'draft').map((shift) => shift.position_id));
 
