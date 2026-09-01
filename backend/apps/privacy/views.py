@@ -27,6 +27,7 @@ from apps.scheduling.models import Assignment, EmployeeUnavailability, Shift
 from apps.scheduling.services import shift_fields
 from apps.shell import render_app
 
+from .emails import send_account_deleted_email, send_data_export_email
 
 
 def _collect_user_data(user) -> dict:
@@ -92,6 +93,8 @@ def export_my_data(request: HttpRequest) -> HttpResponse:
     user = request.user
     payload = json.dumps(_collect_user_data(user), indent=2, cls=DjangoJSONEncoder, ensure_ascii=False)
 
+    send_data_export_email(user)
+
     response = HttpResponse(payload, content_type="application/json")
     filename = f"planshift-my-data-{timezone.localdate().isoformat()}.json"
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
@@ -126,5 +129,6 @@ def delete_my_account(request: HttpRequest) -> HttpResponse:
         return redirect("privacy_center")
 
     logout(request)
+    send_account_deleted_email(email, name)
     messages.success(request, "Your account and all associated data have been deleted.")
     return redirect("login")
