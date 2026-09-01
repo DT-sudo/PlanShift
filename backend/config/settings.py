@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "apps.accounts",
     "apps.legal",
+    "apps.privacy",
     "apps.scheduling",
     "apps.realtime",
     "apps.notifications",

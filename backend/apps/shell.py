@@ -112,6 +112,7 @@ def render_app(request: HttpRequest, *, page: str, title: str, data: dict[str, A
             "logout": reverse("logout"),
             "privacy": reverse("privacy_policy"),
             "terms": reverse("terms_of_service"),
+            "privacyCenter": reverse("privacy_center"),
         },
         "messages": [{"level": message.level_tag, "text": message.message} for message in get_messages(request)],
         "data": data or {},
