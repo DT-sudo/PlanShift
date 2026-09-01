@@ -110,6 +110,10 @@ PRIVACY_POLICY = {
         {
             "heading": "6. Your rights",
             "paragraphs": [
+                "Under the GDPR you may ask for a copy of the data we hold about you, ask for it to "
+                "be corrected, ask for it to be deleted, object to its processing, or ask for the "
+                "processing to be restricted. You also have the right to complain to your national "
+                "data-protection authority.",
                 f"Send any of these requests to {CONTACT_EMAIL} or to the manager of your "
                 "organisation, who can update or delete your account directly.",
             ],
