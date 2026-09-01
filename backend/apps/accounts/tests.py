@@ -4,6 +4,7 @@ from datetime import date, time
 from io import StringIO
 
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -231,6 +232,55 @@ class EmployeeFormValidationTests(TestCase):
         self._create(full_name="Other Person")
 
         self.assertEqual(User.objects.filter(email="pat@example.com").count(), 1)
+
+
+class EmployeeDeleteGdprTests(TestCase):
+    """Manager-initiated erasure is the other door to the same GDPR right that
+    apps.privacy's self-service delete exercises, and must close the same way:
+    a confirmation email to the person whose data was erased."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.position = Position.objects.create(name="Barista")
+        cls.manager = User.objects.create_user(
+            username="boss@example.com",
+            email="boss@example.com",
+            password="correct-horse-42",
+            role=UserRole.MANAGER,
+        )
+        cls.employee = User.objects.create_user(
+            username="pat@example.com",
+            email="pat@example.com",
+            first_name="Pat",
+            last_name="Smith",
+            role=UserRole.EMPLOYEE,
+            position=cls.position,
+        )
+
+    def setUp(self) -> None:
+        self.client.force_login(self.manager)
+
+    def test_delete_removes_the_employee(self):
+        self.client.post(reverse("employee_delete", args=[self.employee.id]), follow=True)
+        self.assertFalse(User.objects.filter(email="pat@example.com").exists())
+
+    def test_delete_sends_a_confirmation_email_to_the_employee_not_the_manager(self):
+        self.client.post(reverse("employee_delete", args=[self.employee.id]), follow=True)
+
+        self.assertEqual(len(mail.outbox), 1)
+        sent = mail.outbox[0]
+        self.assertEqual(sent.to, ["pat@example.com"])
+        self.assertIn("deleted", sent.subject.lower())
+        self.assertIn("Pat Smith", sent.body)
+
+    def test_a_flaky_mail_backend_does_not_block_the_deletion(self):
+        with self.settings(EMAIL_BACKEND="django.core.mail.backends.dummy.EmailBackend"):
+            response = self.client.post(
+                reverse("employee_delete", args=[self.employee.id]), follow=True
+            )
+
+        self.assertFalse(User.objects.filter(email="pat@example.com").exists())
+        self.assertEqual(response.status_code, 200)
 
 
 class RolePermissionTests(TestCase):

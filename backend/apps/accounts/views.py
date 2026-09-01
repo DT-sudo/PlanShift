@@ -15,6 +15,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from apps.notifications.services import managers, notify
+from apps.privacy.emails import send_account_deleted_email
 from apps.shell import field_errors, first_form_error, flash_redirect, render_app
 from apps.scheduling.management.commands.seed_demo import DEMO_ACCOUNTS, DEMO_EMPLOYEE_EMAIL
 from apps.scheduling.services import position_options
@@ -251,5 +252,6 @@ def employee_delete(request: HttpRequest, user_id: int) -> HttpResponse:
         account.delete()
     except ProtectedError:
         return _back(request, messages.ERROR, "Cannot delete %(name)s: they still have shifts. Reassign or delete them first." % {"name": label})
+    send_account_deleted_email(email, label)
     notify(managers(), "account.deleted", actor=request.user, level="warning", role=role, name=label)
     return _back(request, messages.SUCCESS, "Deleted %(role)s: %(name)s." % {"role": role_label.lower(), "name": label})

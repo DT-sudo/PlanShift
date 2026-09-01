@@ -11,6 +11,7 @@ import { ManagerAnalyticsPage } from './pages/manager-analytics/ManagerAnalytics
 import { ManagerEmployeesPage } from './pages/manager-employees/ManagerEmployeesPage.jsx';
 import { ManagerShiftSearchPage } from './pages/manager-shift-search/ManagerShiftSearchPage.jsx';
 import { ManagerShiftsPage } from './pages/manager-shifts/ManagerShiftsPage.jsx';
+import { PrivacyCenterPage } from './pages/privacy/PrivacyCenterPage.jsx';
 
 const PAGES = {
   login: LoginPage,
@@ -21,6 +22,7 @@ const PAGES = {
   'manager-analytics': ManagerAnalyticsPage,
   'manager-employees': ManagerEmployeesPage,
   'employee-shifts': EmployeeShiftsPage,
+  'privacy-center': PrivacyCenterPage,
 };
 
 const Page = PAGES[getBootstrap().page];
