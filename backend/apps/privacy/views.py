@@ -11,12 +11,17 @@ employee's account, which already existed before this module).
 from __future__ import annotations
 
 import json
+
+from django.contrib import messages
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import ProtectedError
 from django.http import HttpRequest, HttpResponse
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 from apps.scheduling.models import Assignment, EmployeeUnavailability, Shift
 from apps.scheduling.services import shift_fields
@@ -74,6 +79,7 @@ def privacy_center(request: HttpRequest) -> HttpResponse:
             "isManager": request.user.is_manager,
             "urls": {
                 "exportData": reverse("privacy_export_data"),
+                "deleteAccount": reverse("privacy_delete_account"),
             },
         },
     )
@@ -90,3 +96,35 @@ def export_my_data(request: HttpRequest) -> HttpResponse:
     filename = f"planshift-my-data-{timezone.localdate().isoformat()}.json"
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
+
+
+@login_required
+@require_POST
+def delete_my_account(request: HttpRequest) -> HttpResponse:
+    """Delete the caller's own account. Requires typing the account's email
+    and its password - an in-app confirmation step, distinct from the
+    confirmation *email* sent afterwards once deletion has actually happened.
+    """
+    user = request.user
+    confirm_email = (request.POST.get("confirm_email") or "").strip().lower()
+    confirm_password = request.POST.get("confirm_password") or ""
+
+    if confirm_email != (user.email or "").strip().lower() or not user.check_password(confirm_password):
+        messages.error(request, "Email or password didn't match - account not deleted.")
+        return redirect("privacy_center")
+
+    email, name = user.email, user.display_name
+
+    try:
+        user.delete()
+    except ProtectedError:
+        messages.error(
+            request,
+            ("Your account can't be deleted while you still have shifts on the schedule. "
+                "Reassign or delete them first, then try again."),
+        )
+        return redirect("privacy_center")
+
+    logout(request)
+    messages.success(request, "Your account and all associated data have been deleted.")
+    return redirect("login")

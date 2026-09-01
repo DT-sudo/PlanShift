@@ -4,6 +4,7 @@ import { getBootstrap } from '../../app/http.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Download, ShieldCheck, Trash } from '../../components/Icons.jsx';
 import { t } from '../../i18n/index.js';
+import { DeleteAccountModal } from './DeleteAccountModal.jsx';
 
 export function PrivacyCenterPage() {
   const { urls: globalUrls, data } = getBootstrap();
