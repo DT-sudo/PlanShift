@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "apps.realtime",
     "apps.notifications",
     "apps.profiles",
+    "apps.twofactor",
 ]
 
 MIDDLEWARE = [
