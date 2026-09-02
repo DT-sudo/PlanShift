@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "apps.scheduling",
     "apps.realtime",
     "apps.notifications",
+    "apps.profiles",
 ]
 
 MIDDLEWARE = [
@@ -89,6 +90,8 @@ FRONTEND_DIST_DIR = PROJECT_ROOT / "frontend" / "dist"
 
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [FRONTEND_DIST_DIR]
+
+MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", PROJECT_ROOT / "media"))
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 

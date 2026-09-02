@@ -2,13 +2,21 @@ from __future__ import annotations
 
 import secrets
 import string
+import uuid
+from pathlib import Path
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 def generate_employee_id() -> str:
     return f"EMP-{secrets.randbelow(900000) + 100000}"
+
+def avatar_path(user: User, filename: str) -> str:
+    return f"avatars/{uuid.uuid4().hex}.webp"
 
 class UserRole(models.TextChoices):
     ADMIN = "admin", "Admin"
@@ -28,6 +36,10 @@ class User(AbstractUser):
         blank=True,
         related_name="employees",
     )
+    bio = models.CharField(max_length=300, blank=True)
+    avatar = models.ImageField(upload_to=avatar_path, blank=True)
+    open_sockets = models.PositiveIntegerField(default=0, editable=False)
+    last_seen = models.DateTimeField(null=True, blank=True, editable=False)
     @property
     def display_name(self) -> str:
         return self.get_full_name() or self.username
@@ -35,6 +47,11 @@ class User(AbstractUser):
     def role_label(self) -> str:
         """The line under a name: an employee's position, otherwise the role."""
         return self.position.name if self.is_employee and self.position else str(self.get_role_display())
+    @property
+    def avatar_url(self) -> str | None:
+        if not self.avatar:
+            return None
+        return f"{reverse('avatar', args=[self.pk])}?v={Path(self.avatar.name).stem}"
     @property
     def is_admin(self) -> bool:
         return self.role == UserRole.ADMIN
@@ -61,3 +78,10 @@ class User(AbstractUser):
     def generate_password(length: int = 14) -> str:
         alphabet = string.ascii_letters + string.digits
         return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+@receiver(post_delete, sender=User)
+def _delete_avatar_file(sender, instance: User, **kwargs) -> None:
+    """Erasing an account erases its picture too, whichever view deleted it."""
+    if instance.avatar:
+        instance.avatar.delete(save=False)
