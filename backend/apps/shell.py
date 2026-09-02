@@ -22,6 +22,7 @@ from django.templatetags.static import static
 from django.urls import reverse
 
 from apps.notifications.services import recent_notifications
+from apps.profiles.services import card
 
 VITE_ENTRY = "src/main.jsx"
 
@@ -71,16 +72,12 @@ def _nav_links(user, active: str) -> list[dict[str, Any]]:
         ]
     else:
         items = [("employee_shifts", "myShifts")]
+    items.append(("friends", "friends"))
     return [{"href": reverse(name), "id": label_id, "active": name == active} for name, label_id in items]
 
 
 def _user_context(user) -> dict[str, Any] | None:
-    if not user.is_authenticated:
-        return None
-    return {
-        "displayName": user.display_name,
-        "role": "Manager" if user.is_manager else (user.position.name if user.position else "Employee"),
-    }
+    return card(user) if user.is_authenticated else None
 
 
 def _notifications(user) -> dict[str, Any] | None:

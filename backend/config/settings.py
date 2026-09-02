@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "apps.scheduling",
     "apps.realtime",
     "apps.notifications",
+    "apps.profiles",
 ]
 
 MIDDLEWARE = [
