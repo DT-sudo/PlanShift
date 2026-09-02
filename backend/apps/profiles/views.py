@@ -1,15 +1,20 @@
 """Profiles, account settings, profile pictures and friends (the "Major: Standard user management" module)."""
 
 from __future__ import annotations
+
+from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_http_methods
 
 from apps.accounts.models import User
-from apps.shell import render_app
+from apps.shell import field_errors, flash_redirect, render_app
 
 from . import services
+from .forms import AvatarForm, ProfileForm
 
 
 def _visible_person_or_404(request: HttpRequest, user_id: int) -> User:
@@ -43,6 +48,53 @@ def profile(request: HttpRequest, user_id: int) -> HttpResponse:
             "relation": relation,
             "friends": [services.card(friend) for friend in friends] if close else None,
             "urls": services.friend_urls(),
+        },
+    )
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def account_settings(request: HttpRequest) -> HttpResponse:
+    """Your own profile, picture, password and 2FA. Each card posts its `section`; errors re-render in place."""
+    user = request.user
+    section = request.POST.get("section") if request.method == "POST" else None
+
+    profile_form = ProfileForm(request.POST if section == "profile" else None, instance=user)
+    password_form = PasswordChangeForm(user, request.POST if section == "password" else None)
+    avatar_form = AvatarForm(request.POST if section == "avatar" else None, request.FILES if section == "avatar" else None)
+
+    if section == "profile" and profile_form.is_valid():
+        profile_form.save()
+        return flash_redirect(request, messages.SUCCESS, "Profile updated.", "account_settings")
+    if section == "password" and password_form.is_valid():
+        password_form.save()
+        update_session_auth_hash(request, password_form.user)
+        return flash_redirect(request, messages.SUCCESS, "Password changed.", "account_settings")
+    if section == "avatar" and avatar_form.is_valid():
+        avatars.replace_avatar(user, avatars.to_webp(avatar_form.cleaned_data["avatar"]))
+        return flash_redirect(request, messages.SUCCESS, "Profile picture updated.", "account_settings")
+    if section == "remove_avatar":
+        avatars.replace_avatar(user, None)
+        return flash_redirect(request, messages.SUCCESS, "Profile picture removed.", "account_settings")
+
+    posted_profile = section == "profile"
+    return render_app(
+        request,
+        page="account-settings",
+        title="Account settings",
+        data={
+            "values": {
+                "fullName": request.POST.get("full_name", "") if posted_profile else user.get_full_name(),
+                "email": request.POST.get("email", "") if posted_profile else user.email,
+                "bio": request.POST.get("bio", "") if posted_profile else user.bio,
+            },
+            "errors": {
+                "profile": field_errors(profile_form) if posted_profile else {},
+                "password": field_errors(password_form) if section == "password" else {},
+                "avatar": field_errors(avatar_form).get("avatar", "") if section == "avatar" else "",
+            },
+            "person": services.card(user),
+            "avatar": {"maxBytes": avatars.MAX_BYTES, "accept": ",".join(avatars.FORMATS.values())},
         },
     )
 
