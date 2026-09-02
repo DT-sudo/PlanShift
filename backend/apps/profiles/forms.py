@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from apps.accounts.forms import AccountForm, clean_full_name
 from apps.accounts.models import User
 
+from . import avatars
 
 
 class ProfileForm(AccountForm):

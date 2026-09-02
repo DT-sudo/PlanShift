@@ -6,14 +6,14 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from django.http import Http404, HttpRequest, HttpResponse
+from django.http import FileResponse, Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_GET, require_http_methods
 
 from apps.accounts.models import User
 from apps.shell import field_errors, flash_redirect, render_app
 
-from . import services
+from . import avatars, services
 from .forms import AvatarForm, ProfileForm
 
 
@@ -50,6 +50,18 @@ def profile(request: HttpRequest, user_id: int) -> HttpResponse:
             "urls": services.friend_urls(),
         },
     )
+
+
+@login_required
+@require_GET
+def avatar(request: HttpRequest, user_id: int) -> FileResponse:
+    """A profile picture, for those who may see the profile. Its URL changes with each upload, hence the long cache."""
+    person = _visible_person_or_404(request, user_id)
+    if not person.avatar:
+        raise Http404
+    response = FileResponse(person.avatar.open("rb"), content_type="image/webp")
+    response["Cache-Control"] = "private, max-age=31536000, immutable"
+    return response
 
 
 @login_required
