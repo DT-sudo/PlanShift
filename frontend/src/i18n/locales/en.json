@@ -174,6 +174,61 @@
     "deleteTitle": "Delete shift",
     "deleteMessage": "Delete this shift:",
     "detailsTitle": "Shift details",
-    "publish": "Publish"
+    "publish": "Publish",
+    "date": "Date",
+    "time": "Time",
+    "position": "Position",
+    "staffed": "Staffed",
+    "noneAssigned": "None assigned",
+    "editingNow": "Editing now",
+    "editTitle": "Edit shift",
+    "createTitle": "Create shift",
+    "create": "Create shift",
+    "stale": "Someone else just changed or deleted this shift, so saving will be refused. Close and reopen it to see the latest version.",
+    "alsoEditing": {
+      "one": "{names} is also editing this shift.",
+      "other": "{names} are also editing this shift."
+    },
+    "capacity": "Capacity",
+    "startTime": "Start time",
+    "endTime": "End time",
+    "timeFormat": "24-hour time, e.g. 09:30",
+    "selectPosition": "Select position...",
+    "assignEmployees": "Assign employees",
+    "noStaff": "No employees for this position.",
+    "selectPositionFirst": "Select a position first.",
+    "unavailable": "Unavailable"
+  },
+  "search": {
+    "placeholder": "Search by position or worker…",
+    "label": "Search shifts",
+    "date": "Date",
+    "time": "Time",
+    "position": "Position",
+    "workers": "Workers",
+    "status": "Status",
+    "staffed": "Staffed",
+    "results": {
+      "one": "{count} result",
+      "other": "{count} results"
+    },
+    "page": "Page {page} of {total}",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "noResults": "No shifts match these filters.",
+    "openInCalendar": "Open in calendar",
+    "unassigned": "Unassigned"
+  },
+  "analytics": {
+    "shifts": "Shifts",
+    "workers": "Workers",
+    "hours": "Hours",
+    "openShifts": "Open shifts",
+    "export": "Export",
+    "csv": "CSV (raw data)",
+    "pdf": "PDF (report)",
+    "reportTitle": "Workforce Analytics Report",
+    "reportFilters": "{from} – {to} · Position: {position} · Worker: {worker} · Status: {status}",
+    "generated": "Generated {time}"
   }
 }

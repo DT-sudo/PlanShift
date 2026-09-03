@@ -1,5 +1,6 @@
 import { positionPalette, unavailableDaysBetween } from '../../app/shifts.js';
 import { Avatar } from '../../components/Avatar.jsx';
+import { t } from '../../i18n/index.js';
 
 const MAX_LISTED_DAYS = 3;
 
@@ -11,8 +12,8 @@ function formatDayList(days) {
 
 export function EmployeeSidebar({ employees, availability, periodStart, periodEnd, flashedEmployeeId, highlightedEmployeeId, onToggleEmployee }) {
   return (
-    <aside className="card calendar-fill mt-3" aria-label="Employees">
-      <h3 className="card-title border-b border-border px-4 py-2.5">Employees</h3>
+    <aside className="card calendar-fill mt-3" aria-label={t('shifts.employees')}>
+      <h3 className="card-title border-b border-border px-4 py-2.5">{t('shifts.employees')}</h3>
 
       <ul className="flex flex-auto flex-col gap-2 overflow-auto p-3">
         {employees.map((employee) => {
@@ -24,7 +25,7 @@ export function EmployeeSidebar({ employees, availability, periodStart, periodEn
               <button
                 type="button"
                 aria-pressed={active}
-                title={`Highlight shifts for ${employee.name}`}
+                title={t('shifts.highlightShifts', { name: employee.name })}
                 className={`employee-sidebar-item ${active ? 'employee-sidebar-item-active' : ''} ${flashed ? 'employee-sidebar-item-updated' : ''}`}
                 onClick={() => onToggleEmployee(employee.id)}
               >
@@ -37,7 +38,7 @@ export function EmployeeSidebar({ employees, availability, periodStart, periodEn
                     </span>
                   ) : null}
                   {days.length ? (
-                    <div className="employee-sidebar-unavailable truncate">{`Unavailable: ${formatDayList(days)}`}</div>
+                    <div className="employee-sidebar-unavailable truncate">{t('shifts.unavailableDays', { days: formatDayList(days) })}</div>
                   ) : null}
                 </div>
               </button>

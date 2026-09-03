@@ -20,7 +20,10 @@ from django.middleware.csrf import get_token
 from django.shortcuts import redirect, render
 from django.templatetags.static import static
 from django.urls import reverse
+from django.utils.translation import get_language
 
+from apps.i18n.languages import direction
+from apps.i18n.languages import options as language_options
 from apps.notifications.services import recent_notifications
 from apps.profiles.services import card
 
@@ -102,6 +105,8 @@ def render_app(request: HttpRequest, *, page: str, title: str, data: dict[str, A
     bootstrap = {
         "page": page,
         "csrfToken": get_token(request),
+        "locale": {"language": get_language(), "dir": direction()},
+        "languages": language_options(),
         "user": _user_context(request.user),
         "notifications": _notifications(request.user),
         "nav": _nav_links(request.user, nav_active),
@@ -111,6 +116,7 @@ def render_app(request: HttpRequest, *, page: str, title: str, data: dict[str, A
             "terms": reverse("terms_of_service"),
             "privacyCenter": reverse("privacy_center"),
             "settings": reverse("account_settings"),
+            "language": reverse("set_language"),
         },
         "messages": [{"level": message.level_tag, "text": message.message} for message in get_messages(request)],
         "data": data or {},

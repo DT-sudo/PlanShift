@@ -248,12 +248,12 @@ def employee_delete(request: HttpRequest, user_id: int) -> HttpResponse:
     to the employee (not the manager) once the data is actually gone.
     """
     account = _managed_user_or_404(request, user_id)
-    label, email, role = account.display_name, account.email, account.role
+    label, email, role, language = account.display_name, account.email, account.role, account.language
     role_label = str(account.get_role_display())
     try:
         account.delete()
     except ProtectedError:
         return _back(request, messages.ERROR, "Cannot delete %(name)s: they still have shifts. Reassign or delete them first." % {"name": label})
-    send_account_deleted_email(email, label)
+    send_account_deleted_email(email, label, language)
     notify(managers(), "account.deleted", actor=request.user, level="warning", role=role, name=label)
     return _back(request, messages.SUCCESS, "Deleted %(role)s: %(name)s." % {"role": role_label.lower(), "name": label})

@@ -6,6 +6,7 @@ import { sendLive, useLiveEvents, useLivePageData } from '../../app/live.js';
 import { availabilityFromPayload, positionPalette, withAvailabilityChange } from '../../app/shifts.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { ConfirmModal } from '../../components/Modal.jsx';
+import { t } from '../../i18n/index.js';
 import { EmployeeSidebar } from './EmployeeSidebar.jsx';
 import { MonthGrid, WeekGrid } from './ShiftGrids.jsx';
 import { ShiftDetailsModal } from './ShiftDetailsModal.jsx';
@@ -76,11 +77,11 @@ function PositionLegend({ positions, shifts }) {
   const published = new Set(shifts.filter((shift) => shift.status !== 'draft').map((shift) => shift.position_id));
 
   return (
-    <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs" aria-label="Position colours">
+    <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs" aria-label={t('shifts.legend')}>
       {shifts.some((shift) => shift.status === 'draft') ? (
         <li className="inline-flex items-center gap-1.5">
           <span className="position-swatch position-swatch-draft" aria-hidden="true" />
-          Draft
+          {t('status.draft')}
         </li>
       ) : null}
       {positions
@@ -220,10 +221,10 @@ function ManagerShiftsContent({ data }) {
 
       {pendingDelete ? (
         <ConfirmModal
-          title="Delete shift"
-          message="Delete this shift:"
+          title={t('shifts.deleteTitle')}
+          message={t('shifts.deleteMessage')}
           detail={pendingDelete.label}
-          confirmText="Yes, delete"
+          confirmText={t('common.yesDelete')}
           destructive
           onCancel={() => setPendingDelete(null)}
           onConfirm={() => submitPost(urlFromTemplate(urls.delete, pendingDelete.id))}

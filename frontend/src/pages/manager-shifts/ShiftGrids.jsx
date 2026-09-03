@@ -3,7 +3,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { formatDuration, navigateWith, pad2, shiftDurationMinutes, weekDays } from '../../app/dates.js';
 import { computeLaneLayout, groupShiftsByDate, positionPalette, timedChipStyle } from '../../app/shifts.js';
 import { MonthCalendar } from '../../components/Calendar.jsx';
-import { useLanguage } from '../../i18n/index.js';
+import { t, useLanguage } from '../../i18n/index.js';
 
 function ChipButton({ shift, editors, highlighted, variant, style, onSelect, children }) {
   const isDraft = shift.status === 'draft';
@@ -24,7 +24,7 @@ function ChipButton({ shift, editors, highlighted, variant, style, onSelect, chi
         event.stopPropagation();
         onSelect(shift.id);
       }}
-      title={`${shift.position} ${shift.start_time}-${shift.end_time}${editors ? ` (${`${editors.join(', ')} editing`})` : ''}`}
+      title={`${shift.position} ${shift.start_time}-${shift.end_time}${editors ? ` (${t('shifts.editing', { names: editors.join(', ') })})` : ''}`}
     >
       {children}
     </button>
@@ -33,7 +33,7 @@ function ChipButton({ shift, editors, highlighted, variant, style, onSelect, chi
 
 const Staffing = ({ shift, editors, className }) => (
   <span className={className}>
-    {editors ? <span aria-label={`${editors.join(', ')} editing`}>✎ </span> : null}
+    {editors ? <span aria-label={t('shifts.editing', { names: editors.join(', ') })}>✎ </span> : null}
     {shift.assigned_employee_ids.length}/{shift.capacity}
   </span>
 );
@@ -79,7 +79,7 @@ export function MonthGrid({ anchorISO, todayISO, shifts, editors, highlightedShi
     <MonthCalendar
       anchorISO={anchorISO}
       todayISO={todayISO}
-      ariaLabel="Month schedule"
+      ariaLabel={t('shifts.monthSchedule')}
       onDayClick={(day) => (day.inMonth ? onCreateSlot(day.iso) : navigateWith({ date: day.iso }))}
       renderDay={(day) => {
         const dayShifts = byDate.get(day.iso);
@@ -132,7 +132,7 @@ export function WeekGrid({ startISO, todayISO, shifts, editors, highlightedShift
   }, [gridTemplateColumns]);
 
   return (
-    <div ref={gridRef} className="calendar-grid calendar-grid-week" style={{ gridTemplateColumns }} aria-label="Week schedule">
+    <div ref={gridRef} className="calendar-grid calendar-grid-week" style={{ gridTemplateColumns }} aria-label={t('shifts.weekSchedule')}>
       <div className="calendar-header-cell week-corner" style={{ gridColumn: 1, gridRow: 1 }} />
 
       {days.map((day, index) => (

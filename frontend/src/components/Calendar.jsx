@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { addDays, addMonths, monthMatrix, navigateWith, weekdayLabels } from '../app/dates.js';
+import { t } from '../i18n/index.js';
 import { ChevronLeft, ChevronRight } from './Icons.jsx';
 
 export function CalendarNav({ anchorISO, todayISO, view = 'month' }) {
@@ -14,18 +15,18 @@ export function CalendarNav({ anchorISO, todayISO, view = 'month' }) {
         className="btn btn-outline btn-icon"
         type="button"
         onClick={() => step(-1)}
-        aria-label={view === 'week' ? "Previous week" : "Previous month"}
+        aria-label={view === 'week' ? t('calendar.previousWeek') : t('calendar.previousMonth')}
       >
         <ChevronLeft className="rtl:-scale-x-100" />
       </button>
       <button className="btn btn-outline btn-sm" type="button" onClick={() => navigateWith({ date: todayISO })}>
-        Today
+        {t('calendar.today')}
       </button>
       <button
         className="btn btn-outline btn-icon"
         type="button"
         onClick={() => step(1)}
-        aria-label={view === 'week' ? "Next week" : "Next month"}
+        aria-label={view === 'week' ? t('calendar.nextWeek') : t('calendar.nextMonth')}
       >
         <ChevronRight className="rtl:-scale-x-100" />
       </button>

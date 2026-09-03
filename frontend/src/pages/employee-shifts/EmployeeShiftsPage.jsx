@@ -7,6 +7,7 @@ import { groupShiftsByDate } from '../../app/shifts.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { CalendarNav, MonthCalendar } from '../../components/Calendar.jsx';
 import { useToast } from '../../components/Notifications.jsx';
+import { t } from '../../i18n/index.js';
 
 export function EmployeeShiftsPage() {
   return (
@@ -31,9 +32,9 @@ function EmployeeShiftsContent() {
         else next.delete(iso);
         return next;
       });
-      showToast('success', payload.unavailable ? "Marked unavailable" : "Marked available", formatDate(iso));
+      showToast('success', payload.unavailable ? t('employeeShifts.markedUnavailable') : t('employeeShifts.markedAvailable'), formatDate(iso));
     } catch (error) {
-      showToast('error', "Cannot mark unavailable", error.message || "Something went wrong. Please try again.");
+      showToast('error', t('employeeShifts.cannotMark'), error.message || t('common.requestFailed'));
     }
   };
 
@@ -55,7 +56,7 @@ function EmployeeShiftsContent() {
         <MonthCalendar
           anchorISO={data.anchor}
           todayISO={data.today}
-          ariaLabel="Month calendar"
+          ariaLabel={t('employeeShifts.calendar')}
           dayClassName={(day) => (!shiftsByDate.has(day.iso) && unavailable.has(day.iso) ? 'calendar-cell-unavailable' : '')}
           onDayClick={(day) => {
             if (!day.inMonth) navigateWith({ date: day.iso });
