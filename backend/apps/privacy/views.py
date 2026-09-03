@@ -116,7 +116,7 @@ def delete_my_account(request: HttpRequest) -> HttpResponse:
         messages.error(request, "Email or password didn't match - account not deleted.")
         return redirect("privacy_center")
 
-    email, name = user.email, user.display_name
+    email, name, language = user.email, user.display_name, user.language
 
     try:
         user.delete()
@@ -129,6 +129,6 @@ def delete_my_account(request: HttpRequest) -> HttpResponse:
         return redirect("privacy_center")
 
     logout(request)
-    send_account_deleted_email(email, name)
+    send_account_deleted_email(email, name, language)
     messages.success(request, "Your account and all associated data have been deleted.")
     return redirect("login")

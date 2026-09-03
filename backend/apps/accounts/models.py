@@ -40,6 +40,7 @@ class User(AbstractUser):
     avatar = models.ImageField(upload_to=avatar_path, blank=True)
     open_sockets = models.PositiveIntegerField(default=0, editable=False)
     last_seen = models.DateTimeField(null=True, blank=True, editable=False)
+    language = models.CharField(max_length=8, blank=True)
     @property
     def display_name(self) -> str:
         return self.get_full_name() or self.username
