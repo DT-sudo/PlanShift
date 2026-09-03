@@ -138,3 +138,18 @@ def _availability_changed(p):
     if p["unavailable"]:
         return "Availability updated", "%(name)s is unavailable on %(day)s." % values
     return "Availability updated", "%(name)s is available again on %(day)s." % values
+
+
+@_renders("friend.requested")
+def _friend_requested(p):
+    return "New friend request", "%(name)s wants to add you as a friend." % p
+
+
+@_renders("friend.accepted")
+def _friend_accepted(p):
+    return "Friend request accepted", "%(name)s accepted your friend request." % p
+
+
+@_renders("friend.removed")
+def _friend_removed(p):
+    return "Friend removed", "%(name)s removed you from their friends." % p

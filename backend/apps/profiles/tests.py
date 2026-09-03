@@ -12,6 +12,7 @@ from PIL import Image
 
 from apps.accounts.models import User, UserRole
 from apps.scheduling.models import Position
+from .models import Friendship, FriendshipStatus
 
 PASSWORD = "pw-for-tests-42"
 
