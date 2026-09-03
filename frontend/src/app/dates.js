@@ -1,3 +1,4 @@
+import { intlLocale, t } from '../i18n/index.js';
 
 const FIRST_DAY_OF_WEEK = 1;
 
@@ -23,7 +24,7 @@ export function weekDays(startISO) {
   return Array.from({ length: 7 }, (_, index) => {
     const iso = addDays(startISO, index);
     const date = dateFromISO(iso);
-    return { iso, label: date.toLocaleDateString('en', { weekday: 'short' }), dayNumber: date.getDate() };
+    return { iso, label: date.toLocaleDateString(intlLocale(), { weekday: 'short' }), dayNumber: date.getDate() };
   });
 }
 
@@ -42,7 +43,7 @@ export function monthMatrix(anchorISO, todayISO) {
 
 export function weekdayLabels() {
   return Array.from({ length: 7 }, (_, index) =>
-    new Date(2023, 0, 1 + ((FIRST_DAY_OF_WEEK + index) % 7)).toLocaleDateString('en', { weekday: 'short' }),
+    new Date(2023, 0, 1 + ((FIRST_DAY_OF_WEEK + index) % 7)).toLocaleDateString(intlLocale(), { weekday: 'short' }),
   );
 }
 
@@ -53,7 +54,7 @@ export const minutesOf = (time) => {
 
 export const shiftDurationMinutes = (shift) => minutesOf(shift.end_time) - minutesOf(shift.start_time);
 
-const inUnit = (value, unit) => new Intl.NumberFormat('en', { style: 'unit', unit, unitDisplay: 'narrow' }).format(value);
+const inUnit = (value, unit) => new Intl.NumberFormat(intlLocale(), { style: 'unit', unit, unitDisplay: 'narrow' }).format(value);
 
 export function formatDuration(minutes) {
   const hours = Math.floor(minutes / 60);

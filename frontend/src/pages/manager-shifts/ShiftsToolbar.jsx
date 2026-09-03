@@ -3,26 +3,27 @@ import { statusOptions } from '../../app/shifts.js';
 import { CalendarNav } from '../../components/Calendar.jsx';
 import { CsrfInput, FilterSelect } from '../../components/Field.jsx';
 import { Plus } from '../../components/Icons.jsx';
+import { t } from '../../i18n/index.js';
 
 const filterBy = (param) => (event) => navigateWith({ [param]: event.target.value });
 
 export function ShiftsToolbar({ data, onCreateShift }) {
   const { view, anchor, start, end, today, positions, filters, urls } = data;
   const views = [
-    { id: 'week', name: "Week" },
-    { id: 'month', name: "Month" },
+    { id: 'week', name: t('shifts.week') },
+    { id: 'month', name: t('shifts.month') },
   ];
 
   return (
     <div className="card page-toolbar-card">
       <div className="shifts-toolbar">
         <div className="shifts-toolbar-left flex min-w-0 flex-wrap items-center gap-3 justify-self-start">
-          <FilterSelect id="positionFilter" label="Position:" options={positions} value={filters.position} onChange={filterBy('position')} />
-          <FilterSelect id="statusFilter" label="Status:" options={statusOptions()} value={filters.status} onChange={filterBy('status')} />
+          <FilterSelect id="positionFilter" label={t('filters.position')} options={positions} value={filters.position} onChange={filterBy('position')} />
+          <FilterSelect id="statusFilter" label={t('filters.status')} options={statusOptions()} value={filters.status} onChange={filterBy('status')} />
           <FilterSelect
             id="showFilter"
-            label="Show:"
-            options={[{ id: 'understaffed', name: "Understaffed" }]}
+            label={t('filters.show')}
+            options={[{ id: 'understaffed', name: t('filters.understaffed') }]}
             value={filters.understaffed ? 'understaffed' : ''}
             onChange={filterBy('show')}
           />
@@ -35,7 +36,7 @@ export function ShiftsToolbar({ data, onCreateShift }) {
         </div>
 
         <div className="shifts-toolbar-right flex min-w-0 flex-wrap items-center justify-end gap-3 justify-self-end">
-          <div className="flex gap-1" role="group" aria-label="Calendar view">
+          <div className="flex gap-1" role="group" aria-label={t('shifts.calendarView')}>
             {views.map((option) => (
               <button
                 key={option.id}
@@ -53,7 +54,7 @@ export function ShiftsToolbar({ data, onCreateShift }) {
 
           <button className="btn btn-primary" type="button" onClick={onCreateShift}>
             <Plus size={16} />
-            Add
+            {t('shifts.add')}
           </button>
 
           <form method="post" action={urls.publishAll} className="flex">
@@ -61,7 +62,7 @@ export function ShiftsToolbar({ data, onCreateShift }) {
             <input type="hidden" name="view" value={view} readOnly />
             <input type="hidden" name="date" value={anchor} readOnly />
             <button className="btn btn-outline" type="submit">
-              Publish all
+              {t('shifts.publishAll')}
             </button>
           </form>
         </div>
