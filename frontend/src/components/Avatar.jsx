@@ -1,3 +1,4 @@
+import { timeAgo } from '../app/dates.js';
 
 const SIZES = { sm: 'size-8', header: 'size-8.5', md: 'size-10', lg: 'size-24 text-2xl' };
 
@@ -19,3 +20,7 @@ export function Avatar({ name, src, size = 'sm', online, primary = false }) {
   );
 }
 
+export function presenceLabel(status) {
+  if (status.online) return "Online";
+  return status.lastSeen ? `Last seen ${timeAgo(status.lastSeen)}` : "Offline";
+}

@@ -64,6 +64,37 @@ export function formatDuration(minutes) {
 
 export const formatHours = (hours) => inUnit(hours, 'hour');
 
+export const formatMonth = (iso) => dateFromISO(iso).toLocaleDateString(intlLocale(), { month: 'long', year: 'numeric' });
+
+export function formatDate(iso, { year = true } = {}) {
+  return dateFromISO(iso).toLocaleDateString(intlLocale(), {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: year ? 'numeric' : undefined,
+  });
+}
+
+export const formatNow = () => new Date().toLocaleString(intlLocale());
+
+const RELATIVE_UNITS = [
+  ['year', 365 * 86400],
+  ['month', 30 * 86400],
+  ['week', 7 * 86400],
+  ['day', 86400],
+  ['hour', 3600],
+  ['minute', 60],
+];
+
+export function timeAgo(isoDateTime) {
+  const seconds = (Date.parse(isoDateTime) - Date.now()) / 1000;
+  const format = new Intl.RelativeTimeFormat(intlLocale(), { numeric: 'auto' });
+  for (const [unit, length] of RELATIVE_UNITS) {
+    if (Math.abs(seconds) >= length) return format.format(Math.round(seconds / length), unit);
+  }
+  return t('dates.justNow');
+}
+
 export function navigateWith(params) {
   const url = new URL(window.location.href);
   for (const [key, value] of Object.entries(params)) {

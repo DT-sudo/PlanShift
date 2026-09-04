@@ -14,7 +14,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 from apps.accounts.models import User
 from apps.shell import field_errors, flash_redirect, render_app
 
-from . import avatars, services
+from . import avatars, presence, services
 from .forms import AvatarForm, ProfileForm
 from .models import Friendship, FriendshipStatus
 

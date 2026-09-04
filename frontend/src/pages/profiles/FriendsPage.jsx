@@ -1,6 +1,8 @@
 import { getBootstrap } from '../../app/http.js';
+import { timeAgo } from '../../app/dates.js';
 import { useLivePageData } from '../../app/live.js';
 import { AppShell } from '../../components/AppShell.jsx';
+import { presenceLabel } from '../../components/Avatar.jsx';
 import { CsrfInput } from '../../components/Field.jsx';
 import { UserPlus } from '../../components/Icons.jsx';
 import { FRIEND_EVENTS, FriendActions, PeopleCard, PersonRow } from './People.jsx';

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { formatDate } from '../../app/dates.js';
 import { getBootstrap, submitPost } from '../../app/http.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Avatar } from '../../components/Avatar.jsx';

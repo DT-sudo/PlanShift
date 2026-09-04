@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { pad2 } from '../../app/dates.js';
+import { formatDate, pad2 } from '../../app/dates.js';
 import { getBootstrap, submitPost, urlFromTemplate } from '../../app/http.js';
 import { sendLive, useLiveEvents, useLivePageData } from '../../app/live.js';
 import { availabilityFromPayload, positionPalette, withAvailabilityChange } from '../../app/shifts.js';
