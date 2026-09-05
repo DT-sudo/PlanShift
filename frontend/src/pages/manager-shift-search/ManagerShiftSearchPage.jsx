@@ -1,4 +1,4 @@
-import { navigateWith } from '../../app/dates.js';
+import { formatDate, navigateWith } from '../../app/dates.js';
 import { getBootstrap } from '../../app/http.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { DateRangeFields, ShiftFilterSelects } from '../../components/Field.jsx';

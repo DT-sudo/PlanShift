@@ -1,3 +1,4 @@
+import { formatDate } from '../../app/dates.js';
 import { positionPalette, unavailableDaysBetween } from '../../app/shifts.js';
 import { Avatar } from '../../components/Avatar.jsx';
 import { t } from '../../i18n/index.js';

@@ -1,4 +1,4 @@
-import { formatHours } from '../../app/dates.js';
+import { formatDate, formatHours, formatNow } from '../../app/dates.js';
 import { getBootstrap } from '../../app/http.js';
 import { useLivePageData } from '../../app/live.js';
 import { statusOptions } from '../../app/shifts.js';

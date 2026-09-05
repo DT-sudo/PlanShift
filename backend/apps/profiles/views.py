@@ -8,13 +8,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.http import FileResponse, Http404, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
-from django.views.decorators.http import require_GET, require_http_methods
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from apps.accounts.models import User
 from apps.shell import field_errors, flash_redirect, render_app
 
-from . import avatars, services
+from . import avatars, presence, services
 from .forms import AvatarForm, ProfileForm
+from .models import Friendship, FriendshipStatus
 
 
 def _visible_person_or_404(request: HttpRequest, user_id: int) -> User:
@@ -134,3 +136,56 @@ def friends(request: HttpRequest) -> HttpResponse:
         nav_active="friends",
         data={**lists, "urls": services.friend_urls()},
     )
+
+
+def _back(request: HttpRequest, level: int, text: str) -> HttpResponse:
+    """Back to the page the action came from (a profile or the Friends page)."""
+    target = request.POST.get("next", "")
+    if not url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        target = "friends"
+    return flash_redirect(request, level, text, target)
+
+
+@login_required
+@require_POST
+def friend_request(request: HttpRequest) -> HttpResponse:
+    """Ask by email (the Friends page) or by id (the button on a profile you can already see)."""
+    user_id = request.POST.get("user_id", "")
+    if user_id:
+        receiver = User.objects.filter(pk=user_id, is_active=True).first() if user_id.isdigit() else None
+        if receiver is None or not services.can_view(request.user, receiver):
+            return _back(request, messages.ERROR, "That person was not found.")
+    else:
+        email = (request.POST.get("email") or "").strip().lower()
+        receiver = User.objects.filter(username=email, is_active=True).first() if email else None
+        if receiver is None:
+            return _back(request, messages.ERROR, "No account uses that email address.")
+
+    try:
+        friendship = services.send_request(request.user, receiver)
+    except services.FriendshipError as error:
+        return _back(request, messages.ERROR, str(error))
+    if friendship.accepted:
+        return _back(request, messages.SUCCESS, "You and %(name)s are now friends." % {"name": receiver.display_name})
+    return _back(request, messages.SUCCESS, "Friend request sent to %(name)s." % {"name": receiver.display_name})
+
+
+@login_required
+@require_POST
+def friend_accept(request: HttpRequest, friendship_id: int) -> HttpResponse:
+    friendship = get_object_or_404(
+        Friendship.objects.select_related("from_user", "to_user"),
+        pk=friendship_id,
+        to_user=request.user,
+        status=FriendshipStatus.PENDING,
+    )
+    services.accept(friendship)
+    return _back(request, messages.SUCCESS, "You and %(name)s are now friends." % {"name": friendship.from_user.display_name})
+
+
+@login_required
+@require_POST
+def friend_end(request: HttpRequest, friendship_id: int) -> HttpResponse:
+    """Decline an incoming request, cancel your own, or unfriend."""
+    friendship = get_object_or_404(services.involving(request.user).select_related("from_user", "to_user"), pk=friendship_id)
+    return _back(request, messages.SUCCESS, services.end(friendship, request.user))

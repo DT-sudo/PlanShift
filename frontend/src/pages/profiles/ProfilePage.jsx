@@ -1,7 +1,8 @@
+import { formatMonth } from '../../app/dates.js';
 import { getBootstrap } from '../../app/http.js';
 import { useLivePageData } from '../../app/live.js';
 import { AppShell } from '../../components/AppShell.jsx';
-import { Avatar } from '../../components/Avatar.jsx';
+import { Avatar, presenceLabel } from '../../components/Avatar.jsx';
 import { Settings } from '../../components/Icons.jsx';
 import { FRIEND_EVENTS, FriendActions, PeopleCard, PersonRow } from './People.jsx';
 
