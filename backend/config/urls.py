@@ -7,5 +7,6 @@ urlpatterns = [
     path("", include("apps.privacy.urls")),
     path("", include("apps.profiles.urls")),
     path("", include("apps.scheduling.urls")),
+    path("", include("apps.twofactor.urls")),
     path("", include("apps.i18n.urls")),
 ]

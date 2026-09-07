@@ -1,18 +1,97 @@
 """The sign-in code step, and the Security card of Account settings (the "Minor: 2FA" module)."""
 
 from __future__ import annotations
+
+import time
 from typing import Any
 
 from django.contrib import messages
+from django.contrib.auth import login
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
-from apps.shell import field_errors, flash_redirect
+from django.views.decorators.http import require_http_methods, require_POST
+
+from apps.accounts.models import User
+from apps.shell import field_errors, flash_redirect, render_app
 
 from . import services, totp
-from .forms import ConfirmSetupForm, ReauthenticateForm
+from .forms import ConfirmSetupForm, LoginCodeForm, ReauthenticateForm
+
+PENDING_LOGIN = "twofactor_pending_login"
+PENDING_LOGIN_SECONDS = 5 * 60
 SETUP_SECRET = "twofactor_setup_secret"
 NEW_RECOVERY_CODES = "twofactor_recovery_codes"
+
+
+def begin_login(request: HttpRequest, user: User) -> HttpResponse:
+    """Sign in someone who got past the password (or a demo button); with 2FA on, only after the code step."""
+    backend = getattr(user, "backend", None)
+    if not services.is_enabled(user):
+        login(request, user, backend=backend)
+        return redirect("home")
+    request.session[PENDING_LOGIN] = {"user_id": user.pk, "backend": backend, "started": time.time()}
+    return redirect("login_verify")
+
+
+def _pending_user(request: HttpRequest) -> User | None:
+    pending = request.session.get(PENDING_LOGIN)
+    if not pending or time.time() - pending["started"] > PENDING_LOGIN_SECONDS:
+        return None
+    return User.objects.filter(pk=pending["user_id"], is_active=True).first()
+
+
+@require_http_methods(["GET", "POST"])
+def login_verify(request: HttpRequest) -> HttpResponse:
+    if request.user.is_authenticated:
+        return redirect("home")
+
+    user = _pending_user(request)
+    if user is None or not services.is_enabled(user):
+        if request.session.pop(PENDING_LOGIN, None):
+            messages.error(request, "Your sign-in timed out. Enter your password again.")
+        return redirect("login")
+
+    form = LoginCodeForm(request.POST or None)
+    error = ""
+    if request.method == "POST" and form.is_valid():
+        result = services.verify(user, form.cleaned_data["code"])
+        if result is services.Result.LOCKED:
+            del request.session[PENDING_LOGIN]
+            return flash_redirect(request, messages.ERROR, services.LOCKED_MESSAGE, "login")
+        if result.ok:
+            login(request, user, backend=request.session.pop(PENDING_LOGIN)["backend"])
+            if result is services.Result.RECOVERY_CODE:
+                left = services.recovery_codes_left(user)
+                messages.warning(
+                    request,
+                    ("You signed in with a recovery code, which now no longer works. %(count)d left: "
+                        "get new ones in Account settings if you're running out." if left == 1 else "You signed in with a recovery code, which now no longer works. %(count)d left: "
+                        "get new ones in Account settings if you're running out.")
+                    % {"count": left},
+                )
+            return redirect("home")
+        error = "That code is not valid. Try again."
+    elif request.method == "POST":
+        error = field_errors(form).get("code", "")
+
+    return render_app(
+        request,
+        page="two-factor-verify",
+        title="Two-factor authentication",
+        data={
+            "email": user.email,
+            "error": error,
+            "useRecoveryCode": request.POST.get("mode") == "recovery",
+            "urls": {"verify": reverse("login_verify"), "cancel": reverse("login_verify_cancel")},
+        },
+    )
+
+
+@require_POST
+def login_verify_cancel(request: HttpRequest) -> HttpResponse:
+    request.session.pop(PENDING_LOGIN, None)
+    return redirect("login")
 
 
 SETTINGS_SECTIONS = {"2fa_start", "2fa_cancel", "2fa_confirm", "2fa_disable", "2fa_recovery"}

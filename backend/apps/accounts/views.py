@@ -19,6 +19,7 @@ from apps.privacy.emails import send_account_deleted_email
 from apps.shell import field_errors, first_form_error, flash_redirect, render_app
 from apps.scheduling.management.commands.seed_demo import DEMO_ACCOUNTS, DEMO_EMPLOYEE_EMAIL
 from apps.scheduling.services import position_options
+from apps.twofactor.views import begin_login
 
 from .forms import EmailAuthenticationForm, EmployeeForm, SignUpForm, UserForm
 from .models import User, UserRole
@@ -52,8 +53,7 @@ def login_view(request: HttpRequest) -> HttpResponse:
 
     form = EmailAuthenticationForm(request, data=request.POST or None)
     if request.method == "POST" and form.is_valid():
-        login(request, form.get_user())
-        return redirect("home")
+        return begin_login(request, form.get_user())
 
     errors = field_errors(form)
     if "username" in errors:
@@ -130,8 +130,7 @@ def demo_login(request: HttpRequest, role: str) -> HttpResponse:
     if user is None:
         messages.error(request, "Demo accounts are missing. Run `python manage.py seed_demo` first.")
         return redirect("login")
-    login(request, user)
-    return redirect("home")
+    return begin_login(request, user)
 
 
 def _managed_user_or_404(request: HttpRequest, user_id: int) -> User:

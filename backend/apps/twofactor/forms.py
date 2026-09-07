@@ -12,6 +12,10 @@ def _code_field(required_message: str) -> forms.CharField:
     return forms.CharField(max_length=32, error_messages={"required": required_message})
 
 
+class LoginCodeForm(forms.Form):
+    code = _code_field("Enter the code from your authenticator app, or a recovery code.")
+
+
 class ConfirmSetupForm(forms.Form):
     """The first code from the app proves it holds the secret before 2FA is switched on."""
 
