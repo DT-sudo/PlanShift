@@ -5,11 +5,16 @@ from __future__ import annotations
 import enum
 import secrets
 from datetime import timedelta
+
+from django.conf import settings
+from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 from django.utils.crypto import salted_hmac
 
 from apps.accounts.models import User
+from apps.notifications.messages import render
+from apps.notifications.services import notify
 
 from . import totp
 from .models import RecoveryCode, TOTPDevice
@@ -62,17 +67,35 @@ def recovery_codes_left(user: User) -> int:
     return RecoveryCode.objects.filter(device__user=user, used_at=None).count()
 
 
+def _announce(user: User, kind: str, *, actor: User | None = None) -> None:
+    """A security notice in the bell and by email, so a change nobody asked for gets noticed.
+
+    `kind` is a notification message (`apps/notifications/messages.py`); the email says the
+    same, in the account owner's language.
+    """
+    params = {"by": actor.display_name} if actor else {}
+    notify([user], kind, actor=actor, level="warning", **params)
+    title, detail = render(kind, params)
+    subject = "PlanShift: %(title)s" % {"title": title}
+    body = ("Hi %(name)s,\n\n%(detail)s\n\n"
+        "If this wasn't you or someone you asked, change your password and contact your manager straight away.\n\n"
+        "— PlanShift") % {"name": user.display_name, "detail": detail}
+    send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=True)
+
+
 @transaction.atomic
 def enable(user: User, secret: str, step: int) -> list[str]:
     """Save the confirmed secret and return fresh recovery codes, the only time they exist in clear."""
     device = TOTPDevice.objects.create(user=user, secret=secret, last_used_step=step)
     codes = _replace_recovery_codes(device)
+    _announce(user, "2fa.enabled")
     return codes
 
 
 @transaction.atomic
 def replace_recovery_codes(user: User) -> list[str]:
     codes = _replace_recovery_codes(TOTPDevice.objects.get(user=user))
+    _announce(user, "2fa.recovery_codes")
     return codes
 
 
@@ -81,6 +104,7 @@ def disable(user: User, *, actor: User | None = None) -> bool:
     deleted, _per_model = TOTPDevice.objects.filter(user=user).delete()
     if not deleted:
         return False
+    _announce(user, "2fa.disabled" if actor is None else "2fa.reset", actor=actor)
     return True
 
 
@@ -120,3 +144,13 @@ def verify(user: User, code: str) -> Result:
             result = Result.LOCKED
     device.save(update_fields=["last_used_step", "failed_attempts", "locked_until"])
     return result
+
+
+def export_data(user: User) -> dict:
+    """For the GDPR export: whether 2FA is on, never the secret or the codes."""
+    device = TOTPDevice.objects.filter(user=user).first()
+    return {
+        "enabled": device is not None,
+        "enabled_at": device.confirmed_at.isoformat() if device else None,
+        "unused_recovery_codes": recovery_codes_left(user) if device else 0,
+    }
