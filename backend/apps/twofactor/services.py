@@ -71,6 +71,20 @@ def enable(user: User, secret: str, step: int) -> list[str]:
 
 
 @transaction.atomic
+def replace_recovery_codes(user: User) -> list[str]:
+    codes = _replace_recovery_codes(TOTPDevice.objects.get(user=user))
+    return codes
+
+
+def disable(user: User, *, actor: User | None = None) -> bool:
+    """Turn 2FA off (the recovery codes go with the device). False if it was already off."""
+    deleted, _per_model = TOTPDevice.objects.filter(user=user).delete()
+    if not deleted:
+        return False
+    return True
+
+
+@transaction.atomic
 def verify(user: User, code: str) -> Result:
     """Check an authenticator code or a recovery code, counting failures towards the lock.
 

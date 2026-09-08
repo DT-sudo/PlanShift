@@ -19,6 +19,7 @@ from apps.privacy.emails import send_account_deleted_email
 from apps.shell import field_errors, first_form_error, flash_redirect, render_app
 from apps.scheduling.management.commands.seed_demo import DEMO_ACCOUNTS, DEMO_EMPLOYEE_EMAIL
 from apps.scheduling.services import position_options
+from apps.twofactor import services as two_factor
 from apps.twofactor.views import begin_login
 
 from .forms import EmailAuthenticationForm, EmployeeForm, SignUpForm, UserForm
@@ -177,8 +178,9 @@ def manager_employees(request: HttpRequest) -> HttpResponse:
                     "roleLabel": e.get_role_display(),
                     "positionId": e.position_id,
                     "position": e.position.name if e.position else "",
+                    "twoFactor": two_factor.is_enabled(e),
                 }
-                for e in request.user.managed_users().select_related("position")
+                for e in request.user.managed_users().select_related("position", "totp_device")
             ],
             "roles": [{"id": value, "name": label} for value, label in UserRole.choices] if is_admin else None,
             "positions": position_options(),
@@ -188,6 +190,7 @@ def manager_employees(request: HttpRequest) -> HttpResponse:
                 "update": reverse("employee_update", args=[0]),
                 "delete": reverse("employee_delete", args=[0]),
                 "resetPassword": reverse("reset_employee_password", args=[0]),
+                "resetTwoFactor": reverse("reset_employee_two_factor", args=[0]),
                 "positionCreate": reverse("position_create"),
                 "positionDelete": reverse("position_delete", args=[0]),
             },
@@ -233,6 +236,16 @@ def reset_employee_password(request: HttpRequest, user_id: int) -> HttpResponse:
     _set_generated_password(request, employee)
     notify([employee], "account.password_reset", actor=request.user, level="warning", by=request.user.display_name)
     return _back(request, messages.SUCCESS, "Password reset.")
+
+
+@manager_required
+@require_POST
+def reset_employee_two_factor(request: HttpRequest, user_id: int) -> HttpResponse:
+    """Turn off 2FA for someone who lost both their phone and their recovery codes; they are told by email."""
+    account = _managed_user_or_404(request, user_id)
+    if not two_factor.disable(account, actor=request.user):
+        return _back(request, messages.ERROR, "%(name)s doesn't use two-factor authentication." % {"name": account.display_name})
+    return _back(request, messages.SUCCESS, "Two-factor authentication reset for %(name)s." % {"name": account.display_name})
 
 
 @manager_required
