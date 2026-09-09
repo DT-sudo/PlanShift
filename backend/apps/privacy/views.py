@@ -26,6 +26,7 @@ from django.views.decorators.http import require_GET, require_POST
 from apps.scheduling.models import Assignment, EmployeeUnavailability, Shift
 from apps.scheduling.services import shift_fields
 from apps.shell import render_app
+from apps.twofactor.services import export_data as two_factor_export
 
 from .emails import send_account_deleted_email, send_data_export_email
 
@@ -44,6 +45,7 @@ def _collect_user_data(user) -> dict:
             "date_joined": user.date_joined.isoformat(),
             "last_login": user.last_login.isoformat() if user.last_login else None,
         },
+        "two_factor_authentication": two_factor_export(user),
     }
 
     if user.is_employee:

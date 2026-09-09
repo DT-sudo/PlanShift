@@ -153,3 +153,33 @@ def _friend_accepted(p):
 @_renders("friend.removed")
 def _friend_removed(p):
     return "Friend removed", "%(name)s removed you from their friends." % p
+
+
+@_renders("2fa.enabled")
+def _two_factor_enabled(p):
+    return (
+        "Two-factor authentication turned on",
+        "Signing in to your account now also takes a code from your authenticator app.",
+    )
+
+
+@_renders("2fa.recovery_codes")
+def _two_factor_codes(p):
+    return (
+        "New recovery codes created",
+        "New recovery codes were created for your account. The old ones no longer work.",
+    )
+
+
+@_renders("2fa.disabled")
+def _two_factor_disabled(p):
+    return "Two-factor authentication turned off", "Signing in to your account no longer takes a code."
+
+
+@_renders("2fa.reset")
+def _two_factor_reset(p):
+    return (
+        "Two-factor authentication reset",
+        "%(by)s turned off two-factor authentication for your account. Turn it on again in Account settings."
+        % p,
+    )

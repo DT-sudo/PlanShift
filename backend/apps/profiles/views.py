@@ -13,6 +13,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from apps.accounts.models import User
 from apps.shell import field_errors, flash_redirect, render_app
+from apps.twofactor import views as two_factor
 
 from . import avatars, presence, services
 from .forms import AvatarForm, ProfileForm
@@ -73,6 +74,12 @@ def account_settings(request: HttpRequest) -> HttpResponse:
     user = request.user
     section = request.POST.get("section") if request.method == "POST" else None
 
+    two_factor_errors = {}
+    if section in two_factor.SETTINGS_SECTIONS:
+        response, two_factor_errors = two_factor.settings_action(request, section)
+        if response:
+            return response
+
     profile_form = ProfileForm(request.POST if section == "profile" else None, instance=user)
     password_form = PasswordChangeForm(user, request.POST if section == "password" else None)
     avatar_form = AvatarForm(request.POST if section == "avatar" else None, request.FILES if section == "avatar" else None)
@@ -109,6 +116,7 @@ def account_settings(request: HttpRequest) -> HttpResponse:
             },
             "person": services.card(user),
             "avatar": {"maxBytes": avatars.MAX_BYTES, "accept": ",".join(avatars.FORMATS.values())},
+            "twoFactor": two_factor.settings_data(request, two_factor_errors),
         },
     )
 

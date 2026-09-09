@@ -5,6 +5,7 @@ import './styles/index.css';
 import { getBootstrap } from './app/http.js';
 import { LoginPage } from './pages/auth/LoginPage.jsx';
 import { SignUpPage } from './pages/auth/SignUpPage.jsx';
+import { TwoFactorVerifyPage } from './pages/auth/TwoFactorVerifyPage.jsx';
 import { EmployeeShiftsPage } from './pages/employee-shifts/EmployeeShiftsPage.jsx';
 import { LegalPage } from './pages/legal/LegalPage.jsx';
 import { ManagerAnalyticsPage } from './pages/manager-analytics/ManagerAnalyticsPage.jsx';
@@ -19,6 +20,7 @@ import { AccountSettingsPage } from './pages/profiles/AccountSettingsPage.jsx';
 const PAGES = {
   login: LoginPage,
   signup: SignUpPage,
+  'two-factor-verify': TwoFactorVerifyPage,
   legal: LegalPage,
   'manager-shifts': ManagerShiftsPage,
   'manager-shift-search': ManagerShiftSearchPage,
