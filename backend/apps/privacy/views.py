@@ -21,6 +21,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.scheduling.models import Assignment, EmployeeUnavailability, Shift
@@ -76,7 +77,7 @@ def privacy_center(request: HttpRequest) -> HttpResponse:
     return render_app(
         request,
         page="privacy-center",
-        title="Privacy & My Data",
+        title=_("Privacy & My Data"),
         data={
             "email": request.user.email,
             "isManager": request.user.is_manager,
@@ -115,7 +116,7 @@ def delete_my_account(request: HttpRequest) -> HttpResponse:
     confirm_password = request.POST.get("confirm_password") or ""
 
     if confirm_email != (user.email or "").strip().lower() or not user.check_password(confirm_password):
-        messages.error(request, "Email or password didn't match - account not deleted.")
+        messages.error(request, _("Email or password didn't match - account not deleted."))
         return redirect("privacy_center")
 
     email, name, language = user.email, user.display_name, user.language
@@ -125,12 +126,14 @@ def delete_my_account(request: HttpRequest) -> HttpResponse:
     except ProtectedError:
         messages.error(
             request,
-            ("Your account can't be deleted while you still have shifts on the schedule. "
-                "Reassign or delete them first, then try again."),
+            _(
+                "Your account can't be deleted while you still have shifts on the schedule. "
+                "Reassign or delete them first, then try again."
+            ),
         )
         return redirect("privacy_center")
 
     logout(request)
     send_account_deleted_email(email, name, language)
-    messages.success(request, "Your account and all associated data have been deleted.")
+    messages.success(request, _("Your account and all associated data have been deleted."))
     return redirect("login")

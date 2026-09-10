@@ -5,6 +5,7 @@ from __future__ import annotations
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.accounts.models import User
 from apps.notifications.services import notify
@@ -81,7 +82,7 @@ def friend_urls() -> dict:
 
 def send_request(sender: User, receiver: User) -> Friendship:
     if receiver.pk == sender.pk:
-        raise FriendshipError("You can't add yourself as a friend.")
+        raise FriendshipError(_("You can't add yourself as a friend."))
     existing = between(sender, receiver)
     if existing is None:
         friendship = Friendship.objects.create(from_user=sender, to_user=receiver)
@@ -89,9 +90,9 @@ def send_request(sender: User, receiver: User) -> Friendship:
         push_to_user(receiver.pk, FRIENDS_CHANGED)
         return friendship
     if existing.accepted:
-        raise FriendshipError("You and %(name)s are already friends." % {"name": receiver.display_name})
+        raise FriendshipError(_("You and %(name)s are already friends.") % {"name": receiver.display_name})
     if existing.from_user_id == sender.pk:
-        raise FriendshipError("You already sent %(name)s a friend request." % {"name": receiver.display_name})
+        raise FriendshipError(_("You already sent %(name)s a friend request.") % {"name": receiver.display_name})
     accept(existing)
     return existing
 
@@ -109,11 +110,11 @@ def end(friendship: Friendship, user: User) -> str:
     other = friendship.other(user)
     if friendship.accepted:
         notify([other], "friend.removed", actor=user, name=user.display_name)
-        text = "Removed %(name)s from your friends." % {"name": other.display_name}
+        text = _("Removed %(name)s from your friends.") % {"name": other.display_name}
     elif friendship.to_user_id == user.pk:
-        text = "Declined %(name)s's friend request." % {"name": other.display_name}
+        text = _("Declined %(name)s's friend request.") % {"name": other.display_name}
     else:
-        text = "Cancelled your friend request to %(name)s." % {"name": other.display_name}
+        text = _("Cancelled your friend request to %(name)s.") % {"name": other.display_name}
     friendship.delete()
     push_to_user(other.pk, FRIENDS_CHANGED)
     return text

@@ -18,6 +18,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.utils import timezone
 from django.utils.formats import date_format
+from django.utils.translation import gettext as _
 
 
 def _send(subject: str, body: str, to: str) -> None:
@@ -29,12 +30,14 @@ def _send(subject: str, body: str, to: str) -> None:
 def send_data_export_email(user) -> None:
     when = date_format(timezone.localtime(), "DATETIME_FORMAT")
     _send(
-        "Your PlanShift data export",
-        ("Hi %(name)s,\n\n"
+        _("Your PlanShift data export"),
+        _(
+            "Hi %(name)s,\n\n"
             "A copy of your personal data was just downloaded from your PlanShift account (%(when)s).\n\n"
             "If this wasn't you, someone else may have access to your account - sign in and change your "
             "password, or contact your manager immediately.\n\n"
-            "\u2014 PlanShift")
+            "\u2014 PlanShift"
+        )
         % {"name": user.display_name, "when": when},
         user.email,
     )
@@ -42,12 +45,14 @@ def send_data_export_email(user) -> None:
 
 def send_account_deleted_email(email: str, name: str, language: str = "") -> None:
     _send(
-        "Your PlanShift account has been deleted",
-        ("Hi %(name)s,\n\n"
+        _("Your PlanShift account has been deleted"),
+        _(
+            "Hi %(name)s,\n\n"
             "Your PlanShift account and the personal data associated with it (profile, shift assignments "
             "and unavailability) have been permanently deleted, as you requested.\n\n"
             "If you did not request this, contact your organisation's manager immediately.\n\n"
-            "\u2014 PlanShift")
+            "\u2014 PlanShift"
+        )
         % {"name": name},
         email,
     )

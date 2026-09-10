@@ -11,6 +11,8 @@ from collections.abc import Callable
 from datetime import date
 
 from django.utils.formats import date_format
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 
 RENDERERS: dict[str, Callable[[dict], tuple[str, str]]] = {}
 MAX_LISTED_SHIFTS = 3
@@ -45,7 +47,7 @@ def _day(iso: str) -> str:
 
 
 def shift_label(params: dict) -> str:
-    return "%(position)s, %(day)s, %(start)s–%(end)s" % {**params, "day": _day(params["date"])}
+    return _("%(position)s, %(day)s, %(start)s–%(end)s") % {**params, "day": _day(params["date"])}
 
 
 def _role(params: dict) -> str:
@@ -56,32 +58,32 @@ def _role(params: dict) -> str:
 
 @_renders("account.added")
 def _account_added(p):
-    return "%(role)s added" % {"role": _role(p)}, p["name"]
+    return _("%(role)s added") % {"role": _role(p)}, p["name"]
 
 
 @_renders("account.updated")
 def _account_updated(p):
-    return "%(role)s updated" % {"role": _role(p)}, p["name"]
+    return _("%(role)s updated") % {"role": _role(p)}, p["name"]
 
 
 @_renders("account.deleted")
 def _account_deleted(p):
-    return "%(role)s deleted" % {"role": _role(p)}, p["name"]
+    return _("%(role)s deleted") % {"role": _role(p)}, p["name"]
 
 
 @_renders("account.role_changed")
 def _role_changed(p):
-    return "Your role was changed", "%(by)s made you %(role)s." % {"by": p["by"], "role": _role(p)}
+    return _("Your role was changed"), _("%(by)s made you %(role)s.") % {"by": p["by"], "role": _role(p)}
 
 
 @_renders("account.details_updated")
 def _details_updated(p):
-    return "Your details were updated", "%(by)s changed your account." % p
+    return _("Your details were updated"), _("%(by)s changed your account.") % p
 
 
 @_renders("account.password_reset")
 def _password_reset(p):
-    return "Your password was reset", "%(by)s set a new password for your account." % p
+    return _("Your password was reset"), _("%(by)s set a new password for your account.") % p
 
 
 @_renders("shift.published")
@@ -89,29 +91,29 @@ def _shifts_published(p):
     shifts = p["shifts"]
     count = len(shifts)
     if count == 1:
-        title = "New shift published"
+        title = _("New shift published")
     else:
-        title = ("%(count)d new shift published" if count == 1 else "%(count)d new shifts published") % {"count": count}
+        title = ngettext("%(count)d new shift published", "%(count)d new shifts published", count) % {"count": count}
     description = "; ".join(shift_label(shift) for shift in shifts[:MAX_LISTED_SHIFTS])
     extra = count - MAX_LISTED_SHIFTS
     if extra > 0:
-        description += "; " + ("and %(count)d more" if extra == 1 else "and %(count)d more") % {"count": extra}
+        description += "; " + ngettext("and %(count)d more", "and %(count)d more", extra) % {"count": extra}
     return title, description
 
 
 @_renders("shift.assigned")
 def _shift_assigned(p):
-    return "New shift assigned", shift_label(p["shift"])
+    return _("New shift assigned"), shift_label(p["shift"])
 
 
 @_renders("shift.removed")
 def _shift_removed(p):
-    return "Removed from a shift", shift_label(p["shift"])
+    return _("Removed from a shift"), shift_label(p["shift"])
 
 
 @_renders("shift.changed")
 def _shift_changed(p):
-    return "Shift changed", "%(before)s is now %(after)s" % {
+    return _("Shift changed"), _("%(before)s is now %(after)s") % {
         "before": shift_label(p["before"]),
         "after": shift_label(p["after"]),
     }
@@ -119,67 +121,67 @@ def _shift_changed(p):
 
 @_renders("shift.cancelled")
 def _shift_cancelled(p):
-    return "Shift cancelled", shift_label(p["shift"])
+    return _("Shift cancelled"), shift_label(p["shift"])
 
 
 @_renders("position.created")
 def _position_created(p):
-    return "Position created", p["name"]
+    return _("Position created"), p["name"]
 
 
 @_renders("position.deleted")
 def _position_deleted(p):
-    return "Position deleted", p["name"]
+    return _("Position deleted"), p["name"]
 
 
 @_renders("availability.changed")
 def _availability_changed(p):
     values = {"name": p["name"], "day": _day(p["date"])}
     if p["unavailable"]:
-        return "Availability updated", "%(name)s is unavailable on %(day)s." % values
-    return "Availability updated", "%(name)s is available again on %(day)s." % values
+        return _("Availability updated"), _("%(name)s is unavailable on %(day)s.") % values
+    return _("Availability updated"), _("%(name)s is available again on %(day)s.") % values
 
 
 @_renders("friend.requested")
 def _friend_requested(p):
-    return "New friend request", "%(name)s wants to add you as a friend." % p
+    return _("New friend request"), _("%(name)s wants to add you as a friend.") % p
 
 
 @_renders("friend.accepted")
 def _friend_accepted(p):
-    return "Friend request accepted", "%(name)s accepted your friend request." % p
+    return _("Friend request accepted"), _("%(name)s accepted your friend request.") % p
 
 
 @_renders("friend.removed")
 def _friend_removed(p):
-    return "Friend removed", "%(name)s removed you from their friends." % p
+    return _("Friend removed"), _("%(name)s removed you from their friends.") % p
 
 
 @_renders("2fa.enabled")
 def _two_factor_enabled(p):
     return (
-        "Two-factor authentication turned on",
-        "Signing in to your account now also takes a code from your authenticator app.",
+        _("Two-factor authentication turned on"),
+        _("Signing in to your account now also takes a code from your authenticator app."),
     )
 
 
 @_renders("2fa.recovery_codes")
 def _two_factor_codes(p):
     return (
-        "New recovery codes created",
-        "New recovery codes were created for your account. The old ones no longer work.",
+        _("New recovery codes created"),
+        _("New recovery codes were created for your account. The old ones no longer work."),
     )
 
 
 @_renders("2fa.disabled")
 def _two_factor_disabled(p):
-    return "Two-factor authentication turned off", "Signing in to your account no longer takes a code."
+    return _("Two-factor authentication turned off"), _("Signing in to your account no longer takes a code.")
 
 
 @_renders("2fa.reset")
 def _two_factor_reset(p):
     return (
-        "Two-factor authentication reset",
-        "%(by)s turned off two-factor authentication for your account. Turn it on again in Account settings."
+        _("Two-factor authentication reset"),
+        _("%(by)s turned off two-factor authentication for your account. Turn it on again in Account settings.")
         % p,
     )

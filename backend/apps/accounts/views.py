@@ -12,6 +12,7 @@ from django.db.models import ProtectedError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from apps.notifications.services import managers, notify
@@ -67,7 +68,7 @@ def login_view(request: HttpRequest) -> HttpResponse:
     return render_app(
         request,
         page="login",
-        title="Sign in",
+        title=_("Sign in"),
         data={
             "showDemo": settings.ENABLE_DEMO_LOGIN,
             "email": form["username"].value() or "",
@@ -89,13 +90,13 @@ def signup_view(request: HttpRequest) -> HttpResponse:
     if posted and form.is_valid():
         user = form.save()
         login(request, user)
-        messages.success(request, "Welcome, %(name)s. Your account is ready." % {"name": user.get_full_name()})
+        messages.success(request, _("Welcome, %(name)s. Your account is ready.") % {"name": user.get_full_name()})
         return redirect("home")
 
     return render_app(
         request,
         page="signup",
-        title="Create account",
+        title=_("Create account"),
         data={
             "values": {
                 "fullName": request.POST.get("full_name", ""),
@@ -129,7 +130,7 @@ def demo_login(request: HttpRequest, role: str) -> HttpResponse:
     email = DEMO_ACCOUNTS.get(role, DEMO_EMPLOYEE_EMAIL)
     user = User.objects.filter(username=email, is_active=True).first()
     if user is None:
-        messages.error(request, "Demo accounts are missing. Run `python manage.py seed_demo` first.")
+        messages.error(request, _("Demo accounts are missing. Run `python manage.py seed_demo` first."))
         return redirect("login")
     return begin_login(request, user)
 
@@ -163,7 +164,7 @@ def manager_employees(request: HttpRequest) -> HttpResponse:
     return render_app(
         request,
         page="manager-employees",
-        title="User Management" if is_admin else "Employee Management",
+        title=_("User Management") if is_admin else _("Employee Management"),
         nav_active="manager_employees",
         data={
             "employees": [
@@ -203,12 +204,12 @@ def manager_employees(request: HttpRequest) -> HttpResponse:
 def manager_employees_create(request: HttpRequest) -> HttpResponse:
     form = _account_form(request)(request.POST)
     if not form.is_valid():
-        return _back(request, messages.ERROR, first_form_error(form, "Please fix the errors and try again."))
+        return _back(request, messages.ERROR, first_form_error(form, _("Please fix the errors and try again.")))
 
     account = form.save(commit=False)
     _set_generated_password(request, account)
     notify(managers(), "account.added", actor=request.user, role=account.role, name=account.display_name)
-    return _back(request, messages.SUCCESS, "%(role)s created." % {"role": account.get_role_display()})
+    return _back(request, messages.SUCCESS, _("%(role)s created.") % {"role": account.get_role_display()})
 
 
 @manager_required
@@ -217,7 +218,7 @@ def employee_update(request: HttpRequest, user_id: int) -> HttpResponse:
     account = _managed_user_or_404(request, user_id)
     form = _account_form(request)(request.POST, instance=account)
     if not form.is_valid():
-        return _back(request, messages.ERROR, first_form_error(form, "Could not update the account."))
+        return _back(request, messages.ERROR, first_form_error(form, _("Could not update the account.")))
     account = form.save()
     if form.has_changed():
         actor = request.user
@@ -226,7 +227,7 @@ def employee_update(request: HttpRequest, user_id: int) -> HttpResponse:
             notify([account], "account.role_changed", actor=actor, by=actor.display_name, role=account.role)
         else:
             notify([account], "account.details_updated", actor=actor, by=actor.display_name)
-    return _back(request, messages.SUCCESS, "%(role)s updated." % {"role": account.get_role_display()})
+    return _back(request, messages.SUCCESS, _("%(role)s updated.") % {"role": account.get_role_display()})
 
 
 @manager_required
@@ -235,7 +236,7 @@ def reset_employee_password(request: HttpRequest, user_id: int) -> HttpResponse:
     employee = _managed_user_or_404(request, user_id)
     _set_generated_password(request, employee)
     notify([employee], "account.password_reset", actor=request.user, level="warning", by=request.user.display_name)
-    return _back(request, messages.SUCCESS, "Password reset.")
+    return _back(request, messages.SUCCESS, _("Password reset."))
 
 
 @manager_required
@@ -244,8 +245,8 @@ def reset_employee_two_factor(request: HttpRequest, user_id: int) -> HttpRespons
     """Turn off 2FA for someone who lost both their phone and their recovery codes; they are told by email."""
     account = _managed_user_or_404(request, user_id)
     if not two_factor.disable(account, actor=request.user):
-        return _back(request, messages.ERROR, "%(name)s doesn't use two-factor authentication." % {"name": account.display_name})
-    return _back(request, messages.SUCCESS, "Two-factor authentication reset for %(name)s." % {"name": account.display_name})
+        return _back(request, messages.ERROR, _("%(name)s doesn't use two-factor authentication.") % {"name": account.display_name})
+    return _back(request, messages.SUCCESS, _("Two-factor authentication reset for %(name)s.") % {"name": account.display_name})
 
 
 @manager_required
@@ -265,7 +266,7 @@ def employee_delete(request: HttpRequest, user_id: int) -> HttpResponse:
     try:
         account.delete()
     except ProtectedError:
-        return _back(request, messages.ERROR, "Cannot delete %(name)s: they still have shifts. Reassign or delete them first." % {"name": label})
+        return _back(request, messages.ERROR, _("Cannot delete %(name)s: they still have shifts. Reassign or delete them first.") % {"name": label})
     send_account_deleted_email(email, label, language)
     notify(managers(), "account.deleted", actor=request.user, level="warning", role=role, name=label)
-    return _back(request, messages.SUCCESS, "Deleted %(role)s: %(name)s." % {"role": role_label.lower(), "name": label})
+    return _back(request, messages.SUCCESS, _("Deleted %(role)s: %(name)s.") % {"role": role_label.lower(), "name": label})
