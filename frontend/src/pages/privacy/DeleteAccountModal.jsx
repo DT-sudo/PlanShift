@@ -1,21 +1,22 @@
 import { getBootstrap } from '../../app/http.js';
 import { CsrfInput, Field } from '../../components/Field.jsx';
 import { Modal } from '../../components/Modal.jsx';
+import { t, tx } from '../../i18n/index.js';
 
 export function DeleteAccountModal({ email, action, onClose }) {
   const { urls } = getBootstrap();
 
   return (
     <Modal
-      title="Delete your account"
+      title={t('privacy.deleteTitle')}
       onClose={onClose}
       footer={
         <>
           <button className="btn btn-outline" type="button" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button className="btn btn-destructive" type="submit" form="deleteAccountForm">
-            Permanently delete my account
+            {t('privacy.modalConfirm')}
           </button>
         </>
       }
@@ -24,11 +25,13 @@ export function DeleteAccountModal({ email, action, onClose }) {
         <CsrfInput />
 
         <p className="text-sm">
-          {["This permanently deletes your account, your shift assignments and your unavailability records. There is no undo and no archive copy - see the ", ((
+          {tx('privacy.modalText', {
+            policy: (
               <a className="footer-link" href={urls.privacy}>
-                Privacy Policy
+                {t('footer.privacyPolicy')}
               </a>
-            )), " (section 4) for exactly what that means."]}
+            ),
+          })}
         </p>
 
         <Field
@@ -36,7 +39,7 @@ export function DeleteAccountModal({ email, action, onClose }) {
           name="confirm_email"
           type="email"
           dir="ltr"
-          label={`Type your email (${email}) to confirm`}
+          label={t('privacy.typeEmail', { email })}
           placeholder={email}
           autoComplete="off"
           required
@@ -45,7 +48,7 @@ export function DeleteAccountModal({ email, action, onClose }) {
           id="deleteConfirmPassword"
           name="confirm_password"
           type="password"
-          label="Confirm your password"
+          label={t('privacy.confirmPassword')}
           autoComplete="current-password"
           required
         />

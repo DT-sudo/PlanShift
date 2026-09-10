@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { isRtl, t } from '../../i18n/index.js';
 
 const HEIGHT = 200;
 const PAD = { top: 14, right: 14, bottom: 28, left: 36 };
@@ -11,7 +12,7 @@ const DONUT_RADIUS = 70;
 const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
 
 export function EmptyChart() {
-  return <p className="chart-empty">No data for these filters.</p>;
+  return <p className="chart-empty">{t('analytics.noData')}</p>;
 }
 
 function useWidth() {
@@ -33,7 +34,7 @@ export function XYChart({ kind, label, data, labelKey, valueKey, formatLabel = S
   const [ref, width] = useWidth();
   const [hovered, setHovered] = useState(null);
 
-  const x = false ? (value) => width - value : (value) => value;
+  const x = isRtl() ? (value) => width - value : (value) => value;
   const max = Math.max(1, ...data.map((item) => item[valueKey]));
   const slot = (width - PAD.left - PAD.right) / Math.max(1, data.length);
   const baseline = PAD.top + PLOT_HEIGHT;
@@ -147,7 +148,7 @@ export function DonutChart({ label, segments }) {
           {total}
         </text>
         <text x="100" y="116" textAnchor="middle" className="chart-axis-label">
-          total
+          {t('analytics.total')}
         </text>
       </svg>
 
