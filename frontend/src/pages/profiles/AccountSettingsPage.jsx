@@ -6,6 +6,7 @@ import { AppShell } from '../../components/AppShell.jsx';
 import { Avatar } from '../../components/Avatar.jsx';
 import { CsrfInput, Field } from '../../components/Field.jsx';
 import { Settings, Trash, UserIcon } from '../../components/Icons.jsx';
+import { LanguageSwitcher } from '../../components/LanguageSwitcher.jsx';
 import { Modal } from '../../components/Modal.jsx';
 import { t, tx } from '../../i18n/index.js';
 
