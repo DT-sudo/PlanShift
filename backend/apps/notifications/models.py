@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.conf import settings
 from django.db import models
 
+from .messages import RENDERERS, render
 
 
 class Notification(models.Model):
@@ -13,6 +14,8 @@ class Notification(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
     )
     level = models.CharField(max_length=10, default="info")
+    kind = models.CharField(max_length=40, blank=True)
+    params = models.JSONField(default=dict, blank=True)
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -24,6 +27,8 @@ class Notification(models.Model):
 
     def text(self) -> tuple[str, str]:
         """Title and description in the active language."""
+        if self.kind in RENDERERS:
+            return render(self.kind, self.params)
         return self.title, self.description
 
     def as_dict(self) -> dict:

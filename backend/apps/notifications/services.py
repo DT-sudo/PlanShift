@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from django.conf import settings
 from django.utils import translation
 
 from apps.accounts.models import MANAGER_ROLES, User
@@ -34,13 +35,18 @@ def notify(
             recipient_id=rid,
             actor_id=actor_id,
             level=level,
+            kind=kind,
+            params=params,
             title=title[:100],
             description=description,
         )
         for rid in sorted(recipient_ids)
     )
+    languages = dict(User.objects.filter(pk__in=recipient_ids).values_list("pk", "language"))
     for notification in created:
-        push_to_user(notification.recipient_id, {"type": "notification", "notification": notification.as_dict()})
+        with translation.override(languages.get(notification.recipient_id) or settings.LANGUAGE_CODE):
+            payload = notification.as_dict()
+        push_to_user(notification.recipient_id, {"type": "notification", "notification": payload})
 
 
 def managers():
