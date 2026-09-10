@@ -10,9 +10,9 @@ from __future__ import annotations
 
 from django.utils.translation import get_language
 
-from .content import en
+from .content import ar, cs, en
 
-TRANSLATIONS = {"en": en}
+TRANSLATIONS = {"en": en, "cs": cs, "ar": ar}
 NAMES = ("privacy", "terms")
 
 
