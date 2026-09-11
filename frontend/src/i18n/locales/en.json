@@ -279,6 +279,57 @@
     "createEmployee": "Create employee",
     "fullNamePlaceholder": "Enter full name",
     "emailLogin": "Email / Login",
-    "emailPlaceholder": "Enter email"
+    "emailPlaceholder": "Enter email",
+    "selectRole": "Select role...",
+    "passwordNote": "A password is generated automatically and shown {once} after creation.",
+    "onlyOnce": "only once",
+    "credentialsTitle": "Credentials (shown once)",
+    "login": "Login",
+    "password": "Password",
+    "credentialsNote": "This password is shown only once. Copy and share it securely.",
+    "positionsTitle": "Manage positions",
+    "newPosition": "New position name (e.g., Barista)",
+    "addPosition": "Add position",
+    "positionList": "Position list",
+    "noPositions": "No positions yet.",
+    "deletePositionLabel": "Delete position {name}",
+    "deletePosition": "Delete position",
+    "deletePositionMessage": "Delete this position?",
+    "deletePositionNote": "A position still required by a shift cannot be deleted."
+  },
+  "profile": {
+    "editProfile": "Edit profile",
+    "sentYouRequest": "{name} sent you a friend request.",
+    "noBio": "No bio yet. {link} so people know who you are.",
+    "addBio": "Add one",
+    "email": "Email",
+    "memberSince": "Member since",
+    "friends": "Friends",
+    "noFriends": "No friends yet."
+  },
+  "friends": {
+    "addByEmail": "Add a friend by email",
+    "emailPlaceholder": "colleague@example.com",
+    "send": "Send request",
+    "friends": "Friends",
+    "online": "{online} of {total} online",
+    "noFriends": "No friends yet. Add a colleague by their email address above.",
+    "requests": "Friend requests",
+    "noRequests": "No requests to answer.",
+    "sentRequests": "Sent requests",
+    "noSentRequests": "No requests waiting for an answer.",
+    "sentAgo": "Sent {time}",
+    "add": "Add friend",
+    "cancelRequest": "Cancel request",
+    "accept": "Accept",
+    "decline": "Decline",
+    "remove": "Remove friend",
+    "removeMessage": "Remove {name} from your friends?",
+    "removeNote": "They will no longer see your online status or your email.",
+    "yesRemove": "Yes, remove"
+  },
+  "settings": {
+    "title": "Account settings",
+    "viewProfile": "View my profile"
   }
 }
