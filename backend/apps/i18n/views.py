@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.http import HttpRequest, JsonResponse
 from django.utils import translation
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from apps.profiles.services import card
@@ -21,7 +22,7 @@ def set_language(request: HttpRequest) -> JsonResponse:
     """
     code = request.POST.get("language", "")
     if not is_supported(code):
-        return JsonResponse({"error": "That language is not available."}, status=400)
+        return JsonResponse({"error": _("That language is not available.")}, status=400)
 
     user = request.user
     if user.is_authenticated and user.language != code:

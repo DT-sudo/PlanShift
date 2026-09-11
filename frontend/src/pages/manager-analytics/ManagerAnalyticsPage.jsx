@@ -18,9 +18,9 @@ const KPIS = [
 
 const STATUS_COLORS = { draft: 'var(--color-shift-past)', published: 'var(--color-shift-published)' };
 
-const shiftCount = (count) => (count === 1 ? `${count} shift` : `${count} shifts`);
+const shiftCount = (count) => t('analytics.shiftCount', { count });
 
-const nameOf = (options, id) => options.find((option) => String(option.id) === id)?.name ?? "All";
+const nameOf = (options, id) => options.find((option) => String(option.id) === id)?.name ?? t('common.all');
 
 function ChartCard({ title, wide = false, children }) {
   return (
@@ -61,35 +61,41 @@ export function ManagerAnalyticsPage() {
           <DateRangeFields from={filters.date_from} to={filters.date_to} />
           <ShiftFilterSelects filters={filters} positions={positions} workers={workers} />
           <button className="btn btn-primary" type="submit">
-            Apply
+            {t('common.apply')}
           </button>
 
           <div className="ms-auto">
             <Dropdown
               trigger={({ toggle }) => (
                 <button className="btn btn-outline" type="button" onClick={toggle} aria-haspopup="menu">
-                  Export
+                  {t('analytics.export')}
                   <ChevronDown />
                 </button>
               )}
             >
               {/* The CSV is an attachment, so the page stays; the browser's print dialog saves the PDF. */}
               <button className="dropdown-item" type="button" onClick={() => window.location.assign(`${urls.exportCsv}${window.location.search}`)}>
-                CSV (raw data)
+                {t('analytics.csv')}
               </button>
               <button className="dropdown-item" type="button" onClick={() => window.print()}>
-                PDF (report)
+                {t('analytics.pdf')}
               </button>
             </Dropdown>
           </div>
         </form>
 
         <div className="print-only mb-4">
-          <h1 className="text-xl font-semibold">Workforce Analytics Report</h1>
+          <h1 className="text-xl font-semibold">{t('analytics.reportTitle')}</h1>
           <p className="text-sm text-muted-foreground">
-            {`${formatDate(filters.date_from)} – ${formatDate(filters.date_to)} · Position: ${nameOf(positions, filters.position)} · Worker: ${nameOf(workers, filters.worker)} · Status: ${nameOf(statuses, filters.status)}`}
+            {t('analytics.reportFilters', {
+              from: formatDate(filters.date_from),
+              to: formatDate(filters.date_to),
+              position: nameOf(positions, filters.position),
+              worker: nameOf(workers, filters.worker),
+              status: nameOf(statuses, filters.status),
+            })}
           </p>
-          <p className="text-xs text-muted-foreground">{`Generated ${formatNow()}`}</p>
+          <p className="text-xs text-muted-foreground">{t('analytics.generated', { time: formatNow() })}</p>
         </div>
 
         <div className="kpi-grid mt-3">
@@ -102,10 +108,10 @@ export function ManagerAnalyticsPage() {
         </div>
 
         <div className="analytics-grid mt-3">
-          <ChartCard title="Shifts over time" wide>
+          <ChartCard title={t('analytics.overTime')} wide>
             <XYChart
               kind="line"
-              label="Shifts over time"
+              label={t('analytics.overTime')}
               data={analytics.by_date}
               labelKey="date"
               valueKey="count"
@@ -113,13 +119,13 @@ export function ManagerAnalyticsPage() {
             />
           </ChartCard>
 
-          <ChartCard title="Shifts by position">
-            <XYChart kind="bar" label="Shifts by position" data={analytics.by_position} labelKey="position" valueKey="count" />
+          <ChartCard title={t('analytics.byPosition')}>
+            <XYChart kind="bar" label={t('analytics.byPosition')} data={analytics.by_position} labelKey="position" valueKey="count" />
           </ChartCard>
 
-          <ChartCard title="Shift status">
+          <ChartCard title={t('analytics.shiftStatus')}>
             <DonutChart
-              label="Shift status"
+              label={t('analytics.shiftStatus')}
               segments={analytics.by_status.map(({ status, count }) => ({
                 label: nameOf(statuses, status),
                 value: count,
@@ -128,10 +134,10 @@ export function ManagerAnalyticsPage() {
             />
           </ChartCard>
 
-          <ChartCard title="Hours per worker" wide>
+          <ChartCard title={t('analytics.hoursPerWorker')} wide>
             <XYChart
               kind="bar"
-              label="Hours per worker"
+              label={t('analytics.hoursPerWorker')}
               data={analytics.top_workers}
               labelKey="worker"
               valueKey="hours"
@@ -140,11 +146,11 @@ export function ManagerAnalyticsPage() {
             />
           </ChartCard>
 
-          <ChartCard title="Top workers">
+          <ChartCard title={t('analytics.topWorkers')}>
             <TopList items={analytics.top_workers.slice(0, 5)} name="worker" detail={(w) => `${formatHours(w.hours)} · ${shiftCount(w.shifts)}`} />
           </ChartCard>
 
-          <ChartCard title="Top positions">
+          <ChartCard title={t('analytics.topPositions')}>
             <TopList items={topPositions} name="position" detail={(p) => shiftCount(p.count)} />
           </ChartCard>
         </div>

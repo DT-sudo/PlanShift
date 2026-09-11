@@ -1,8 +1,9 @@
+import { t } from '../i18n/index.js';
 import { minutesOf, shiftDurationMinutes } from './dates.js';
 
 export const statusOptions = () => [
-  { id: 'draft', name: "Draft" },
-  { id: 'published', name: "Published" },
+  { id: 'draft', name: t('status.draft') },
+  { id: 'published', name: t('status.published') },
 ];
 
 

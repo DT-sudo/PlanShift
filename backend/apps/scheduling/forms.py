@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from .models import Position, Shift
 
@@ -9,8 +10,8 @@ class PositionForm(forms.ModelForm):
         fields = ["name"]
         error_messages = {
             "name": {
-                "required": "Enter a position name.",
-                "unique": "A position with this name already exists.",
+                "required": _("Enter a position name."),
+                "unique": _("A position with this name already exists."),
             }
         }
 

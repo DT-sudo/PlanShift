@@ -74,7 +74,7 @@ export function ToastProvider({ initialMessages = [], notifications = null, chil
   }, [initialMessages, showToast]);
 
   const center = useMemo(() => {
-    const save = (url) => postForm(url, {}).catch(() => showToast('error', "Error", "Could not update notifications."));
+    const save = (url) => postForm(url, {}).catch(() => showToast('error', t('toast.error'), t('notifications.saveFailed')));
     return {
       history,
       markAllRead: () => {
@@ -116,7 +116,7 @@ export function NotificationBell() {
       <button
         className="btn btn-ghost btn-icon relative"
         type="button"
-        aria-label={unread ? (unread === 1 ? `Notifications, ${unread} unread` : `Notifications, ${unread} unread`) : "Notifications"}
+        aria-label={unread ? t('notifications.unread', { count: unread }) : t('notifications.title')}
         onClick={() => {
           setOpen(true);
           markAllRead();
@@ -130,12 +130,12 @@ export function NotificationBell() {
       {open
         ? createPortal(
             <Modal
-              title="Notifications"
+              title={t('notifications.title')}
               onClose={() => setOpen(false)}
               footer={
                 history.length ? (
                   <button className="btn btn-outline" type="button" onClick={clear}>
-                    Clear history
+                    {t('notifications.clear')}
                   </button>
                 ) : null
               }
@@ -153,7 +153,7 @@ export function NotificationBell() {
                   ))}
                 </ul>
               ) : (
-                <p className="modal-body text-center text-sm text-muted-foreground">No notifications yet.</p>
+                <p className="modal-body text-center text-sm text-muted-foreground">{t('notifications.empty')}</p>
               )}
             </Modal>,
             document.body,

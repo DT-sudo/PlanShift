@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 from apps.accounts.models import User
 
@@ -13,13 +14,13 @@ def _code_field(required_message: str) -> forms.CharField:
 
 
 class LoginCodeForm(forms.Form):
-    code = _code_field("Enter the code from your authenticator app, or a recovery code.")
+    code = _code_field(_("Enter the code from your authenticator app, or a recovery code."))
 
 
 class ConfirmSetupForm(forms.Form):
     """The first code from the app proves it holds the secret before 2FA is switched on."""
 
-    code = _code_field("Enter the 6-digit code your app shows.")
+    code = _code_field(_("Enter the 6-digit code your app shows."))
 
     def __init__(self, secret: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -30,7 +31,7 @@ class ConfirmSetupForm(forms.Form):
         code = services.normalize(self.cleaned_data["code"])
         self.step = totp.matching_step(self.secret, code) if code.isdigit() and len(code) == totp.DIGITS else None
         if self.step is None:
-            raise ValidationError("That code doesn't match. Check that your phone's clock is set automatically, then try the new code.")
+            raise ValidationError(_("That code doesn't match. Check that your phone's clock is set automatically, then try the new code."))
         return code
 
 
@@ -41,8 +42,8 @@ class ReauthenticateForm(forms.Form):
     unlocked computer can't use up the attempts and lock the owner out.
     """
 
-    password = forms.CharField(strip=False, error_messages={"required": "Enter your password."})
-    code = _code_field("Enter a code from your app, or a recovery code.")
+    password = forms.CharField(strip=False, error_messages={"required": _("Enter your password.")})
+    code = _code_field(_("Enter a code from your app, or a recovery code."))
 
     def __init__(self, user: User, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -51,11 +52,11 @@ class ReauthenticateForm(forms.Form):
     def clean(self) -> dict:
         cleaned = super().clean()
         if "password" in cleaned and not self.user.check_password(cleaned["password"]):
-            self.add_error("password", "Your password is incorrect.")
+            self.add_error("password", _("Your password is incorrect."))
         elif "password" in cleaned and "code" in cleaned:
             result = services.verify(self.user, cleaned["code"])
             if result is services.Result.LOCKED:
                 self.add_error("code", services.LOCKED_MESSAGE)
             elif not result.ok:
-                self.add_error("code", "That code is not valid.")
+                self.add_error("code", _("That code is not valid."))
         return cleaned

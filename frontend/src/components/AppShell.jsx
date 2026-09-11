@@ -1,6 +1,7 @@
 import { getBootstrap, submitPost } from '../app/http.js';
 import { t } from '../i18n/index.js';
 import { Avatar } from './Avatar.jsx';
+import { LanguageSwitcher } from './LanguageSwitcher.jsx';
 import { Dropdown } from './Menus.jsx';
 import { NotificationBell, ToastProvider } from './Notifications.jsx';
 

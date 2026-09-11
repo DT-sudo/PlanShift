@@ -10,6 +10,8 @@ from django.contrib.auth import login
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 from django.views.decorators.http import require_http_methods, require_POST
 
 from apps.accounts.models import User
@@ -49,7 +51,7 @@ def login_verify(request: HttpRequest) -> HttpResponse:
     user = _pending_user(request)
     if user is None or not services.is_enabled(user):
         if request.session.pop(PENDING_LOGIN, None):
-            messages.error(request, "Your sign-in timed out. Enter your password again.")
+            messages.error(request, _("Your sign-in timed out. Enter your password again."))
         return redirect("login")
 
     form = LoginCodeForm(request.POST or None)
@@ -65,20 +67,24 @@ def login_verify(request: HttpRequest) -> HttpResponse:
                 left = services.recovery_codes_left(user)
                 messages.warning(
                     request,
-                    ("You signed in with a recovery code, which now no longer works. %(count)d left: "
-                        "get new ones in Account settings if you're running out." if left == 1 else "You signed in with a recovery code, which now no longer works. %(count)d left: "
-                        "get new ones in Account settings if you're running out.")
+                    ngettext(
+                        "You signed in with a recovery code, which now no longer works. %(count)d left: "
+                        "get new ones in Account settings if you're running out.",
+                        "You signed in with a recovery code, which now no longer works. %(count)d left: "
+                        "get new ones in Account settings if you're running out.",
+                        left,
+                    )
                     % {"count": left},
                 )
             return redirect("home")
-        error = "That code is not valid. Try again."
+        error = _("That code is not valid. Try again.")
     elif request.method == "POST":
         error = field_errors(form).get("code", "")
 
     return render_app(
         request,
         page="two-factor-verify",
-        title="Two-factor authentication",
+        title=_("Two-factor authentication"),
         data={
             "email": user.email,
             "error": error,
@@ -114,16 +120,16 @@ def settings_action(request: HttpRequest, section: str) -> tuple[HttpResponse | 
             return None, field_errors(form)
         request.session[NEW_RECOVERY_CODES] = services.enable(user, secret, form.step)
         del request.session[SETUP_SECRET]
-        return flash_redirect(request, messages.SUCCESS, "Two-factor authentication is on.", back), {}
+        return flash_redirect(request, messages.SUCCESS, _("Two-factor authentication is on."), back), {}
     elif section in ("2fa_disable", "2fa_recovery") and enabled:
         form = ReauthenticateForm(user, request.POST)
         if not form.is_valid():
             return None, field_errors(form)
         if section == "2fa_disable":
             services.disable(user)
-            return flash_redirect(request, messages.SUCCESS, "Two-factor authentication is off.", back), {}
+            return flash_redirect(request, messages.SUCCESS, _("Two-factor authentication is off."), back), {}
         request.session[NEW_RECOVERY_CODES] = services.replace_recovery_codes(user)
-        return flash_redirect(request, messages.SUCCESS, "New recovery codes created. The old ones no longer work.", back), {}
+        return flash_redirect(request, messages.SUCCESS, _("New recovery codes created. The old ones no longer work."), back), {}
     return redirect(back), {}
 
 

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 
 import './styles/index.css';
 import { getBootstrap } from './app/http.js';
+import { useLanguage } from './i18n/index.js';
 import { LoginPage } from './pages/auth/LoginPage.jsx';
 import { SignUpPage } from './pages/auth/SignUpPage.jsx';
 import { TwoFactorVerifyPage } from './pages/auth/TwoFactorVerifyPage.jsx';
@@ -36,6 +37,7 @@ const PAGES = {
 const Page = PAGES[getBootstrap().page];
 
 function App() {
+  useLanguage();
   return <Page />;
 }
 

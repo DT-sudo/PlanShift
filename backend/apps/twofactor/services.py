@@ -9,8 +9,10 @@ from datetime import timedelta
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import transaction
-from django.utils import timezone
+from django.utils import timezone, translation
 from django.utils.crypto import salted_hmac
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from apps.accounts.models import User
 from apps.notifications.messages import render
@@ -21,7 +23,7 @@ from .models import RecoveryCode, TOTPDevice
 
 MAX_FAILED_ATTEMPTS = 5
 LOCK_DURATION = timedelta(minutes=5)
-LOCKED_MESSAGE = "Too many incorrect codes. Wait 5 minutes, then try again."
+LOCKED_MESSAGE = gettext_lazy("Too many incorrect codes. Wait 5 minutes, then try again.")
 
 RECOVERY_CODE_COUNT = 10
 RECOVERY_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"
@@ -75,11 +77,14 @@ def _announce(user: User, kind: str, *, actor: User | None = None) -> None:
     """
     params = {"by": actor.display_name} if actor else {}
     notify([user], kind, actor=actor, level="warning", **params)
-    title, detail = render(kind, params)
-    subject = "PlanShift: %(title)s" % {"title": title}
-    body = ("Hi %(name)s,\n\n%(detail)s\n\n"
-        "If this wasn't you or someone you asked, change your password and contact your manager straight away.\n\n"
-        "— PlanShift") % {"name": user.display_name, "detail": detail}
+    with translation.override(user.language or settings.LANGUAGE_CODE):
+        title, detail = render(kind, params)
+        subject = _("PlanShift: %(title)s") % {"title": title}
+        body = _(
+            "Hi %(name)s,\n\n%(detail)s\n\n"
+            "If this wasn't you or someone you asked, change your password and contact your manager straight away.\n\n"
+            "— PlanShift"
+        ) % {"name": user.display_name, "detail": detail}
     send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=True)
 
 

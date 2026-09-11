@@ -19,9 +19,9 @@ def avatar_path(user: User, filename: str) -> str:
     return f"avatars/{uuid.uuid4().hex}.webp"
 
 class UserRole(models.TextChoices):
-    ADMIN = "admin", "Admin"
-    MANAGER = "manager", "Manager"
-    EMPLOYEE = "employee", "Employee"
+    ADMIN = "admin", _("Admin")
+    MANAGER = "manager", _("Manager")
+    EMPLOYEE = "employee", _("Employee")
 
 
 MANAGER_ROLES = (UserRole.ADMIN, UserRole.MANAGER)
