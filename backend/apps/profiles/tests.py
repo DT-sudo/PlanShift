@@ -363,6 +363,17 @@ class FriendshipTests(ProfilesTestCase):
         self.assertEqual(next_event(layer, channel)["type"], "notification")
         self.assertEqual(next_event(layer, channel), {"type": "friends.changed"})
 
+    def test_the_data_export_lists_friends(self):
+        self.befriend(self.alice, self.bob)
+        self.client.force_login(self.alice)
+
+        export = json.loads(self.client.get(reverse("privacy_export_data")).content)
+
+        self.assertEqual(
+            [(friend["name"], friend["status"], friend["requested_by"]) for friend in export["friends"]],
+            [("Bob Test", "accepted", "you")],
+        )
+
 
 class PresenceTests(ProfilesTestCase):
     def test_online_while_any_page_is_open(self):
