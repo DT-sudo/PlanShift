@@ -31,6 +31,10 @@ PRIVACY_POLICY = {
                 "Account data — your full name, email address (which is also your login), a "
                 "system-generated employee ID, your role (manager or employee) and, for employees, "
                 "the position you are qualified for.",
+                "Profile data — an optional profile picture (re-encoded to a small WebP, which "
+                "strips any camera or location metadata), an optional short bio, your friends and "
+                "friend requests, and your online status: whether you have PlanShift open, and when "
+                "you last did.",
                 "Password — never stored as text. Only a salted PBKDF2-SHA256 hash is written to "
                 "the database, and it cannot be reversed back into your password.",
                 "Two-factor authentication, if you turn it on — the secret your authenticator app "
@@ -39,6 +43,9 @@ PRIVACY_POLICY = {
                 "authentication off deletes all of it.",
                 "Scheduling data — the shifts you are assigned to, their dates, times, position "
                 "and capacity, and the days you have marked yourself unavailable.",
+                "Notifications — the in-app messages about changes other people made that concern "
+                "you, such as a shift you were assigned to. They are kept until you clear them or "
+                "your account is deleted.",
                 "Language — the language you use PlanShift in, saved on your account and in a cookie, so "
                 "the application, emails and notifications reach you in a language you read.",
                 "Session cookie — a signed identifier that keeps you logged in. It is "
@@ -71,6 +78,8 @@ PRIVACY_POLICY = {
                 "You — your own profile, your published shifts and your unavailability.",
                 "Managers in your organisation — the team directory (name, email, position) and "
                 "the full schedule, including draft shifts that employees cannot yet see.",
+                "Your friends — your profile, email, friend list and online status. Someone you "
+                "have a pending friend request with sees only your name, picture, role and bio.",
                 "Administrators of the instance — technical staff with server or database access.",
             ],
             "paragraphs": [

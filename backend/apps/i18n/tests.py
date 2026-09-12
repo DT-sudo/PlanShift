@@ -138,6 +138,18 @@ class ServerTextTests(I18nTestCase):
                 document = self.bootstrap(self.client.get(reverse("privacy_policy")))["data"]["document"]
                 self.assertEqual(document["title"], title)
 
+    def test_legal_translations_have_the_same_structure(self):
+        from apps.legal.documents import NAMES, TRANSLATIONS
+
+        def shape(document):
+            return [(len(section.get("paragraphs", [])), len(section.get("bullets", []))) for section in document["sections"]]
+
+        for code, content in TRANSLATIONS.items():
+            for name in NAMES:
+                with self.subTest(language=code, document=name):
+                    self.assertEqual(shape(content.DOCUMENTS[name]), shape(TRANSLATIONS["en"].DOCUMENTS[name]))
+                    self.assertEqual(len(content.DOCUMENTS[name]["intro"]), len(TRANSLATIONS["en"].DOCUMENTS[name]["intro"]))
+
 
 class RecipientLanguageTests(I18nTestCase):
     def test_a_notification_reads_in_whoever_reads_it(self):
