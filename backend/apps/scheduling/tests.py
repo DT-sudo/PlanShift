@@ -3,15 +3,17 @@ from __future__ import annotations
 from datetime import date, time, timedelta
 
 from django.contrib.messages import get_messages
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.accounts.models import User, UserRole
+from apps.accounts.models import Position, User, UserRole
 
-from .models import Assignment, EmployeeUnavailability, Shift
-from .services import STALE_SHIFT, assign_employees_to_shift, shifts_for_employee
+from .forms import ShiftForm
+from .models import MIDNIGHT, Assignment, EmployeeUnavailability, Shift, ShiftStatus
+from .services import STALE_SHIFT, assign_employees_to_shift, shift_fields, shifts_for_employee
 
 
 class HardConstraintTests(TestCase):
@@ -85,6 +87,28 @@ class HardConstraintTests(TestCase):
         assign_employees_to_shift(afternoon, [self.alice.id])
         self.assertEqual(Assignment.objects.filter(employee=self.alice).count(), 2)
 
+    def test_a_shift_can_end_at_midnight(self):
+        form = ShiftForm(
+            {"date": self.day, "start_time": "18:00", "end_time": "24:00", "position": self.barista.id, "capacity": 1}
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        shift = form.save(commit=False)
+        self.assertEqual(shift.end_time, MIDNIGHT)
+        self.assertEqual(shift.duration, timedelta(hours=6))
+        self.assertEqual(shift_fields(shift)["end_time"], "24:00")
+
+    def test_a_shift_ending_at_midnight_overlaps_the_evening(self):
+        night = self._shift(start=time(18, 0), end=MIDNIGHT)
+        assign_employees_to_shift(night, [self.alice.id])
+
+        with self.assertRaises(ValidationError):
+            assign_employees_to_shift(self._shift(start=time(22, 0), end=time(23, 0)), [self.alice.id])
+        assign_employees_to_shift(self._shift(start=time(9, 0), end=time(13, 0)), [self.alice.id])
+
+    def test_an_end_before_the_start_is_refused(self):
+        with self.assertRaises(ValidationError):
+            Shift(date=self.day, start_time=time(18, 0), end_time=time(9, 0), position=self.barista).clean()
+
     def test_duplicate_ids_are_deduplicated_before_capacity_check(self):
         shift = self._shift(capacity=1)
         assign_employees_to_shift(shift, [self.alice.id, self.alice.id])
@@ -131,7 +155,7 @@ class ShiftVisibilityTests(TestCase):
 
 
 class SearchAndAnalyticsTests(TestCase):
-    """Search and analytics read only the signed-in manager's own shifts."""
+    """Search and analytics read the whole schedule, whichever manager wrote each shift."""
 
     @classmethod
     def setUpTestData(cls) -> None:
@@ -148,14 +172,13 @@ class SearchAndAnalyticsTests(TestCase):
             first_name="Bob", last_name="Marek",
         )
         cls.barista_shift = cls._shift(cls.manager, cls.barista, time(9, 0), time(17, 0), 2, [cls.alice, cls.bob])
-        cls.chef_shift = cls._shift(cls.manager, cls.chef, time(10, 0), time(14, 0), 1, [])
-        cls._shift(other_manager, cls.barista, time(9, 0), time(17, 0), 1, [cls.alice])
+        cls.chef_shift = cls._shift(other_manager, cls.chef, time(10, 0), time(14, 0), 1, [])
 
     @classmethod
-    def _shift(cls, manager, position, start, end, capacity, employees) -> Shift:
+    def _shift(cls, manager, position, start, end, capacity, employees, *, day=None, status=ShiftStatus.PUBLISHED) -> Shift:
         shift = Shift.objects.create(
-            date=timezone.localdate(), start_time=start, end_time=end, capacity=capacity,
-            position=position, created_by=manager,
+            date=day or timezone.localdate(), start_time=start, end_time=end, capacity=capacity,
+            position=position, created_by=manager, status=status,
         )
         Assignment.objects.bulk_create([Assignment(shift=shift, employee=employee) for employee in employees])
         return shift
@@ -169,6 +192,24 @@ class SearchAndAnalyticsTests(TestCase):
     def _result_ids(self, **params) -> list[int]:
         return [row["id"] for row in self._search(**params)["results"]]
 
+    def test_any_manager_can_edit_a_shift_another_manager_wrote(self):
+        tomorrow = timezone.localdate() + timedelta(days=1)
+        Shift.objects.filter(pk=self.chef_shift.pk).update(date=tomorrow)
+        response = self.client.post(
+            reverse("update_shift", args=[self.chef_shift.id]),
+            {
+                "date": tomorrow.isoformat(),
+                "start_time": "11:00",
+                "end_time": "14:00",
+                "position": self.chef.id,
+                "capacity": 1,
+                "version": self.chef_shift.version,
+            },
+        )
+        self.assertEqual(response.json()["redirect"], f"{reverse('manager_shifts')}?date={tomorrow.isoformat()}")
+        self.chef_shift.refresh_from_db()
+        self.assertEqual(self.chef_shift.start_time, time(11, 0))
+
     def test_text_query_matches_worker_names(self):
         self.assertEqual(self._result_ids(q="novak"), [self.barista_shift.id])
 
@@ -177,14 +218,17 @@ class SearchAndAnalyticsTests(TestCase):
 
     def test_filters_combine(self):
         self.assertEqual(self._result_ids(position=self.barista.id, worker=self.bob.id), [self.barista_shift.id])
-        self.assertEqual(self._result_ids(status="published"), [])
+        self.assertEqual(self._result_ids(status="draft"), [])
 
     def test_sorting_by_position_descending(self):
         self.assertEqual(self._result_ids(sort="position", dir="desc"), [self.chef_shift.id, self.barista_shift.id])
 
     def test_pagination(self):
         Shift.objects.bulk_create(
-            Shift(date=timezone.localdate(), start_time=time(6, 0), end_time=time(7, 0), position=self.chef, created_by=self.manager)
+            Shift(
+                date=timezone.localdate(), start_time=time(6, 0), end_time=time(7, 0),
+                position=self.chef, position_name=self.chef.name, created_by=self.manager,
+            )
             for _ in range(28)
         )
         data = self._search(page=2)
@@ -198,12 +242,31 @@ class SearchAndAnalyticsTests(TestCase):
         self.assertEqual(everyone, {"shifts": 2, "hours": 16.0, "workers": 2, "open_shifts": 1})
         self.assertEqual(alice_only, {"shifts": 1, "hours": 8.0, "workers": 1, "open_shifts": 0})
 
+    def test_analytics_never_counts_drafts(self):
+        """A draft is a plan nobody was told about: it says nothing about the work."""
+        self._shift(self.manager, self.barista, time(18, 0), time(20, 0), 1, [self.alice], status=ShiftStatus.DRAFT)
+
+        kpis = self.client.get(reverse("manager_analytics"), {"format": "json"}).json()["analytics"]["kpis"]
+
+        self.assertEqual(kpis["shifts"], 2)
+
+    def test_analytics_reads_whole_months(self):
+        last_month = timezone.localdate().replace(day=1) - timedelta(days=1)
+        self._shift(self.manager, self.barista, time(9, 0), time(13, 0), 1, [self.alice], day=last_month)
+
+        def shifts(**params):
+            return self.client.get(reverse("manager_analytics"), {"format": "json", **params}).json()["analytics"]["kpis"]["shifts"]
+
+        self.assertEqual(shifts(date_from=last_month.strftime("%Y-%m")), 3)
+        self.assertEqual(shifts(), 2)
+
     def test_csv_export_lists_each_shift(self):
         response = self.client.get(reverse("manager_analytics_export_csv"))
 
         self.assertEqual(response["Content-Type"], "text/csv")
         lines = response.content.decode().strip().splitlines()
         self.assertEqual(len(lines), 3)
+        self.assertNotIn("Status", lines[0])
         self.assertIn("Alice Novak; Bob Marek", lines[1])
 
 

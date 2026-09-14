@@ -4,7 +4,7 @@ from django.db import transaction
 
 from apps.notifications.services import managers, notify
 from apps.scheduling.models import ShiftStatus
-from apps.scheduling.services import shift_fields
+from apps.scheduling.services import delete_upcoming_shifts_of_position, release_from_future_shifts, shift_fields
 
 from .models import Position, User
 

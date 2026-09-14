@@ -38,8 +38,6 @@ from .services import (
 # Open calendars and analytics dashboards re-fetch their data when a shift is written.
 SHIFTS_CHANGED = {"type": "shifts.changed"}
 
-# ── Query parameters and periods ────────────────────────────────────────────
-
 
 def _parse_date(value: str | None, default: date | None) -> date | None:
     """Parse YYYY-MM-DD, return default if missing or invalid."""
@@ -47,6 +45,12 @@ def _parse_date(value: str | None, default: date | None) -> date | None:
         return datetime.strptime((value or "").strip(), "%Y-%m-%d").date()
     except ValueError:
         return default
+
+
+def _today_and_anchor(request: HttpRequest) -> tuple[date, date]:
+    """Today, and the day the calendar is showing (`?date=`, today by default)."""
+    today = timezone.localdate()
+    return today, _parse_date(request.GET.get("date"), today)
 
 
 def _parse_id(value: str | None) -> int | None:
@@ -84,6 +88,11 @@ def _period(view: str, anchor: date) -> tuple[date, date]:
 
 def _manager_shift_or_404(request: HttpRequest, shift_id: int) -> Shift:
     return get_object_or_404(Shift, pk=shift_id, created_by=request.user)
+
+
+def _shift_or_404(shift_id: int) -> Shift:
+    """Any shift on the schedule: every manager runs the same one."""
+    return get_object_or_404(Shift, pk=shift_id)
 
 
 def _active_employees():
@@ -125,8 +134,7 @@ def _unavailability_payload(*, since: date) -> dict[str, list[str]]:
 @manager_required
 @require_GET
 def manager_shifts(request: HttpRequest) -> HttpResponse:
-    today = timezone.localdate()
-    anchor = _parse_date(request.GET.get("date"), today)
+    today, anchor = _today_and_anchor(request)
     view = _calendar_view(request)
     start, end = _period(view, anchor)
 
@@ -135,7 +143,6 @@ def manager_shifts(request: HttpRequest) -> HttpResponse:
     understaffed = request.GET.get("show") == "understaffed"
 
     shift_qs = shifts_for_manager(
-        manager_id=request.user.id,
         start=start,
         end=end,
         position_id=position_id,
