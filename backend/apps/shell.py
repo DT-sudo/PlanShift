@@ -36,6 +36,11 @@ def flash_redirect(request: HttpRequest, level: int, text: str, to: str) -> Http
     return redirect(to)
 
 
+def json_error(message: str, *, status: int = 400, **details) -> JsonResponse:
+    """How a fetch-driven page is refused: `{"error": message, ...details}`, which `postForm` throws with."""
+    return JsonResponse({"error": str(message), **details}, status=status)
+
+
 def first_form_error(form, default: str) -> str:
     """First error message on a form, for flows that redirect instead of re-rendering."""
     return next((errors[0] for errors in form.errors.values() if errors), default)

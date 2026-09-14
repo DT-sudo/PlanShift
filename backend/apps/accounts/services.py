@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.db import transaction
 
 from apps.notifications.services import managers, notify
+from apps.scheduling import notices
 from apps.scheduling.models import ShiftStatus
 from apps.scheduling.services import delete_upcoming_shifts_of_position, release_from_future_shifts, shift_fields
 

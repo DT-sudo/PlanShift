@@ -22,9 +22,10 @@ from apps.accounts.models import User, UserRole
 from apps.notifications.messages import shift_params
 from apps.accounts.services import position_options
 from apps.notifications.services import notify
-from apps.shell import flash_redirect, render_app
+from apps.shell import flash_redirect, json_error, render_app
 from apps.realtime.events import notify_managers
 
+from . import notices
 from .models import Assignment, EmployeeUnavailability, Shift, ShiftStatus
 from .services import (
     publish_shift,
@@ -263,22 +264,26 @@ def delete_shift(request: HttpRequest, shift_id: int) -> HttpResponse:
 @manager_required
 @require_POST
 def publish_shift_view(request: HttpRequest, shift_id: int) -> HttpResponse:
-    shift = _manager_shift_or_404(request, shift_id)
+    shift = _shift_or_404(shift_id)
+    if refused := _refuse_if_started(request, shift):
+        return refused
     was_draft = shift.status == ShiftStatus.DRAFT
     publish_shift(shift)
     if was_draft:
-        _notify_published(request.user, [shift])
+        notices.published(request.user, [shift])
+        notices.to_colleagues(request.user, "shift.published", shifts=[shift_fields(shift)])
     return flash_redirect(request, messages.SUCCESS, _("Shift published."), _calendar_url(shift))
 
 
 @manager_required
 @require_POST
 def publish_all_shifts(request: HttpRequest) -> HttpResponse:
-    """Publish all draft shifts in the visible month or week."""
+    """Publish all draft shifts in the visible month or week that have not started yet."""
     start, end = _period(_calendar_view(request), _parse_date(request.POST.get("date"), timezone.localdate()))
-    published = publish_shifts_in_period(manager_id=request.user.id, start=start, end=end)
+    published = publish_shifts_in_period(start=start, end=end)
     if published:
-        _notify_published(request.user, published)
+        notices.published(request.user, published)
+        notices.to_colleagues(request.user, "shift.published", shifts=[shift_fields(shift) for shift in published])
         count = len(published)
         text = ngettext("Published %(count)d shift.", "Published %(count)d shifts.", count) % {"count": count}
         return flash_redirect(request, messages.SUCCESS, text, "manager_shifts")
@@ -433,20 +438,27 @@ def employee_shifts_view(request: HttpRequest) -> HttpResponse:
 def employee_unavailability_toggle(request: HttpRequest) -> JsonResponse:
     day = _parse_date(request.POST.get("date"), None)
     if day is None:
-        return JsonResponse({"ok": False, "error": _("Enter a valid date.")}, status=400)
+        return json_error(_("Enter a valid date."))
     if day <= timezone.localdate():
-        return JsonResponse(
-            {"ok": False, "error": _("Only dates from tomorrow onwards can be marked as unavailable.")}, status=400
-        )
-    if Assignment.objects.filter(employee_id=request.user.id, shift__date=day).exists():
-        return JsonResponse({"ok": False, "error": _("You have a shift assigned on this day.")}, status=400)
+        return json_error(_("Only dates from tomorrow onwards can be marked as unavailable."))
+    assignments = Assignment.objects.filter(employee_id=request.user.id, shift__date=day).select_related("shift")
+    drafts = [assignment for assignment in assignments if assignment.shift.status == ShiftStatus.DRAFT]
+    if len(drafts) != len(assignments):
+        return json_error(_("You have a shift assigned on this day."))
 
     existing = EmployeeUnavailability.objects.filter(employee_id=request.user.id, date=day)
     unavailable = not existing.exists()
+    released = []
     if unavailable:
         EmployeeUnavailability.objects.create(employee_id=request.user.id, date=day)
+        released = [assignment.shift for assignment in drafts]
+        Assignment.objects.filter(pk__in=[assignment.pk for assignment in drafts]).delete()
     else:
         existing.delete()
+
+    if released:
+        notices.shifts_changed()
+        notices.staff_released(request.user, request.user.display_name, released)
 
     notify_managers(
         {
@@ -458,11 +470,11 @@ def employee_unavailability_toggle(request: HttpRequest) -> JsonResponse:
         }
     )
     notify(
-        managers(),
+        schedulers(),
         "availability.changed",
         actor=request.user,
         name=request.user.display_name,
         date=day.isoformat(),
         unavailable=unavailable,
     )
-    return JsonResponse({"ok": True, "date": day.isoformat(), "unavailable": unavailable})
+    return JsonResponse({"date": day.isoformat(), "unavailable": unavailable})
