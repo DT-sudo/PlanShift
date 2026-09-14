@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.utils.translation import ngettext
 from django.views.decorators.http import require_GET, require_POST
 
@@ -23,6 +24,7 @@ from apps.accounts.services import position_options
 from apps.notifications.services import notify
 from apps.shell import flash_redirect, render_app
 from apps.realtime.events import notify_managers
+
 from .models import Assignment, EmployeeUnavailability, Shift, ShiftStatus
 from .services import (
     publish_shift,
@@ -217,6 +219,15 @@ def _notify_published_shift_edited(actor: User, shift: Shift, before_ids: set[in
         notify(after_ids & before_ids, "shift.changed", actor=actor, before=before, after=after)
 
 
+STARTED_SHIFT = gettext_lazy("This shift has already started, so it can't be changed.")
+
+
+def _refuse_if_started(request: HttpRequest, shift: Shift) -> HttpResponse | None:
+    if shift.is_past:
+        return flash_redirect(request, messages.ERROR, str(STARTED_SHIFT), _calendar_url(shift))
+    return None
+
+
 @manager_required
 @require_POST
 def save_shift_view(request: HttpRequest, shift_id: int | None = None) -> HttpResponse:
@@ -240,12 +251,12 @@ def save_shift_view(request: HttpRequest, shift_id: int | None = None) -> HttpRe
 @manager_required
 @require_POST
 def delete_shift(request: HttpRequest, shift_id: int) -> HttpResponse:
-    shift = _manager_shift_or_404(request, shift_id)
-    employee_ids = _assigned_ids(shift) if shift.status == ShiftStatus.PUBLISHED else set()
-    details = shift_params(shift)
-    shift.delete()
-    _shifts_changed(employee_ids)
-    notify(employee_ids, "shift.cancelled", actor=request.user, level="warning", shift=details)
+    shift = get_object_or_404(Shift.objects.prefetch_related("assignments"), pk=shift_id)
+    if refused := _refuse_if_started(request, shift):
+        return refused
+    Shift.objects.filter(pk=shift.pk).delete()
+    notices.cancelled(request.user, [shift])
+    notices.to_colleagues(request.user, "shift.deleted", shift=shift_fields(shift))
     return flash_redirect(request, messages.SUCCESS, _("Shift deleted."), "manager_shifts")
 
 

@@ -13,10 +13,9 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 from apps.accounts.models import User, UserRole
-from apps.shell import first_form_error
 
 from .forms import ShiftForm
-from .models import Assignment, EmployeeUnavailability, Shift, ShiftStatus
+from .models import MIDNIGHT, Assignment, EmployeeUnavailability, Shift, ShiftStatus, clock
 
 
 def position_options() -> list[dict]:
@@ -28,57 +27,72 @@ def shift_fields(shift: Shift) -> dict:
     """The fields every shift payload shares: its day, HH:MM times and position name."""
     return {
         "date": shift.date.isoformat(),
-        "start_time": shift.start_time.strftime("%H:%M"),
-        "end_time": shift.end_time.strftime("%H:%M"),
-        "position": shift.position.name,
+        "start_time": clock(shift.start_time),
+        "end_time": clock(shift.end_time, end=True),
+        "position": shift.position_name,
     }
 
 
+class ShiftError(ValidationError):
+    """A shift save the rules refused, and where the form should say so: the field it concerns
+    (None for the form as a whole) and, for a rule about one employee, which one."""
+
+    def __init__(self, message, *, field: str | None = None, employee_id: int | None = None):
+        super().__init__(message)
+        self.field, self.employee_id = field, employee_id
+
+
+def _employee_error(message, employee_id: int) -> ShiftError:
+    return ShiftError(message, field="employee_ids", employee_id=employee_id)
+
+
 def _check_position_match(shift: Shift, employee_ids: list[int]) -> None:
-    valid = User.objects.filter(
-        id__in=employee_ids,
-        role=UserRole.EMPLOYEE,
-        is_active=True,
-        position_id=shift.position_id,
-    ).count()
-    if valid != len(employee_ids):
-        raise ValidationError(_("Selected employees must match the shift position."))
+    valid = set(
+        User.objects.filter(
+            id__in=employee_ids, role=UserRole.EMPLOYEE, is_active=True, position_id=shift.position_id
+        ).values_list("id", flat=True)
+    )
+    wrong = next((employee_id for employee_id in employee_ids if employee_id not in valid), None)
+    if wrong is not None:
+        raise _employee_error(_("Selected employees must match the shift position."), wrong)
 
 
 def _check_capacity(shift: Shift, employee_ids: list[int]) -> None:
     if len(employee_ids) > shift.capacity:
-        raise ValidationError(_("Cannot assign more employees than shift capacity."))
+        raise ShiftError(_("Cannot assign more employees than shift capacity."), field="capacity")
 
 
 def _check_availability(shift: Shift, employee_ids: list[int]) -> None:
-    if EmployeeUnavailability.objects.filter(employee_id__in=employee_ids, date=shift.date).exists():
-        raise ValidationError(_("Employee is unavailable on %(day)s.") % {"day": date_format(shift.date, "D j M Y")})
+    unavailable = (
+        EmployeeUnavailability.objects.filter(employee_id__in=employee_ids, date=shift.date)
+        .values_list("employee_id", flat=True)
+        .first()
+    )
+    if unavailable is not None:
+        message = _("Employee is unavailable on %(day)s.") % {"day": date_format(shift.date, "D j M Y")}
+        raise _employee_error(message, unavailable)
 
 
 def _check_no_overlap(shift: Shift, employee_ids: list[int]) -> None:
+    overlapping = models.Q(shift__end_time__gt=shift.start_time) | models.Q(shift__end_time=MIDNIGHT)
+    if shift.end_time != MIDNIGHT:
+        overlapping &= models.Q(shift__start_time__lt=shift.end_time)
     conflict = (
-        Assignment.objects.filter(
-            employee_id__in=employee_ids,
-            shift__date=shift.date,
-            shift__start_time__lt=shift.end_time,
-            shift__end_time__gt=shift.start_time,
-        )
+        Assignment.objects.filter(overlapping, employee_id__in=employee_ids, shift__date=shift.date)
         .exclude(shift_id=shift.id)
-        .select_related("shift__position")
+        .select_related("shift")
         .order_by("shift__start_time")
         .first()
     )
     if conflict:
         other = conflict.shift
-        raise ValidationError(
-            _("Employee already assigned to: %(position)s %(start)s–%(end)s (%(day)s)")
-            % {
-                "position": other.position.name,
-                "start": f"{other.start_time:%H:%M}",
-                "end": f"{other.end_time:%H:%M}",
-                "day": date_format(other.date, "j M"),
-            }
-        )
+        message = _("Employee already assigned to: %(position)s %(start)s–%(end)s (%(day)s)") % {
+            "position": other.position_name,
+            "start": clock(other.start_time),
+            "end": clock(other.end_time, end=True),
+            "day": date_format(other.date, "j M"),
+        }
+        raise _employee_error(message, conflict.employee_id)
 
 
 def assign_employees_to_shift(shift: Shift, employee_ids: list[int]) -> None:
@@ -94,24 +108,28 @@ def assign_employees_to_shift(shift: Shift, employee_ids: list[int]) -> None:
 
 
 STALE_SHIFT = gettext_lazy("Someone else changed this shift while you were editing it. Your changes were not saved.")
+IN_THE_PAST = gettext_lazy("A shift can't start in the past. Choose a later date or start time.")
 
 
 def save_shift(shift: Shift, post_data) -> Shift:
     """Validate the posted form, then save the shift and its assignments in one transaction.
 
-    Raises ValidationError with a user-facing message when either step rejects, or when
-    the shift was edited by someone else since the form was opened.
+    Raises ShiftError with a user-facing message when either step rejects, or when the shift
+    was edited by someone else since the form was opened.
     """
     form = ShiftForm(post_data, instance=shift)
     if not form.is_valid():
-        raise ValidationError(first_form_error(form, _("Please check the form fields.")))
+        field, errors = next(iter(form.errors.items()))
+        raise ShiftError(errors[0], field=None if field == "__all__" else field)
+    if shift.is_past:
+        raise ShiftError(IN_THE_PAST, field="date" if shift.date < timezone.localdate() else "start_time")
     employee_ids = [int(value) for value in post_data.getlist("employee_ids") if value.isdigit()]
 
     with transaction.atomic():
         if shift.pk:
             current = Shift.objects.select_for_update().values_list("version", flat=True).get(pk=shift.pk)
             if post_data.get("version") != str(current):
-                raise ValidationError(STALE_SHIFT)
+                raise ShiftError(STALE_SHIFT)
             shift.version = current + 1
         saved = form.save()
         assign_employees_to_shift(saved, employee_ids)
