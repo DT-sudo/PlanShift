@@ -23,6 +23,9 @@ class UserRole(models.TextChoices):
     MANAGER = "manager", _("Manager")
     EMPLOYEE = "employee", _("Employee")
 
+
+ASSIGNABLE_ROLES = (UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE)
+
 MANAGER_ROLES = (UserRole.ADMIN, UserRole.MANAGER)
 
 class Position(models.Model):

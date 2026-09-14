@@ -10,7 +10,7 @@ import { TwoFactorVerifyPage } from './pages/auth/TwoFactorVerifyPage.jsx';
 import { EmployeeShiftsPage } from './pages/employee-shifts/EmployeeShiftsPage.jsx';
 import { LegalPage } from './pages/legal/LegalPage.jsx';
 import { ManagerAnalyticsPage } from './pages/manager-analytics/ManagerAnalyticsPage.jsx';
-import { ManagerEmployeesPage } from './pages/manager-employees/ManagerEmployeesPage.jsx';
+import { AdminUsersPage } from './pages/admin-users/AdminUsersPage.jsx';
 import { ManagerShiftSearchPage } from './pages/manager-shift-search/ManagerShiftSearchPage.jsx';
 import { ManagerShiftsPage } from './pages/manager-shifts/ManagerShiftsPage.jsx';
 import { PrivacyCenterPage } from './pages/privacy/PrivacyCenterPage.jsx';
@@ -26,7 +26,7 @@ const PAGES = {
   'manager-shifts': ManagerShiftsPage,
   'manager-shift-search': ManagerShiftSearchPage,
   'manager-analytics': ManagerAnalyticsPage,
-  'manager-employees': ManagerEmployeesPage,
+  'admin-users': AdminUsersPage,
   'employee-shifts': EmployeeShiftsPage,
   'privacy-center': PrivacyCenterPage,
   profile: ProfilePage,

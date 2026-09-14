@@ -5,7 +5,7 @@ from django.contrib.auth.forms import AuthenticationForm, BaseUserCreationForm
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from .models import Position, User, UserRole
+from .models import ASSIGNABLE_ROLES, Position, User, UserRole
 
 
 def _split_full_name(full_name: str) -> tuple[str, str]:
@@ -138,10 +138,34 @@ class PositionForm(forms.ModelForm):
         }
 
 
-class UserForm(EmployeeForm):
-    """Admin-side create/edit of any account: the role is picked too, and only employees have a position."""
+class RoleAndPositionMixin:
+    """The role an admin gives an account, and the position that only employees have.
 
-    class Meta(EmployeeForm.Meta):
+    The role field is the only way to make someone a manager; a position is a job title that gets
+    scheduled, nothing more. Guest is never offered: that is where sign-up puts an account, not a
+    role to hand out.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["role"].choices = [(role.value, role.label) for role in ASSIGNABLE_ROLES]
+
+    def clean(self) -> dict:
+        cleaned = super().clean()
+        role, position = cleaned.get("role"), cleaned.get("position")
+        if role == UserRole.EMPLOYEE:
+            if not position:
+                self.add_error("position", _("Employees need a position."))
+        elif role:
+            cleaned["position"] = None
+
+        return cleaned
+
+class UserForm(RoleAndPositionMixin, AccountForm):
+    """The admin's create/edit of any account: name, email, role and (for employees) position."""
+
+    class Meta:
+        model = User
         fields = ["email", "role", "position"]
 
     def __init__(self, *args, **kwargs):

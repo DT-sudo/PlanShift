@@ -25,9 +25,10 @@
     "search": "Hledání",
     "analytics": "Analýza",
     "users": "Uživatelé",
-    "team": "Tým",
     "myShifts": "Moje směny",
-    "friends": "Přátelé"
+    "friends": "Přátelé",
+    "requests": "Žádosti",
+    "team": "Tým"
   },
   "header": {
     "userMenu": "Uživatelská nabídka",
@@ -37,7 +38,7 @@
     "logout": "Odhlásit se"
   },
   "footer": {
-    "tagline": "© {year} PlanShift — plánování směn pro týmy placené po hodinách.",
+    "tagline": "© {year} ft_transcendence",
     "legal": "Právní informace",
     "privacyPolicy": "Zásady ochrany osobních údajů",
     "terms": "Podmínky používání"
@@ -66,7 +67,10 @@
     "lastSeen": "Naposledy online {time}"
   },
   "dates": {
-    "justNow": "právě teď"
+    "justNow": "právě teď",
+    "placeholder": "DD.MM.RRRR",
+    "format": "Den, měsíc a rok, např. 19.09.2026",
+    "pick": "Vybrat datum"
   },
   "status": {
     "draft": "Koncept",
@@ -103,7 +107,6 @@
     "createManager": "Vytvořit účet manažera"
   },
   "signup": {
-    "title": "Vytvořte si účet",
     "subtitle": "Založte si účet manažera a začněte plánovat směny svého týmu",
     "fullName": "Celé jméno",
     "fullNamePlaceholder": "Jana Nováková",
@@ -115,8 +118,9 @@
     "submit": "Vytvořit účet",
     "agree": "Vytvořením účtu přijímáte dokumenty {terms} a {privacy}.",
     "haveAccount": "Už máte účet?",
-    "signIn": "Přihlásit se",
-    "employeesNote": "Zaměstnanci se zde neregistrují — účet vám vytvoří váš manažer a předá vám heslo."
+    "employeesNote": "Zaměstnanci se zde neregistrují — účet vám vytvoří váš manažer a předá vám heslo.",
+    "title": "Vytvořte si účet",
+    "signIn": "Přihlásit se"
   },
   "twoFactorLogin": {
     "title": "Dvoufázové ověření",
@@ -135,7 +139,6 @@
     "lastUpdated": "Naposledy aktualizováno: {date}"
   },
   "privacy": {
-    "title": "Soukromí a moje údaje",
     "subtitle": "Jaké údaje o vašem účtu PlanShift uchovává a jaká k nim máte práva podle GDPR.",
     "holdTitle": "Co o vás uchováváme",
     "holdManager": "Vaše jméno, e-mail, ID zaměstnance a roli, profilovou fotografii a popis, vaše přátele, kdy jste byli naposledy online, jazyk, který používáte, a směny, které jste vytvořili.",
@@ -152,7 +155,8 @@
     "modalConfirm": "Trvale smazat můj účet",
     "modalText": "Tím se trvale smaže váš účet, vaše přiřazení ke směnám a záznamy o nedostupnosti. Nelze to vrátit a neexistuje žádná archivní kopie – co přesně to znamená, najdete v dokumentu {policy} (oddíl 4).",
     "typeEmail": "Pro potvrzení napište svůj e-mail ({email})",
-    "confirmPassword": "Potvrďte své heslo"
+    "confirmPassword": "Potvrďte své heslo",
+    "title": "Soukromí a moje údaje"
   },
   "employeeShifts": {
     "calendar": "Měsíční kalendář",
@@ -163,7 +167,6 @@
   "shifts": {
     "employees": "Zaměstnanci",
     "highlightShifts": "Zvýraznit směny: {name}",
-    "unavailableDays": "Nedostupnost: {days}",
     "legend": "Barvy pozic",
     "monthSchedule": "Měsíční rozpis",
     "weekSchedule": "Týdenní rozpis",
@@ -184,9 +187,7 @@
     "noneAssigned": "Nikdo nepřiřazen",
     "editingNow": "Právě upravuje",
     "editTitle": "Upravit směnu",
-    "createTitle": "Vytvořit směnu",
     "create": "Vytvořit směnu",
-    "stale": "Tuto směnu právě změnil nebo smazal někdo jiný, takže uložení bude odmítnuto. Zavřete ji a otevřete znovu, abyste viděli aktuální verzi.",
     "alsoEditing": {
       "one": "Tuto směnu upravuje také {names}.",
       "few": "Tuto směnu upravují také {names}.",
@@ -201,17 +202,15 @@
     "assignEmployees": "Přiřadit zaměstnance",
     "noStaff": "Pro tuto pozici nejsou žádní zaměstnanci.",
     "selectPositionFirst": "Nejprve vyberte pozici.",
-    "unavailable": "Nedostupný"
+    "unavailable": "Nedostupný",
+    "unavailableDays": "Nedostupnost: {days}",
+    "createTitle": "Vytvořit směnu",
+    "stale": "Tuto směnu právě změnil nebo smazal někdo jiný, takže uložení bude odmítnuto. Zavřete ji a otevřete znovu, abyste viděli aktuální verzi."
   },
   "search": {
     "placeholder": "Hledat podle pozice nebo pracovníka…",
     "label": "Hledat směny",
-    "date": "Datum",
-    "time": "Čas",
-    "position": "Pozice",
-    "workers": "Pracovníci",
     "status": "Stav",
-    "staffed": "Obsazeno",
     "results": {
       "one": "{count} výsledek",
       "few": "{count} výsledky",
@@ -223,10 +222,14 @@
     "nextPage": "Další strana",
     "noResults": "Těmto filtrům neodpovídají žádné směny.",
     "openInCalendar": "Otevřít v kalendáři",
-    "unassigned": "Nepřiřazeno"
+    "unassigned": "Nepřiřazeno",
+    "date": "Datum",
+    "time": "Čas",
+    "position": "Pozice",
+    "workers": "Pracovníci",
+    "staffed": "Obsazeno"
   },
   "analytics": {
-    "shifts": "Směny",
     "workers": "Pracovníci",
     "hours": "Hodiny",
     "openShifts": "Neobsazené směny",
@@ -237,8 +240,6 @@
     "reportFilters": "{from} – {to} · Pozice: {position} · Pracovník: {worker} · Stav: {status}",
     "generated": "Vytvořeno {time}",
     "overTime": "Směny v čase",
-    "byPosition": "Směny podle pozice",
-    "shiftStatus": "Stav směn",
     "hoursPerWorker": "Hodiny na pracovníka",
     "topWorkers": "Nejvytíženější pracovníci",
     "topPositions": "Nejčastější pozice",
@@ -249,20 +250,18 @@
       "other": "{count} směn"
     },
     "noData": "Pro tyto filtry nejsou žádná data.",
+    "shifts": "Směny",
+    "byPosition": "Směny podle pozice",
+    "shiftStatus": "Stav směn",
     "total": "celkem"
   },
   "team": {
     "addUser": "Přidat uživatele",
-    "addEmployee": "Přidat zaměstnance",
     "managePositions": "Spravovat pozice",
     "userList": "Seznam uživatelů",
-    "employeeList": "Seznam zaměstnanců",
     "avatar": "Fotografie",
     "employeeId": "ID zaměstnance",
-    "fullName": "Celé jméno",
     "role": "Role",
-    "position": "Pozice",
-    "email": "E-mail",
     "actions": "Akce",
     "empty": "Zatím žádní zaměstnanci. Přidejte prvního zaměstnance a začněte přiřazovat směny.",
     "twoFactorOn": "Dvoufázové ověření je zapnuté",
@@ -274,17 +273,11 @@
     "resetTwoFactorNote": "Udělejte to jen pro někoho, kdo ztratil telefon i záložní kódy. Dostane o tom e-mail a může si ověření znovu zapnout.",
     "yesReset": "Ano, zrušit",
     "deleteUser": "Smazat uživatele",
-    "deleteEmployee": "Smazat zaměstnance",
     "deleteUserMessage": "Opravdu chcete smazat tohoto uživatele?",
-    "deleteEmployeeMessage": "Opravdu chcete smazat tohoto zaměstnance?",
     "deleteUserNote": "Tím odstraníte uživatele i jeho přiřazení.",
-    "deleteEmployeeNote": "Tím odstraníte zaměstnance i jeho přiřazení.",
     "editUser": "Upravit uživatele",
-    "editEmployee": "Upravit zaměstnance",
     "newUser": "Přidat nového uživatele",
-    "newEmployee": "Přidat nového zaměstnance",
     "createUser": "Vytvořit uživatele",
-    "createEmployee": "Vytvořit zaměstnance",
     "fullNamePlaceholder": "Zadejte celé jméno",
     "emailLogin": "E-mail / přihlašovací jméno",
     "emailPlaceholder": "Zadejte e-mail",
@@ -293,9 +286,7 @@
     "onlyOnce": "jen jednou",
     "credentialsTitle": "Přihlašovací údaje (zobrazeny jednou)",
     "login": "Přihlašovací jméno",
-    "password": "Heslo",
     "credentialsNote": "Toto heslo se zobrazí jen jednou. Zkopírujte si ho a předejte bezpečně.",
-    "positionsTitle": "Spravovat pozice",
     "newPosition": "Název nové pozice (např. Barista)",
     "addPosition": "Přidat pozici",
     "positionList": "Seznam pozic",
@@ -303,23 +294,32 @@
     "deletePositionLabel": "Smazat pozici {name}",
     "deletePosition": "Smazat pozici",
     "deletePositionMessage": "Smazat tuto pozici?",
-    "deletePositionNote": "Pozici, kterou stále vyžaduje nějaká směna, nelze smazat."
+    "deletePositionNote": "Pozici, kterou stále vyžaduje nějaká směna, nelze smazat.",
+    "addEmployee": "Přidat zaměstnance",
+    "employeeList": "Seznam zaměstnanců",
+    "fullName": "Celé jméno",
+    "position": "Pozice",
+    "email": "E-mail",
+    "deleteEmployee": "Smazat zaměstnance",
+    "deleteEmployeeMessage": "Opravdu chcete smazat tohoto zaměstnance?",
+    "deleteEmployeeNote": "Tím odstraníte zaměstnance i jeho přiřazení.",
+    "editEmployee": "Upravit zaměstnance",
+    "newEmployee": "Přidat nového zaměstnance",
+    "createEmployee": "Vytvořit zaměstnance",
+    "password": "Heslo",
+    "positionsTitle": "Spravovat pozice"
   },
   "profile": {
     "editProfile": "Upravit profil",
     "sentYouRequest": "{name} vám poslal(a) žádost o přátelství.",
     "noBio": "Zatím žádný popis. {link}, ať ostatní vědí, kdo jste.",
     "addBio": "Přidejte ho",
-    "email": "E-mail",
     "memberSince": "Členem od",
-    "friends": "Přátelé",
-    "noFriends": "Zatím žádní přátelé."
+    "noFriends": "Zatím žádní přátelé.",
+    "email": "E-mail",
+    "friends": "Přátelé"
   },
   "friends": {
-    "addByEmail": "Přidat přítele podle e-mailu",
-    "emailPlaceholder": "kolega@example.com",
-    "send": "Poslat žádost",
-    "friends": "Přátelé",
     "online": "{online} z {total} online",
     "noFriends": "Zatím žádní přátelé. Přidejte kolegu podle jeho e-mailové adresy výše.",
     "requests": "Žádosti o přátelství",
@@ -334,10 +334,13 @@
     "remove": "Odebrat přítele",
     "removeMessage": "Odebrat uživatele {name} z vašich přátel?",
     "removeNote": "Už neuvidí váš stav online ani váš e-mail.",
-    "yesRemove": "Ano, odebrat"
+    "yesRemove": "Ano, odebrat",
+    "addByEmail": "Přidat přítele podle e-mailu",
+    "emailPlaceholder": "kolega@example.com",
+    "send": "Poslat žádost",
+    "friends": "Přátelé"
   },
   "settings": {
-    "title": "Nastavení účtu",
     "viewProfile": "Zobrazit můj profil",
     "privacyLink": "Chcete-li stáhnout nebo smazat své údaje, přejděte na stránku {link}.",
     "avatarTitle": "Profilová fotografie",
@@ -353,13 +356,9 @@
     "currentPassword": "Současné heslo",
     "currentPasswordHint": "Potřeba jen pro změnu e-mailu.",
     "saveProfile": "Uložit profil",
-    "passwordTitle": "Heslo",
     "newPassword": "Nové heslo",
     "confirmNewPassword": "Potvrzení nového hesla",
     "changePassword": "Změnit heslo",
-    "languageTitle": "Jazyk",
-    "languageHint": "V tomto jazyce se vám zobrazuje PlanShift, e-maily, které vám posílá, i vaše oznámení.",
-    "twoFactorTitle": "Dvoufázové ověření",
     "on": "Zapnuto",
     "off": "Vypnuto",
     "twoFactorIntro": "Po zadání hesla bude přihlášení vyžadovat ještě šestimístný kód z ověřovací aplikace v telefonu, například Google Authenticator, Microsoft Authenticator, 1Password nebo Authy. Kdo zjistí vaše heslo, se stejně nepřihlásí.",
@@ -388,6 +387,11 @@
     "download": "Stáhnout",
     "copied": "Zkopírováno do schránky.",
     "savedThem": "Mám je uložené",
-    "codesFileHeading": "Záložní kódy PlanShift"
+    "codesFileHeading": "Záložní kódy PlanShift",
+    "title": "Nastavení účtu",
+    "passwordTitle": "Heslo",
+    "languageTitle": "Jazyk",
+    "languageHint": "V tomto jazyce se vám zobrazuje PlanShift, e-maily, které vám posílá, i vaše oznámení.",
+    "twoFactorTitle": "Dvoufázové ověření"
   }
 }
