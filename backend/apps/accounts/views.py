@@ -1,4 +1,5 @@
-"""Sign-up, login, logout, demo logins, and the manager-side employee directory."""
+"""Sign-up, login, logout, demo logins, the required password change, registration requests,
+and the admin-side account and position directory."""
 
 from __future__ import annotations
 
@@ -23,7 +24,7 @@ from apps.scheduling.services import position_options
 from apps.twofactor import services as two_factor
 from apps.twofactor.views import begin_login
 
-from .forms import EmailAuthenticationForm, EmployeeForm, SignUpForm, UserForm
+from .forms import EmailAuthenticationForm, SignUpForm, UserForm
 from .models import User, UserRole
 
 
@@ -44,8 +45,34 @@ def _role_required(attr: str, other_home: str):
     return decorator
 
 
-manager_required = _role_required("is_manager", "employee_shifts")
-employee_required = _role_required("is_employee", "manager_shifts")
+def _home_page(user) -> str:
+    """The page that holds this account's own work: accounts, the schedule, your shifts, or the waiting room."""
+    if user.is_admin:
+        return "admin_users"
+    return "manager_shifts" if user.is_manager else "employee_shifts"
+
+
+def _requires(allowed):
+    """Require login and a role; anyone else is sent to their own home page."""
+
+    def decorator(view):
+        @wraps(view)
+        def wrapped(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect("login")
+            if not allowed(request.user):
+                return redirect(_home_page(request.user))
+            return view(request, *args, **kwargs)
+
+        return wrapped
+
+    return decorator
+
+
+admin_required = _requires(lambda user: user.is_admin)
+manager_required = _requires(lambda user: user.is_manager and not user.is_admin)
+employee_required = _requires(lambda user: user.is_employee)
+colleague_required = _requires(lambda user: user.role in (UserRole.MANAGER, UserRole.EMPLOYEE))
 
 
 @require_http_methods(["GET", "POST"])

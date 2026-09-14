@@ -41,6 +41,7 @@ class User(AbstractUser):
     open_sockets = models.PositiveIntegerField(default=0, editable=False)
     last_seen = models.DateTimeField(null=True, blank=True, editable=False)
     language = models.CharField(max_length=8, blank=True)
+
     @property
     def display_name(self) -> str:
         return self.get_full_name() or self.username
@@ -58,21 +59,21 @@ class User(AbstractUser):
         return self.role == UserRole.ADMIN
     @property
     def is_manager(self) -> bool:
-        """Runs the schedule: managers and admins."""
+        """Manager level: managers, who run the schedule, and admins, who manage the accounts."""
         return self.role in MANAGER_ROLES
     @property
     def is_employee(self) -> bool:
         return self.role == UserRole.EMPLOYEE
     def managed_users(self) -> models.QuerySet[User]:
-        """The accounts on this user's Team page: every other account for an admin, employees for a manager.
+        """The accounts on the admin's Users page: every account but their own.
 
-        Nobody manages their own account there, so an admin can't demote or delete themselves
+        Provisioning accounts is the admin's job alone; managers run the schedule. Nobody
+        manages their own account here, so an admin can't demote or delete themselves
         (their own data is under "Privacy & my data").
         """
-        if not self.is_manager:
+        if not self.is_admin:
             return User.objects.none()
-        accounts = User.objects.all() if self.is_admin else User.objects.filter(role=UserRole.EMPLOYEE)
-        return accounts.exclude(pk=self.pk)
+        return User.objects.exclude(pk=self.pk)
     def manages(self, other: User) -> bool:
         return self.managed_users().filter(pk=other.pk).exists()
     @staticmethod

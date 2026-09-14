@@ -63,24 +63,33 @@ def _bundle() -> dict[str, Any]:
 
 
 def _nav_links(user, active: str) -> list[dict[str, Any]]:
-    """Each link names its label by `id`; the browser translates it, so it switches language with the page."""
+    """Each link names its label by `id`; the browser translates it, so it switches language with the page.
+
+    One nav per job: admins provision accounts, managers run the schedule, employees work it.
+    A guest has no job yet, so no nav. The admin's Requests link counts the requests waiting.
+    """
     if not user.is_authenticated:
         return []
-    if user.is_manager:
+    counts = {}
+    if user.is_admin:
+        items = [("admin_users", "users")]
+    elif user.is_manager:
         items = [
             ("manager_shifts", "shifts"),
             ("manager_shift_search", "search"),
             ("manager_analytics", "analytics"),
-            ("manager_employees", "users" if user.is_admin else "team"),
+            ("friends", "friends"),
         ]
     else:
-        items = [("employee_shifts", "myShifts")]
-    items.append(("friends", "friends"))
-    return [{"href": reverse(name), "id": label_id, "active": name == active} for name, label_id in items]
+        items = [("employee_shifts", "myShifts"), ("friends", "friends")]
+    return [
+        {"href": reverse(name), "id": label_id, "active": name == active, "count": counts.get(name, 0)}
+        for name, label_id in items
+    ]
 
 
 def _user_context(user) -> dict[str, Any] | None:
-    return card(user) if user.is_authenticated else None
+    return {**card(user), "isAdmin": user.is_admin} if user.is_authenticated else None
 
 
 def _notifications(user) -> dict[str, Any] | None:
@@ -112,6 +121,7 @@ def render_app(request: HttpRequest, *, page: str, title: str, data: dict[str, A
         "nav": _nav_links(request.user, nav_active),
         "urls": {
             "logout": reverse("logout"),
+            "login": reverse("login"),
             "privacy": reverse("privacy_policy"),
             "terms": reverse("terms_of_service"),
             "privacyCenter": reverse("privacy_center"),

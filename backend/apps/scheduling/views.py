@@ -20,14 +20,13 @@ from django.views.decorators.http import require_GET, require_POST
 from apps.accounts.views import employee_required, manager_required
 from apps.accounts.models import User, UserRole
 from apps.notifications.messages import shift_params
-from apps.notifications.services import managers, notify
-from apps.shell import first_form_error, flash_redirect, render_app
-from apps.realtime.events import notify_managers, push_to_user
+from apps.notifications.services import notify
+from apps.shell import flash_redirect, render_app
+from apps.realtime.events import notify_managers
 
 from .forms import PositionForm
-from .models import Assignment, EmployeeUnavailability, Position, Shift, ShiftStatus
+from .models import Assignment, EmployeeUnavailability, Shift, ShiftStatus
 from .services import (
-    position_options,
     publish_shift,
     publish_shifts_in_period,
     save_shift,
