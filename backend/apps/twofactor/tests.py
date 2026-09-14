@@ -13,7 +13,6 @@ from django.utils import timezone
 from apps.accounts.models import User, UserRole
 from apps.notifications.models import Notification
 from apps.scheduling.management.commands.seed_demo import DEMO_MANAGER_EMAIL
-from apps.scheduling.models import Position
 
 from . import services, totp
 from .models import RecoveryCode, TOTPDevice

@@ -11,7 +11,7 @@ from django.utils import timezone
 from apps.accounts.models import User, UserRole
 from apps.realtime.events import user_group
 from apps.realtime.tests import IN_MEMORY_LAYER, next_event
-from apps.scheduling.models import Assignment, Position, Shift, ShiftStatus
+from apps.scheduling.models import Assignment, Shift, ShiftStatus
 
 from .models import Notification
 

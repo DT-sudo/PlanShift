@@ -8,7 +8,7 @@ from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
-from apps.scheduling.models import Assignment, EmployeeUnavailability, Position, Shift, ShiftStatus
+from apps.scheduling.models import Assignment, EmployeeUnavailability, Shift, ShiftStatus
 from apps.accounts.models import UserRole
 
 User = get_user_model()

@@ -24,8 +24,8 @@ from apps.scheduling.services import position_options
 from apps.twofactor import services as two_factor
 from apps.twofactor.views import begin_login
 
-from .forms import EmailAuthenticationForm, SignUpForm, UserForm
-from .models import User, UserRole
+from .forms import EmailAuthenticationForm, PositionForm, SignUpForm, UserForm
+from .models import Position, User, UserRole
 
 
 def _role_required(attr: str, other_home: str):
@@ -43,6 +43,7 @@ def _role_required(attr: str, other_home: str):
         return wrapped
 
     return decorator
+from .services import delete_position, position_options
 
 
 def _home_page(user) -> str:
@@ -214,11 +215,6 @@ def manager_employees(request: HttpRequest) -> HttpResponse:
             "positions": position_options(),
             "credentials": request.session.pop("one_time_credentials", None),
             "urls": {
-                "create": reverse("manager_employees_create"),
-                "update": reverse("employee_update", args=[0]),
-                "delete": reverse("employee_delete", args=[0]),
-                "resetPassword": reverse("reset_employee_password", args=[0]),
-                "resetTwoFactor": reverse("reset_employee_two_factor", args=[0]),
                 "positionCreate": reverse("position_create"),
                 "positionDelete": reverse("position_delete", args=[0]),
             },
@@ -297,3 +293,31 @@ def employee_delete(request: HttpRequest, user_id: int) -> HttpResponse:
     send_account_deleted_email(email, label, language)
     notify(managers(), "account.deleted", actor=request.user, level="warning", role=role, name=label)
     return _back(request, messages.SUCCESS, _("Deleted %(role)s: %(name)s.") % {"role": role_label.lower(), "name": label})
+
+
+def _directory_changed() -> None:
+    """Every open page re-reads itself: the accounts and positions directory is shared by all three roles."""
+    notify_everyone(DIRECTORY_CHANGED)
+
+
+@admin_required
+@require_POST
+def position_create(request: HttpRequest) -> HttpResponse:
+    form = PositionForm(request.POST)
+    if not form.is_valid():
+        return _back(request, messages.ERROR, first_form_error(form, _("Could not create position.")))
+    position = form.save()
+    notify(managers(), "position.created", actor=request.user, name=position.name)
+    _directory_changed()
+    log_security("position.created", request, position=position.pk)
+    return _back(request, messages.SUCCESS, _("Position created: %(name)s.") % {"name": position.name})
+
+
+@admin_required
+@require_POST
+def position_delete(request: HttpRequest, position_id: int) -> HttpResponse:
+    position = get_object_or_404(Position, pk=position_id)
+    delete_position(position, actor=request.user)
+    _directory_changed()
+    log_security("position.deleted", request, position=position_id)
+    return _back(request, messages.SUCCESS, _("Position deleted: %(name)s.") % {"name": position.name})

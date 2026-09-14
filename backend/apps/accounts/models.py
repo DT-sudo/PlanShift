@@ -23,14 +23,21 @@ class UserRole(models.TextChoices):
     MANAGER = "manager", _("Manager")
     EMPLOYEE = "employee", _("Employee")
 
-
 MANAGER_ROLES = (UserRole.ADMIN, UserRole.MANAGER)
+
+class Position(models.Model):
+    """A job title the admin keeps, e.g. "Barista". Shifts (apps.scheduling) reference it read-only."""
+
+    name = models.CharField(max_length=25, unique=True)
+
+    def __str__(self) -> str:
+        return self.name
 
 class User(AbstractUser):
     role = models.CharField(max_length=20, choices=UserRole.choices, default=UserRole.EMPLOYEE)
     employee_id = models.CharField(max_length=20, unique=True, default=generate_employee_id, editable=False)
     position = models.ForeignKey(
-        "scheduling.Position",
+        Position,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

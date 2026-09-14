@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from apps.accounts.models import User, UserRole
 
-from .models import Assignment, EmployeeUnavailability, Position, Shift
+from .models import Assignment, EmployeeUnavailability, Shift
 from .services import STALE_SHIFT, assign_employees_to_shift, shifts_for_employee
 
 

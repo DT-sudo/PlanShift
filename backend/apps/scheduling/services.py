@@ -15,7 +15,7 @@ from apps.accounts.models import User, UserRole
 from apps.shell import first_form_error
 
 from .forms import ShiftForm
-from .models import Assignment, EmployeeUnavailability, Position, Shift, ShiftStatus
+from .models import Assignment, EmployeeUnavailability, Shift, ShiftStatus
 
 
 def position_options() -> list[dict]:

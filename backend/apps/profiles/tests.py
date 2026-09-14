@@ -23,7 +23,6 @@ from apps.accounts.models import User, UserRole
 from apps.notifications.models import Notification
 from apps.realtime.events import user_group
 from apps.realtime.tests import IN_MEMORY_LAYER, _as_user, next_event
-from apps.scheduling.models import Position
 
 from . import presence
 from .models import Friendship, FriendshipStatus

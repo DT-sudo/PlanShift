@@ -8,7 +8,6 @@ from datetime import date, datetime, timedelta
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db.models.deletion import ProtectedError
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -20,11 +19,10 @@ from django.views.decorators.http import require_GET, require_POST
 from apps.accounts.views import employee_required, manager_required
 from apps.accounts.models import User, UserRole
 from apps.notifications.messages import shift_params
+from apps.accounts.services import position_options
 from apps.notifications.services import notify
 from apps.shell import flash_redirect, render_app
 from apps.realtime.events import notify_managers
-
-from .forms import PositionForm
 from .models import Assignment, EmployeeUnavailability, Shift, ShiftStatus
 from .services import (
     publish_shift,
@@ -267,34 +265,6 @@ def publish_all_shifts(request: HttpRequest) -> HttpResponse:
         text = ngettext("Published %(count)d shift.", "Published %(count)d shifts.", count) % {"count": count}
         return flash_redirect(request, messages.SUCCESS, text, "manager_shifts")
     return flash_redirect(request, messages.INFO, _("No draft shifts to publish."), "manager_shifts")
-
-
-# ── Positions ───────────────────────────────────────────────────────────────
-
-
-@manager_required
-@require_POST
-def position_create(request: HttpRequest) -> HttpResponse:
-    form = PositionForm(request.POST)
-    if not form.is_valid():
-        return flash_redirect(request, messages.ERROR, first_form_error(form, _("Could not create position.")), "manager_employees")
-    position = form.save()
-    notify(managers(), "position.created", actor=request.user, name=position.name)
-    return flash_redirect(request, messages.SUCCESS, _("Position created: %(name)s.") % {"name": position.name}, "manager_employees")
-
-
-@manager_required
-@require_POST
-def position_delete(request: HttpRequest, position_id: int) -> HttpResponse:
-    position = get_object_or_404(Position, pk=position_id)
-    try:
-        position.delete()
-    except ProtectedError:
-        return flash_redirect(
-            request, messages.ERROR, _("Cannot delete position: it is referenced by existing data."), "manager_employees"
-        )
-    notify(managers(), "position.deleted", actor=request.user, level="warning", name=position.name)
-    return flash_redirect(request, messages.SUCCESS, _("Position deleted: %(name)s.") % {"name": position.name}, "manager_employees")
 
 
 # ── Search and analytics ────────────────────────────────────────────────────

@@ -11,7 +11,6 @@ from django.utils import translation
 from apps.accounts.models import User, UserRole
 from apps.notifications.models import Notification
 from apps.notifications.services import notify, recent_notifications
-from apps.scheduling.models import Position
 
 PASSWORD = "correct-horse-42"
 COOKIE = settings.LANGUAGE_COOKIE_NAME

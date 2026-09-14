@@ -10,7 +10,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from apps.scheduling.management.commands.seed_demo import DEMO_EMPLOYEE_EMAIL, DEMO_MANAGER_EMAIL
-from apps.scheduling.models import Position, Shift
+from apps.scheduling.models import Shift
 
 from .forms import SignUpForm
 from .models import UserRole
