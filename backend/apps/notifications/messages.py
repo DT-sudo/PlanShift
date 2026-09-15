@@ -50,6 +50,33 @@ def shift_label(params: dict) -> str:
     return _("%(position)s, %(day)s, %(start)s–%(end)s") % {**params, "day": _day(params["date"])}
 
 
+def _shift_label(shift: dict) -> str:
+    """One shift as `apps.scheduling.services.shift_fields` recorded it."""
+    return _("%(position)s, %(day)s, %(start)s–%(end)s") % {
+        "position": shift["position"],
+        "day": _day(shift["date"]),
+        "start": shift["start_time"],
+        "end": shift["end_time"],
+    }
+
+
+def _shift_list(shifts: list[dict]) -> str:
+    """The first few shifts as one line, with "and N more" standing in for the rest."""
+    listed = "; ".join(_shift_label(shift) for shift in shifts[:MAX_LISTED_SHIFTS])
+    extra = len(shifts) - MAX_LISTED_SHIFTS
+    if extra > 0:
+        listed += "; " + ngettext("and %(count)d more", "and %(count)d more", extra) % {"count": extra}
+    return listed
+
+
+def _made_you(p: dict) -> str:
+    """"Ada Ray made you Employee, position “Barista”.": an admin giving a role (and position)."""
+    values = {"by": p["by"], "role": _role(p)}
+    if p.get("position"):
+        return _("%(by)s made you %(role)s, position “%(position)s”.") % {**values, "position": p["position"]}
+    return _("%(by)s made you %(role)s.") % values
+
+
 def _role(params: dict) -> str:
     from apps.accounts.models import UserRole
 
@@ -73,7 +100,29 @@ def _account_deleted(p):
 
 @_renders("account.role_changed")
 def _role_changed(p):
-    return _("Your role was changed"), _("%(by)s made you %(role)s.") % {"by": p["by"], "role": _role(p)}
+    title = _("Your role was changed")
+    if not p.get("was"):
+        return title, _made_you(p)
+    values = {"by": p["by"], "role": _role(p), "was": _role({"role": p["was"]})}
+    if p.get("position"):
+        return title, _("%(by)s changed your role from %(was)s to %(role)s, position “%(position)s”.") % {
+            **values,
+            "position": p["position"],
+        }
+    return title, _("%(by)s changed your role from %(was)s to %(role)s.") % values
+
+
+@_renders("account.position_changed")
+def _position_changed(p):
+    title = _("Your position was changed")
+    if not p.get("was"):
+        return title, _("%(by)s changed your position to “%(position)s”.") % p
+    return title, _("%(by)s changed your position from “%(was)s” to “%(position)s”.") % p
+
+
+@_renders("account.position_removed")
+def _position_removed(p):
+    return _("Your position was removed"), _("The position “%(position)s” no longer exists.") % p
 
 
 @_renders("account.details_updated")

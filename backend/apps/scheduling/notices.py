@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from apps.accounts.models import User
-from apps.notifications.services import notify
+from apps.notifications.services import notify, schedulers
 from apps.realtime.events import notify_managers, push_to_user
 
 from .models import Shift, ShiftStatus

@@ -21,7 +21,7 @@ from apps.accounts.views import employee_required, manager_required
 from apps.accounts.models import User, UserRole
 from apps.notifications.messages import shift_params
 from apps.accounts.services import position_options
-from apps.notifications.services import notify
+from apps.notifications.services import notify, schedulers
 from apps.shell import flash_redirect, json_error, render_app
 from apps.realtime.events import notify_managers
 
