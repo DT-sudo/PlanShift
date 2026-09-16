@@ -262,7 +262,10 @@ def shift_rows(*, query: str = "", worker_id: int | None = None, **filters) -> l
     return rows
 
 
-def shift_analytics(rows: list[dict], *, worker_id: int | None = None) -> dict:
+CZ_MAX_WEEKLY_HOURS = 48
+
+
+def shift_analytics(rows: list[dict], *, start: date, end: date, worker_id: int | None = None) -> dict:
     """KPIs and chart series over `shift_rows()` output.
 
     Shift counts describe whole shifts. Hours and workers count only the filtered
@@ -270,7 +273,6 @@ def shift_analytics(rows: list[dict], *, worker_id: int | None = None) -> dict:
     """
     by_date: Counter[str] = Counter()
     by_position: Counter[str] = Counter()
-    by_status = Counter(dict.fromkeys(ShiftStatus.values, 0))
     hours: Counter[int] = Counter()
     shift_count: Counter[int] = Counter()
     names: dict[int, str] = {}
@@ -279,7 +281,6 @@ def shift_analytics(rows: list[dict], *, worker_id: int | None = None) -> dict:
     for row in rows:
         by_date[row["date"]] += 1
         by_position[row["position"]] += 1
-        by_status[row["status"]] += 1
         open_shifts += len(row["workers"]) < row["capacity"]
         for worker in row["workers"]:
             if worker_id and worker["id"] != worker_id:
@@ -298,7 +299,7 @@ def shift_analytics(rows: list[dict], *, worker_id: int | None = None) -> dict:
         },
         "by_date": [{"date": day, "count": count} for day, count in sorted(by_date.items())],
         "by_position": [{"position": name, "count": count} for name, count in sorted(by_position.items())],
-        "by_status": [{"status": status, "count": count} for status, count in by_status.items()],
+        "max_hours": round(CZ_MAX_WEEKLY_HOURS * ((end - start).days + 1) / 7, 1),
         "top_workers": [
             {"worker": names[wid], "hours": round(hours[wid], 1), "shifts": shift_count[wid]} for wid in ranked[:10]
         ],

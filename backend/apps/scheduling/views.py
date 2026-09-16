@@ -349,13 +349,29 @@ def manager_shift_search(request: HttpRequest) -> HttpResponse:
     )
 
 
+def _parse_month(value: str | None, default: date) -> date:
+    """Parse YYYY-MM as the first of that month; the default when it is missing or invalid."""
+    try:
+        return datetime.strptime((value or "").strip(), "%Y-%m").date()
+    except ValueError:
+        return default
+
+
 def _analytics_rows(request: HttpRequest) -> tuple[dict, list[dict]]:
-    """The filters, with the date range defaulting to the 30 days up to today, and the rows they select."""
+    """The filters and the rows they select.
+
+    Analytics is read by the month: the range runs from the first of one month to the last day
+    of another, this month by default. Drafts are never counted - they are a plan nobody has
+    been told about, so they say nothing about the work done or promised.
+    """
     filters = _shift_filters(request)
-    end = filters["end"] or timezone.localdate()
-    start = filters["start"] or end - timedelta(days=ANALYTICS_DEFAULT_DAYS - 1)
-    filters["start"], filters["end"] = min(start, end), max(start, end)
-    return filters, shift_rows(manager_id=request.user.id, **filters)
+    first_of_this_month = timezone.localdate().replace(day=1)
+    start = _parse_month(request.GET.get("date_from"), first_of_this_month)
+    last = _parse_month(request.GET.get("date_to"), first_of_this_month)
+    start, last = min(start, last), max(start, last)
+    filters["start"], filters["end"] = start, _month_bounds(last)[1]
+    filters["status"] = ShiftStatus.PUBLISHED
+    return filters, shift_rows(**filters)
 
 
 @manager_required
@@ -368,8 +384,10 @@ def manager_analytics(request: HttpRequest) -> HttpResponse:
         title=_("Workforce Analytics"),
         nav_active="manager_analytics",
         data={
-            **_filter_bar(request, date_from=filters["start"].isoformat(), date_to=filters["end"].isoformat()),
-            "analytics": shift_analytics(rows, worker_id=filters["worker_id"]),
+            **_filter_bar(
+                request, date_from=filters["start"].strftime("%Y-%m"), date_to=filters["end"].strftime("%Y-%m")
+            ),
+            "analytics": shift_analytics(rows, start=filters["start"], end=filters["end"], worker_id=filters["worker_id"]),
             "urls": {"exportCsv": reverse("manager_analytics_export_csv")},
         },
     )
@@ -385,7 +403,7 @@ def manager_analytics_export_csv(request: HttpRequest) -> HttpResponse:
 
     writer = csv.writer(response)
     writer.writerow(
-        [_("Date"), _("Start"), _("End"), _("Position"), _("Status"), _("Capacity"), _("Assigned"), _("Worker hours"), _("Workers")]
+        [_("Date"), _("Start"), _("End"), _("Position"), _("Capacity"), _("Assigned"), _("Worker hours"), _("Workers")]
     )
     for row in rows:
         writer.writerow(
@@ -394,7 +412,6 @@ def manager_analytics_export_csv(request: HttpRequest) -> HttpResponse:
                 row["start_time"],
                 row["end_time"],
                 row["position"],
-                ShiftStatus(row["status"]).label,
                 row["capacity"],
                 len(row["workers"]),
                 round(row["hours"] * len(row["workers"]), 2),
