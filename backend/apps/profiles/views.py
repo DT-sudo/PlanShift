@@ -156,6 +156,10 @@ def friends(request: HttpRequest) -> HttpResponse:
     )
 
 
+def _now_friends(request: HttpRequest, other: User) -> HttpResponse:
+    return _back(request, messages.SUCCESS, _("You and %(name)s are now friends.") % {"name": other.display_name})
+
+
 def _back(request: HttpRequest, level: int, text: str) -> HttpResponse:
     """Back to the page the action came from (a profile or the Friends page)."""
     target = request.POST.get("next", "")
@@ -164,27 +168,21 @@ def _back(request: HttpRequest, level: int, text: str) -> HttpResponse:
     return flash_redirect(request, level, text, target)
 
 
-@login_required
+@colleague_required
 @require_POST
 def friend_request(request: HttpRequest) -> HttpResponse:
-    """Ask by email (the Friends page) or by id (the button on a profile you can already see)."""
+    """Ask by id: the button on a profile or in the colleagues directory."""
     user_id = request.POST.get("user_id", "")
-    if user_id:
-        receiver = User.objects.filter(pk=user_id, is_active=True).first() if user_id.isdigit() else None
-        if receiver is None or not services.can_view(request.user, receiver):
-            return _back(request, messages.ERROR, _("That person was not found."))
-    else:
-        email = (request.POST.get("email") or "").strip().lower()
-        receiver = User.objects.filter(username=email, is_active=True).first() if email else None
-        if receiver is None:
-            return _back(request, messages.ERROR, _("No account uses that email address."))
+    receiver = User.objects.filter(pk=user_id, is_active=True).first() if user_id.isdigit() else None
+    if receiver is None or not services.can_view(request.user, receiver):
+        return _back(request, messages.ERROR, _("That person was not found."))
 
     try:
         friendship = services.send_request(request.user, receiver)
     except services.FriendshipError as error:
         return _back(request, messages.ERROR, str(error))
     if friendship.accepted:
-        return _back(request, messages.SUCCESS, _("You and %(name)s are now friends.") % {"name": receiver.display_name})
+        return _now_friends(request, receiver)
     return _back(request, messages.SUCCESS, _("Friend request sent to %(name)s.") % {"name": receiver.display_name})
 
 

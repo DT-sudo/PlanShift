@@ -102,10 +102,11 @@
     "passwordPlaceholder": "Enter your password",
     "submit": "Sign in",
     "newHere": "New here?",
+    "requestAccount": "Request an account",
     "createManager": "Create a manager account"
   },
   "signup": {
-    "subtitle": "Set up a manager account and start scheduling your team",
+    "subtitle": "An administrator approves your request and gives you your role",
     "fullName": "Full name",
     "fullNamePlaceholder": "Jane Doe",
     "emailHint": "You will use this address to sign in.",
@@ -113,10 +114,10 @@
     "passwordHint": "Minimum 8 characters, not entirely numeric, and not similar to your name or email.",
     "confirmPassword": "Confirm password",
     "confirmPlaceholder": "Repeat your password",
-    "submit": "Create account",
-    "agree": "By creating an account you agree to our {terms} and {privacy}.",
+    "submit": "Send request",
+    "agree": "By sending a request you agree to our {terms} and {privacy}.",
     "haveAccount": "Already have an account?",
-    "employeesNote": "Employees do not sign up here — your manager creates your account and gives you your password.",
+    "employeesNote": "You can sign in straight away, but you reach the app once an administrator approves your request.",
     "title": "Create your account",
     "signIn": "Sign in"
   },

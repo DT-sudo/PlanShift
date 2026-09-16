@@ -13,8 +13,8 @@ const withPersonStatus = (data, event) =>
     : data;
 
 export function ProfilePage() {
-  const { urls: pageUrls } = getBootstrap();
-  const { person, relation, friends, urls } = useLivePageData(getBootstrap().data, FRIEND_EVENTS, withPersonStatus);
+  const { urls: pageUrls, user: viewer } = getBootstrap();
+  const { person, relation, friends, urls } = useLivePageData(FRIEND_EVENTS, withPersonStatus);
   const isSelf = relation.state === 'self';
 
   return (
@@ -37,7 +37,7 @@ export function ProfilePage() {
                     <Settings size={16} />
                     {t('profile.editProfile')}
                   </a>
-                ) : (
+                ) : viewer.isAdmin ? null : (
                   <FriendActions person={person} relation={relation} urls={urls} />
                 )}
               </div>
@@ -64,7 +64,7 @@ export function ProfilePage() {
             <dl className="profile-facts mt-5">
               {person.email ? (
                 <>
-                  <dt>{t('profile.email')}</dt>
+                  <dt>{t('login.email')}</dt>
                   <dd>
                     <a className="footer-link" dir="ltr" href={`mailto:${person.email}`}>
                       {person.email}
@@ -74,13 +74,13 @@ export function ProfilePage() {
               ) : null}
               <dt>{t('profile.memberSince')}</dt>
               <dd>{formatMonth(person.memberSince)}</dd>
-              <dt>{t('profile.friends')}</dt>
+              <dt>{t('nav.friends')}</dt>
               <dd>{person.friendCount}</dd>
             </dl>
           </section>
 
           {friends ? (
-            <PeopleCard id="profileFriends" title={t('profile.friends')} empty={t('profile.noFriends')}>
+            <PeopleCard id="profileFriends" title={t('nav.friends')} empty={t('profile.noFriends')}>
               {friends.map((friend) => (
                 <PersonRow key={friend.id} person={friend} detail={friend.role} />
               ))}

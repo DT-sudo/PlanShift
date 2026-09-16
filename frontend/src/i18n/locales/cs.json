@@ -104,10 +104,11 @@
     "passwordPlaceholder": "Zadejte heslo",
     "submit": "Přihlásit se",
     "newHere": "Jste tu poprvé?",
+    "requestAccount": "Požádat o účet",
     "createManager": "Vytvořit účet manažera"
   },
   "signup": {
-    "subtitle": "Založte si účet manažera a začněte plánovat směny svého týmu",
+    "subtitle": "Administrátor vaši žádost schválí a přidělí vám roli",
     "fullName": "Celé jméno",
     "fullNamePlaceholder": "Jana Nováková",
     "emailHint": "Touto adresou se budete přihlašovat.",
@@ -115,10 +116,10 @@
     "passwordHint": "Alespoň 8 znaků, ne jen číslice a nepodobné vašemu jménu ani e-mailu.",
     "confirmPassword": "Potvrzení hesla",
     "confirmPlaceholder": "Zopakujte heslo",
-    "submit": "Vytvořit účet",
-    "agree": "Vytvořením účtu přijímáte dokumenty {terms} a {privacy}.",
+    "submit": "Odeslat žádost",
+    "agree": "Odesláním žádosti souhlasíte s našimi {terms} a {privacy}.",
     "haveAccount": "Už máte účet?",
-    "employeesNote": "Zaměstnanci se zde neregistrují — účet vám vytvoří váš manažer a předá vám heslo.",
+    "employeesNote": "Přihlásit se můžete hned, do aplikace se ale dostanete, až administrátor vaši žádost schválí.",
     "title": "Vytvořte si účet",
     "signIn": "Přihlásit se"
   },
