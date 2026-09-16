@@ -155,16 +155,36 @@ def _shift_assigned(p):
     return _("New shift assigned"), shift_label(p["shift"])
 
 
+@_renders("registration.requested")
+def _registration_requested(p):
+    return _("New registration request"), _("%(name)s (%(email)s) is waiting for approval.") % p
+
+
+@_renders("registration.approved")
+def _registration_approved(p):
+    return _("Your registration was approved"), _made_you(p)
+
+
+@_renders("shift.assigned")
+def _shifts_assigned(p):
+    count = len(p["shifts"])
+    if count == 1:
+        title = _("New shift assigned")
+    else:
+        title = ngettext("%(count)d new shift assigned", "%(count)d new shifts assigned", count) % {"count": count}
+    return title, _shift_list(p["shifts"])
+
+
 @_renders("shift.removed")
 def _shift_removed(p):
-    return _("Removed from a shift"), shift_label(p["shift"])
+    return _("Removed from a shift"), _shift_label(p["shift"])
 
 
 @_renders("shift.changed")
 def _shift_changed(p):
     return _("Shift changed"), _("%(before)s is now %(after)s") % {
-        "before": shift_label(p["before"]),
-        "after": shift_label(p["after"]),
+        "before": _shift_label(p["before"]),
+        "after": _shift_label(p["after"]),
     }
 
 
