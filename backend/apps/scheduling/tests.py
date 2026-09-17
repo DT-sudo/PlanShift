@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from datetime import date, time, timedelta
 
-from django.contrib.messages import get_messages
-
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
@@ -13,7 +11,7 @@ from apps.accounts.models import Position, User, UserRole
 
 from .forms import ShiftForm
 from .models import MIDNIGHT, Assignment, EmployeeUnavailability, Shift, ShiftStatus
-from .services import STALE_SHIFT, assign_employees_to_shift, shift_fields, shifts_for_employee
+from .services import IN_THE_PAST, STALE_SHIFT, assign_employees_to_shift, shift_fields, shifts_for_employee
 
 
 class HardConstraintTests(TestCase):
@@ -301,7 +299,58 @@ class ShiftVersionTests(TestCase):
 
         self.shift.refresh_from_db()
         self.assertEqual((self.shift.start_time, self.shift.version), (time(10, 0), 2))
-        self.assertIn(STALE_SHIFT, [message.message for message in get_messages(response.wsgi_request)])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"], STALE_SHIFT)
+
+
+class ShiftInThePastTests(TestCase):
+    """A started shift can never be changed again, so no form may write one."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.barista = Position.objects.create(name="Barista")
+        cls.manager = User.objects.create_user(username="manager@example.com", password="x", role=UserRole.MANAGER)
+
+    def setUp(self) -> None:
+        self.client.force_login(self.manager)
+
+    def _create(self, day: date, start: str = "09:00", end: str = "17:00"):
+        data = {"date": day.isoformat(), "start_time": start, "end_time": end, "position": self.barista.id, "capacity": 1}
+        return self.client.post(reverse("create_shift"), data)
+
+    def test_a_shift_on_a_past_day_is_refused_at_the_date(self):
+        response = self._create(timezone.localdate() - timedelta(days=1))
+
+        self.assertEqual((response.status_code, response.json()["field"]), (400, "date"))
+        self.assertEqual(response.json()["error"], IN_THE_PAST)
+        self.assertFalse(Shift.objects.exists())
+
+    def test_a_shift_that_started_earlier_today_is_refused_at_the_start_time(self):
+        now = timezone.localtime()
+        if now.hour == 0:
+            self.skipTest("no earlier hour today to start from")
+        response = self._create(now.date(), start="00:00", end="24:00")
+
+        self.assertEqual((response.status_code, response.json()["field"]), (400, "start_time"))
+        self.assertFalse(Shift.objects.exists())
+
+    def test_an_upcoming_shift_can_not_be_moved_into_the_past(self):
+        shift = Shift.objects.create(
+            date=timezone.localdate() + timedelta(days=2), start_time=time(9, 0), end_time=time(17, 0),
+            position=self.barista, created_by=self.manager,
+        )
+        data = {"date": (timezone.localdate() - timedelta(days=2)).isoformat(), "start_time": "09:00", "end_time": "17:00"}
+        response = self.client.post(
+            reverse("update_shift", args=[shift.id]), {**data, "position": self.barista.id, "capacity": 1, "version": 1}
+        )
+
+        self.assertEqual(response.status_code, 400)
+        shift.refresh_from_db()
+        self.assertEqual((shift.date, shift.version), (timezone.localdate() + timedelta(days=2), 1))
+
+    def test_a_shift_tomorrow_is_saved(self):
+        self.assertEqual(self._create(timezone.localdate() + timedelta(days=1)).status_code, 200)
+        self.assertEqual(Shift.objects.count(), 1)
 
 
 class CalendarViewTests(TestCase):
@@ -332,3 +381,68 @@ class CalendarViewTests(TestCase):
 
         self.assertEqual(len(self._data(view="month")["shifts"]), 2)
         self.assertEqual(self._data()["view"], "month")
+
+
+class DraftUnavailabilityTests(TestCase):
+    """An employee may mark a day off while a draft holds them, and comes off the draft with it."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.position = Position.objects.create(name="Barista")
+        cls.manager = User.objects.create_user(username="manager@example.com", password="x", role=UserRole.MANAGER)
+        cls.alice = User.objects.create_user(
+            username="alice@example.com", password="x", role=UserRole.EMPLOYEE, position=cls.position
+        )
+
+    def setUp(self) -> None:
+        self.day = timezone.localdate() + timedelta(days=7)
+        self.client.force_login(self.alice)
+
+    def _shift(self, status: str) -> Shift:
+        shift = Shift.objects.create(
+            date=self.day, start_time=time(9, 0), end_time=time(17, 0), position=self.position,
+            created_by=self.manager, status=status,
+        )
+        shift.assignments.create(employee=self.alice)
+        return shift
+
+    def _toggle(self):
+        return self.client.post(reverse("employee_unavailability_toggle"), {"date": self.day.isoformat()})
+
+    def test_a_day_held_only_by_a_draft_can_be_marked_off(self):
+        draft = self._shift(ShiftStatus.DRAFT)
+
+        response = self._toggle()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["unavailable"])
+        self.assertFalse(draft.assignments.exists())
+        self.assertTrue(EmployeeUnavailability.objects.filter(employee=self.alice, date=self.day).exists())
+
+    def test_a_published_shift_still_blocks_the_day(self):
+        published = self._shift(ShiftStatus.PUBLISHED)
+
+        response = self._toggle()
+
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue(published.assignments.exists())
+        self.assertFalse(EmployeeUnavailability.objects.filter(employee=self.alice, date=self.day).exists())
+
+    def test_a_published_shift_blocks_the_day_even_beside_a_draft(self):
+        self._shift(ShiftStatus.DRAFT)
+        Shift.objects.create(
+            date=self.day, start_time=time(18, 0), end_time=time(22, 0), position=self.position,
+            created_by=self.manager, status=ShiftStatus.PUBLISHED,
+        ).assignments.create(employee=self.alice)
+
+        self.assertEqual(self._toggle().status_code, 400)
+        self.assertEqual(Assignment.objects.filter(employee=self.alice).count(), 2)
+
+    def test_becoming_available_again_does_not_put_them_back_on_the_draft(self):
+        draft = self._shift(ShiftStatus.DRAFT)
+        self._toggle()
+
+        self._toggle()
+
+        self.assertFalse(EmployeeUnavailability.objects.filter(employee=self.alice, date=self.day).exists())
+        self.assertFalse(draft.assignments.exists())

@@ -8,12 +8,11 @@ from django.core import mail
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
-
 from apps.scheduling.management.commands.seed_demo import DEMO_EMPLOYEE_EMAIL, DEMO_MANAGER_EMAIL
 from apps.scheduling.models import Shift
 
 from .forms import SignUpForm
-from .models import UserRole
+from .models import Position, UserRole
 
 User = get_user_model()
 
@@ -36,6 +35,18 @@ class SignUpTests(TestCase):
 
         user = User.objects.get(email="jane.doe@example.com")
         self.assertEqual(user.role, UserRole.MANAGER)
+        self.assertEqual(user.first_name, "Jane")
+        self.assertEqual(user.last_name, "Doe")
+        self.assertEqual(user.username, "jane.doe@example.com")
+        self.assertEqual(response.wsgi_request.user, user)
+
+    def test_signup_creates_a_guest_and_logs_them_in(self):
+        """Sign-up is a registration request: signed in, but only as far as the waiting page."""
+        response = self.client.post(reverse("signup"), self._payload(), follow=True)
+
+        user = User.objects.get(email="jane.doe@example.com")
+        self.assertEqual(user.role, UserRole.GUEST)
+        self.assertRedirects(response, reverse("registration_pending"))
         self.assertEqual(user.first_name, "Jane")
         self.assertEqual(user.last_name, "Doe")
         self.assertEqual(user.username, "jane.doe@example.com")
@@ -234,19 +245,67 @@ class EmployeeFormValidationTests(TestCase):
         self.assertEqual(User.objects.filter(email="pat@example.com").count(), 1)
 
 
+class AccountFormValidationTests(TestCase):
+    """The admin's account form validates on the server, not only in the browser."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.position = Position.objects.create(name="Barista")
+        cls.admin = User.objects.create_user(
+            username="boss@example.com",
+            email="boss@example.com",
+            password="correct-horse-42",
+            role=UserRole.ADMIN,
+        )
+
+    def setUp(self) -> None:
+        self.client.force_login(self.admin)
+
+    def _create(self, **overrides):
+        payload = {
+            "full_name": "Pat Smith",
+            "email": "pat@example.com",
+            "role": UserRole.EMPLOYEE,
+            "position": self.position.id,
+        }
+        payload.update(overrides)
+        return self.client.post(reverse("admin_user_create"), payload, follow=True)
+
+    def test_valid_employee_is_created_with_a_hashed_generated_password(self):
+        self._create()
+
+        employee = User.objects.get(email="pat@example.com")
+        self.assertEqual(employee.role, UserRole.EMPLOYEE)
+        self.assertTrue(employee.password.startswith("pbkdf2_"))
+
+    def test_invalid_email_is_rejected_server_side(self):
+        self._create(email="definitely-not-an-email")
+        self.assertFalse(User.objects.filter(first_name="Pat").exists())
+
+    def test_missing_position_is_rejected_server_side(self):
+        self._create(position="")
+        self.assertFalse(User.objects.filter(first_name="Pat").exists())
+
+    def test_duplicate_email_is_rejected(self):
+        self._create()
+        self._create(full_name="Other Person")
+
+        self.assertEqual(User.objects.filter(email="pat@example.com").count(), 1)
+
+
 class EmployeeDeleteGdprTests(TestCase):
-    """Manager-initiated erasure is the other door to the same GDPR right that
+    """Admin-initiated erasure is the other door to the same GDPR right that
     apps.privacy's self-service delete exercises, and must close the same way:
     a confirmation email to the person whose data was erased."""
 
     @classmethod
     def setUpTestData(cls) -> None:
         cls.position = Position.objects.create(name="Barista")
-        cls.manager = User.objects.create_user(
+        cls.admin = User.objects.create_user(
             username="boss@example.com",
             email="boss@example.com",
             password="correct-horse-42",
-            role=UserRole.MANAGER,
+            role=UserRole.ADMIN,
         )
         cls.employee = User.objects.create_user(
             username="pat@example.com",
@@ -258,10 +317,10 @@ class EmployeeDeleteGdprTests(TestCase):
         )
 
     def setUp(self) -> None:
-        self.client.force_login(self.manager)
+        self.client.force_login(self.admin)
 
     def test_delete_removes_the_employee(self):
-        self.client.post(reverse("employee_delete", args=[self.employee.id]), follow=True)
+        self.client.post(reverse("admin_user_delete", args=[self.employee.id]), follow=True)
         self.assertFalse(User.objects.filter(email="pat@example.com").exists())
 
     def test_delete_sends_a_confirmation_email_to_the_employee_not_the_manager(self):
@@ -273,10 +332,19 @@ class EmployeeDeleteGdprTests(TestCase):
         self.assertIn("deleted", sent.subject.lower())
         self.assertIn("Pat Smith", sent.body)
 
+    def test_delete_sends_a_confirmation_email_to_the_employee_not_the_admin(self):
+        self.client.post(reverse("admin_user_delete", args=[self.employee.id]), follow=True)
+
+        self.assertEqual(len(mail.outbox), 1)
+        sent = mail.outbox[0]
+        self.assertEqual(sent.to, ["pat@example.com"])
+        self.assertIn("deleted", sent.subject.lower())
+        self.assertIn("Pat Smith", sent.body)
+
     def test_a_flaky_mail_backend_does_not_block_the_deletion(self):
         with self.settings(EMAIL_BACKEND="django.core.mail.backends.dummy.EmailBackend"):
             response = self.client.post(
-                reverse("employee_delete", args=[self.employee.id]), follow=True
+                reverse("admin_user_delete", args=[self.employee.id]), follow=True
             )
 
         self.assertFalse(User.objects.filter(email="pat@example.com").exists())
@@ -284,7 +352,7 @@ class EmployeeDeleteGdprTests(TestCase):
 
 
 class RolePermissionTests(TestCase):
-    """Admins manage every other account and its role; managers manage employees only."""
+    """Admins provision every account, its role and the positions; managers only run the schedule."""
 
     @classmethod
     def setUpTestData(cls) -> None:
@@ -297,16 +365,25 @@ class RolePermissionTests(TestCase):
 
     def _team(self, user) -> dict:
         self.client.force_login(user)
-        return self.client.get(reverse("manager_employees")).context["bootstrap"]["data"]
+        return self.client.get(reverse("admin_users")).context["bootstrap"]["data"]
 
     def _update(self, user, target, **fields):
         self.client.force_login(user)
-        data = {"full_name": "Some Name", "email": target.email, "position": target.position_id or "", **fields}
-        return self.client.post(reverse("employee_update", args=[target.id]), data)
+        data = {
+            "full_name": "Some Name",
+            "email": target.email,
+            "role": target.role,
+            "position": target.position_id or "",
+            **fields,
+        }
+        return self.client.post(reverse("admin_user_update", args=[target.id]), data)
 
-    def _shift_by(self, manager) -> None:
-        Shift.objects.create(
-            date=date(2030, 6, 3), start_time=time(9, 0), end_time=time(17, 0), position=self.position, created_by=manager
+    def _shift_by(self, manager) -> Shift:
+        return self._shift_on(date(2030, 6, 3), manager=manager)
+
+    def _shift_on(self, day: date, manager=None) -> Shift:
+        return Shift.objects.create(
+            date=day, start_time=time(9, 0), end_time=time(17, 0), position=self.position, created_by=manager or self.manager
         )
 
     def test_admin_sees_every_other_account_and_the_roles(self):
@@ -321,6 +398,27 @@ class RolePermissionTests(TestCase):
         self.assertEqual([row["email"] for row in data["employees"]], ["pat@example.com"])
         self.assertIsNone(data["roles"])
 
+    def test_managers_have_no_account_management_at_all(self):
+        """Provisioning accounts and positions is the admin's job; a manager is sent back to the schedule."""
+        self.client.force_login(self.manager)
+        pages = (
+            ("admin_users", ()),
+            ("admin_user_create", ()),
+            ("admin_user_update", (self.employee.id,)),
+            ("admin_user_delete", (self.employee.id,)),
+            ("admin_user_reset_password", (self.employee.id,)),
+            ("admin_user_reset_two_factor", (self.employee.id,)),
+            ("position_create", ()),
+            ("position_delete", (self.position.id,)),
+        )
+        for name, args in pages:
+            with self.subTest(name=name):
+                url = reverse(name, args=args)
+                response = self.client.get(url) if not args and name == "admin_users" else self.client.post(url)
+                self.assertRedirects(response, reverse("manager_shifts"))
+        self.assertTrue(User.objects.filter(pk=self.employee.pk).exists())
+        self.assertTrue(Position.objects.filter(pk=self.position.pk).exists())
+
     def test_admin_changes_a_role(self):
         self._update(self.admin, self.employee, role=UserRole.MANAGER)
 
@@ -329,7 +427,7 @@ class RolePermissionTests(TestCase):
 
     def test_admin_creates_a_manager_but_an_employee_needs_a_position(self):
         self.client.force_login(self.admin)
-        url = reverse("manager_employees_create")
+        url = reverse("admin_user_create")
         self.client.post(url, {"full_name": "New Boss", "email": "new@example.com", "role": UserRole.MANAGER})
         self.client.post(url, {"full_name": "No Post", "email": "nopost@example.com", "role": UserRole.EMPLOYEE})
 
@@ -342,6 +440,10 @@ class RolePermissionTests(TestCase):
         self._update(self.manager, self.employee, role=UserRole.ADMIN)
         self.employee.refresh_from_db()
         self.assertEqual(self.employee.role, UserRole.EMPLOYEE)
+
+    def test_employees_have_no_account_management_either(self):
+        self.client.force_login(self.employee)
+        self.assertRedirects(self.client.get(reverse("admin_users")), reverse("employee_shifts"))
 
     def test_admin_cannot_manage_their_own_account(self):
         self.assertEqual(self._update(self.admin, self.admin, role=UserRole.EMPLOYEE).status_code, 404)
@@ -365,6 +467,15 @@ class RolePermissionTests(TestCase):
     def test_admin_runs_the_schedule_like_a_manager(self):
         self.client.force_login(self.admin)
         self.assertEqual(self.client.get(reverse("manager_shifts")).status_code, 200)
+
+    def test_demoting_a_manager_keeps_the_shifts_they_wrote(self):
+        shift = self._shift_by(self.manager)
+
+        self._update(self.admin, self.manager, role=UserRole.EMPLOYEE, position=self.position.id)
+
+        self.manager.refresh_from_db()
+        self.assertEqual(self.manager.role, UserRole.EMPLOYEE)
+        self.assertTrue(Shift.objects.filter(pk=shift.pk).exists())
 
     def test_make_admin_command_promotes_an_account(self):
         call_command("make_admin", "BOSS@example.com", stdout=StringIO())

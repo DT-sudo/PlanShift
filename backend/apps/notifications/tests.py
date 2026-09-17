@@ -4,11 +4,11 @@ from datetime import time, timedelta
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.accounts.models import User, UserRole
+from apps.accounts.models import Position, User, UserRole
 from apps.realtime.events import user_group
 from apps.realtime.tests import IN_MEMORY_LAYER, next_event
 from apps.scheduling.models import Assignment, Shift, ShiftStatus
@@ -25,6 +25,9 @@ class NotificationTestCase(TestCase):
         )
         cls.other_manager = User.objects.create_user(
             username="other@example.com", password="x", role=UserRole.MANAGER
+        )
+        cls.admin = User.objects.create_user(
+            username="admin@example.com", password="x", role=UserRole.ADMIN, first_name="Ada", last_name="Ray"
         )
         cls.alice, cls.bob, cls.carol = (
             User.objects.create_user(
@@ -80,7 +83,9 @@ class RecipientTests(NotificationTestCase):
 
         self._post(self.manager, "publish_shift", shift.id)
 
-        self.assertEqual(self._received(), {self.alice: ["New shift published"]})
+        self.assertEqual(
+            self._received(), {self.alice: ["New shift assigned"], self.other_manager: ["Maya Lee published 1 shift"]}
+        )
 
     def test_publish_all_sends_one_notification_per_employee(self):
         self._shift(status=ShiftStatus.DRAFT, employees=[self.alice, self.bob])
@@ -89,15 +94,53 @@ class RecipientTests(NotificationTestCase):
         self._post(self.manager, "publish_all_shifts", data={"date": self.day.isoformat()})
 
         self.assertEqual(
-            self._received(), {self.alice: ["2 new shifts published"], self.bob: ["New shift published"]}
+            self._received(),
+            {
+                self.alice: ["2 new shifts assigned"],
+                self.bob: ["New shift assigned"],
+                self.other_manager: ["Maya Lee published 2 shifts"],
+            },
         )
 
-    def test_editing_a_draft_notifies_nobody(self):
+    def test_a_refused_save_names_the_employee_and_notifies_nobody(self):
+        """The form shows the refusal at the checkbox of the employee it concerns; it is no notification."""
+        self._shift(employees=[self.alice])
+        overlapping = self._shift(status=ShiftStatus.DRAFT)
+        self.client.force_login(self.manager)
+
+        response = self.client.post(
+            reverse("update_shift", args=[overlapping.id]),
+            self._shift_form(overlapping, [self.bob, self.alice], start="12:00", end="18:00"),
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual((response.json()["field"], response.json()["employee"]), ("employee_ids", self.alice.id))
+        self.assertEqual(self._received(), {})
+
+    def test_an_end_before_the_start_is_refused_at_the_end_field(self):
+        shift = self._shift(status=ShiftStatus.DRAFT)
+        self.client.force_login(self.manager)
+
+        response = self.client.post(reverse("update_shift", args=[shift.id]), self._shift_form(shift, [], start="18:00", end="09:00"))
+
+        self.assertEqual(response.json()["field"], "end_time")
+        self.assertEqual(self._received(), {})
+
+    def test_editing_a_draft_tells_only_the_other_managers(self):
+        """Employees never see a draft; the managers share the schedule it is on."""
         shift = self._shift(status=ShiftStatus.DRAFT, employees=[self.alice])
 
         self._post(self.manager, "update_shift", shift.id, data=self._shift_form(shift, [self.bob], start="10:00"))
 
-        self.assertEqual(self._received(), {})
+        self.assertEqual(self._received(), {self.other_manager: ["Maya Lee edited a shift"]})
+
+    def test_creating_a_shift_tells_the_other_managers_but_not_the_admin(self):
+        """The admin never opens the schedule, so it is not told what happens on it."""
+        form = {"date": self.day.isoformat(), "start_time": "09:00", "end_time": "17:00", "position": self.barista.id, "capacity": 1}
+
+        self._post(self.manager, "create_shift", data=form)
+
+        self.assertEqual(self._received(), {self.other_manager: ["Maya Lee added a shift"]})
 
     def test_editing_a_published_shift_tells_each_employee_what_changed_for_them(self):
         shift = self._shift(employees=[self.alice, self.bob])
@@ -108,7 +151,12 @@ class RecipientTests(NotificationTestCase):
 
         self.assertEqual(
             self._received(),
-            {self.alice: ["Shift changed"], self.bob: ["Removed from a shift"], self.carol: ["New shift assigned"]},
+            {
+                self.alice: ["Shift changed"],
+                self.bob: ["Removed from a shift"],
+                self.carol: ["New shift assigned"],
+                self.other_manager: ["Maya Lee edited a shift"],
+            },
         )
 
     def test_deleting_a_published_shift_notifies_its_employees(self):
@@ -116,37 +164,99 @@ class RecipientTests(NotificationTestCase):
 
         self._post(self.manager, "delete_shift", shift.id)
 
-        self.assertEqual(self._received(), {self.alice: ["Shift cancelled"]})
+        self.assertEqual(self._received(), {self.alice: ["Shift cancelled"], self.other_manager: ["Maya Lee deleted a shift"]})
 
-    def test_position_changes_notify_the_other_managers(self):
-        self._post(self.manager, "position_create", data={"name": "Cook"})
-        self._post(self.manager, "position_delete", Position.objects.get(name="Cook").id)
-
-        self.assertEqual(self._received(), {self.other_manager: ["Position created", "Position deleted"]})
-
-    def test_employee_changes_notify_the_other_managers_and_the_employee(self):
-        self._post(
-            self.manager,
-            "employee_update",
-            self.alice.id,
-            data={"full_name": "Alice Novak", "email": "alice@example.com", "position": self.barista.id},
-        )
-        self._post(self.manager, "reset_employee_password", self.alice.id)
+    def test_position_changes_notify_the_managers(self):
+        self._post(self.admin, "position_create", data={"name": "Cook"})
+        self._post(self.admin, "position_delete", Position.objects.get(name="Cook").id)
 
         self.assertEqual(
             self._received(),
             {
+                self.manager: ["Position created", "Position deleted"],
+                self.other_manager: ["Position created", "Position deleted"],
+            },
+        )
+
+    def test_employee_changes_notify_the_managers_and_the_employee(self):
+        self._post(
+            self.admin,
+            "admin_user_update",
+            self.alice.id,
+            data={
+                "full_name": "Alice Novak",
+                "email": "alice@example.com",
+                "role": UserRole.EMPLOYEE,
+                "position": self.barista.id,
+            },
+        )
+        self._post(self.admin, "admin_user_reset_password", self.alice.id)
+
+        self.assertEqual(
+            self._received(),
+            {
+                self.manager: ["Employee updated"],
                 self.other_manager: ["Employee updated"],
                 self.alice: ["Your details were updated", "Your password was reset"],
             },
         )
 
-    def test_deleting_an_employee_notifies_the_other_managers(self):
-        self._post(self.manager, "employee_delete", self.bob.id)
+    def test_deleting_an_employee_notifies_the_managers(self):
+        self._post(self.admin, "admin_user_delete", self.bob.id)
 
-        self.assertEqual(self._received(), {self.other_manager: ["Employee deleted"]})
+        self.assertEqual(self._received(), {self.manager: ["Employee deleted"], self.other_manager: ["Employee deleted"]})
 
-    def test_unavailability_notifies_every_manager(self):
+    def test_deleting_an_employee_with_upcoming_shifts_tells_the_managers_which(self):
+        self._shift(employees=[self.bob])
+        self._post(self.admin, "admin_user_delete", self.bob.id)
+        came_off = "Bob came off 1 upcoming shift"
+        self.assertEqual(
+            self._received(),
+            {self.manager: [came_off, "Employee deleted"], self.other_manager: [came_off, "Employee deleted"]},
+        )
+
+    def test_an_employee_deleting_their_account_tells_the_managers_which_shifts_they_left(self):
+        self.bob.set_password("pw")
+        self.bob.save()
+        self._shift(employees=[self.bob])
+        self._post(self.bob, "privacy_delete_account", data={"confirm_email": self.bob.email, "confirm_password": "pw"})
+        told = ["Bob came off 1 upcoming shift", "Employee deleted"]
+        self.assertEqual(self._received(), {self.manager: told, self.other_manager: told, self.admin: ["Employee deleted"]})
+
+    def _signed_in(self, user) -> Client:
+        client = Client()
+        client.force_login(user)
+        return client
+
+    def _update_alice(self, **fields):
+        self._post(
+            self.admin,
+            "admin_user_update",
+            self.alice.id,
+            data={"full_name": "Alice", "email": "alice@example.com", "role": UserRole.EMPLOYEE, **fields},
+        )
+        return Notification.objects.get(recipient=self.alice)
+
+    def test_a_new_position_names_the_old_and_new_one_and_signs_the_employee_out(self):
+        cook = Position.objects.create(name="Cook")
+        alices_browser = self._signed_in(self.alice)
+
+        notification = self._update_alice(position=cook.id)
+
+        self.assertEqual(notification.title, "Your position was changed")
+        self.assertEqual(notification.description, "Ada Ray changed your position from \u201cBarista\u201d to \u201cCook\u201d.")
+        self.assertRedirects(alices_browser.get(reverse("employee_shifts")), reverse("login"), fetch_redirect_response=False)
+
+    def test_a_new_role_names_the_old_and_new_one_and_signs_the_account_out(self):
+        alices_browser = self._signed_in(self.alice)
+
+        notification = self._update_alice(role=UserRole.MANAGER, position="")
+
+        self.assertEqual(notification.title, "Your role was changed")
+        self.assertEqual(notification.description, "Ada Ray changed your role from Employee to Manager.")
+        self.assertRedirects(alices_browser.get(reverse("employee_shifts")), reverse("login"), fetch_redirect_response=False)
+
+    def test_unavailability_notifies_every_manager_but_not_the_admin(self):
         self._post(self.alice, "employee_unavailability_toggle", data={"date": self.day.isoformat()})
 
         self.assertEqual(
@@ -166,6 +276,89 @@ class RecipientTests(NotificationTestCase):
         self.assertEqual(event["type"], "notification")
         self.assertEqual(event["notification"]["title"], "Shift cancelled")
         self.assertFalse(event["notification"]["read"])
+
+
+class StartedShiftTests(NotificationTestCase):
+    """A shift that has started is history: nothing can change, delete or publish it, so nobody is told."""
+
+    def setUp(self) -> None:
+        self.started = self._shift(employees=[self.alice])
+        self.started.date = timezone.localdate() - timedelta(days=1)
+        self.started.save()
+
+    def test_it_cannot_be_edited(self):
+        form = {
+            "date": self.started.date.isoformat(), "start_time": "10:00", "end_time": "17:00",
+            "position": self.barista.id, "capacity": 2, "employee_ids": [self.alice.id], "version": self.started.version,
+        }
+        self._post(self.manager, "update_shift", self.started.id, data=form)
+        self.started.refresh_from_db()
+        self.assertEqual(self.started.start_time, time(9, 0))
+        self.assertEqual(self._received(), {})
+
+    def test_it_cannot_be_deleted(self):
+        self._post(self.manager, "delete_shift", self.started.id)
+        self.assertTrue(Shift.objects.filter(pk=self.started.pk).exists())
+        self.assertEqual(self._received(), {})
+
+    def test_a_started_draft_is_never_published(self):
+        Shift.objects.filter(pk=self.started.pk).update(status=ShiftStatus.DRAFT)
+        self._post(self.manager, "publish_shift", self.started.id)
+        self._post(self.manager, "publish_all_shifts", data={"date": self.started.date.isoformat(), "view": "week"})
+        self.started.refresh_from_db()
+        self.assertEqual(self.started.status, ShiftStatus.DRAFT)
+        self.assertEqual(self._received(), {})
+
+
+class PositionDeletionTests(NotificationTestCase):
+    """A deleted position takes its upcoming shifts with it; its worked shifts stay as history."""
+
+    def test_worked_shifts_keep_the_position_name_and_upcoming_ones_are_deleted(self):
+        worked = self._shift(employees=[self.alice])
+        worked.date = timezone.localdate() - timedelta(days=2)
+        worked.save()
+        upcoming = self._shift(employees=[self.alice])
+        started = self._shift(employees=[self.alice], start=time(0, 0), end=time(23, 59))
+        started.date = timezone.localdate()
+        started.save()
+        self.assertTrue(started.is_past)
+
+        self._post(self.admin, "position_delete", self.barista.id)
+
+        worked.refresh_from_db()
+        self.assertEqual((worked.position, worked.position_name), (None, "Barista"))
+        self.assertTrue(worked.assignments.filter(employee=self.alice).exists())
+        self.assertFalse(Shift.objects.filter(pk=upcoming.pk).exists())
+        started.refresh_from_db()
+        self.assertEqual(started.position_name, "Barista")
+        self.alice.refresh_from_db()
+        self.assertIsNone(self.alice.position)
+        self.assertEqual(
+            self._received()[self.alice], ["Shift cancelled", "Your position was removed"]
+        )
+        self.assertEqual(
+            self._received()[self.manager], ["Position deleted", "1 upcoming shift of Barista deleted"]
+        )
+
+
+class ErrorHistoryTests(NotificationTestCase):
+    """Errors shown as toasts are kept in the caller's own history."""
+
+    def test_recorded_error_joins_only_the_callers_history(self):
+        self.client.force_login(self.manager)
+        payload = self.client.post(
+            reverse("notifications_record_error"), {"text": "End time must be after start time."}
+        ).json()["notification"]
+
+        self.assertEqual((payload["level"], payload["title"]), ("error", "Error"))
+        self.assertEqual(payload["description"], "End time must be after start time.")
+        self.assertEqual(Notification.objects.get().recipient, self.manager)
+
+    def test_an_empty_error_is_refused(self):
+        self.client.force_login(self.manager)
+        response = self.client.post(reverse("notifications_record_error"), {"text": " "})
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Notification.objects.exists())
 
 
 class HistoryTests(NotificationTestCase):

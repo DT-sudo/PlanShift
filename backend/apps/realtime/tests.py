@@ -1,17 +1,22 @@
 from __future__ import annotations
 
 import asyncio
+import shutil
+import tempfile
 from datetime import time, timedelta
+from io import BytesIO
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from channels.testing import WebsocketCommunicator
 from django.contrib.auth.models import AnonymousUser
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image
 
-from apps.accounts.models import User, UserRole
+from apps.accounts.models import Position, User, UserRole
 from apps.scheduling.models import EmployeeUnavailability, Shift
 
 from .consumers import ScheduleConsumer
@@ -203,3 +208,74 @@ class LiveAvailabilityTests(TestCase):
 
         data = response.context["bootstrap"]["data"]
         self.assertEqual(data["unavailability"], {str(self.alice.id): [self.day.isoformat()]})
+
+
+@override_settings(CHANNEL_LAYERS=IN_MEMORY_LAYER)
+class LiveDirectoryTests(TestCase):
+    """Account, role and position writes reach every open page, whatever role it belongs to."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.barista = Position.objects.create(name="Barista")
+        cls.admin = User.objects.create_user(username="admin@example.com", email="admin@example.com", role=UserRole.ADMIN)
+        cls.employee = User.objects.create_user(
+            username="alice@example.com", email="alice@example.com", password="x",
+            role=UserRole.EMPLOYEE, position=cls.barista,
+        )
+
+    def setUp(self) -> None:
+        self.layer = get_channel_layer()
+        self.channel = async_to_sync(self.layer.new_channel)()
+        async_to_sync(self.layer.group_add)(EVERYONE_GROUP, self.channel)
+        self.client.force_login(self.admin)
+
+    def _post(self, url_name, *args, **data):
+        with self.captureOnCommitCallbacks(execute=True):
+            return self.client.post(reverse(url_name, args=args), data)
+
+    def _events(self) -> list[dict]:
+        """Everything broadcast to the group, until it goes quiet."""
+        events = []
+        while True:
+            try:
+                events.append(next_event(self.layer, self.channel))
+            except TimeoutError:
+                return events
+
+    def test_creating_an_account_reaches_every_page(self):
+        self._post("admin_user_create", full_name="New Hire", email="new@example.com",
+                   role=UserRole.EMPLOYEE, position=self.barista.id)
+
+        self.assertIn({"type": "directory.changed"}, self._events())
+
+    def test_renaming_yourself_reaches_every_page(self):
+        """An employee editing their own name is the same directory write as an admin editing it."""
+        self.client.force_login(self.employee)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(
+                reverse("account_settings"),
+                {"section": "profile", "full_name": "Alice Newname", "email": self.employee.email, "bio": ""},
+            )
+
+        self.employee.refresh_from_db()
+        self.assertEqual(self.employee.display_name, "Alice Newname")
+        self.assertIn({"type": "directory.changed"}, self._events())
+
+    def test_changing_your_own_picture_reaches_every_page(self):
+        """The picture sits beside the name in the same directory, so uploading and removing it also carries."""
+        media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+        self.enterContext(override_settings(MEDIA_ROOT=media))
+        self.client.force_login(self.employee)
+        buffer = BytesIO()
+        Image.new("RGB", (64, 64), (200, 30, 30)).save(buffer, "PNG")
+        upload = SimpleUploadedFile("me.png", buffer.getvalue(), content_type="image/png")
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(reverse("account_settings"), {"section": "avatar", "avatar": upload})
+        self.assertIn({"type": "directory.changed"}, self._events())
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(reverse("account_settings"), {"section": "remove_avatar"})
+        self.assertIn({"type": "directory.changed"}, self._events())

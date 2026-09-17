@@ -8,7 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import translation
 
-from apps.accounts.models import User, UserRole
+from apps.accounts.models import Position, User, UserRole
 from apps.notifications.models import Notification
 from apps.notifications.services import notify, recent_notifications
 
@@ -36,6 +36,7 @@ class I18nTestCase(TestCase):
 
         cls.manager = make("maya", UserRole.MANAGER, "en")
         cls.employee = make("sam", UserRole.EMPLOYEE, "cs")
+        cls.admin = make("adam", UserRole.ADMIN, "en")
 
     def tearDown(self) -> None:
         translation.activate(settings.LANGUAGE_CODE)
@@ -117,8 +118,8 @@ class ServerTextTests(I18nTestCase):
         response = self.client.post(reverse("login"), {"username": self.manager.email, "password": "wrong-password-1"})
         self.assertEqual(self.bootstrap(response)["data"]["error"], "Nesprávný e-mail nebo heslo.")
 
-        User.objects.filter(pk=self.manager.pk).update(language="cs")
-        self.client.force_login(self.manager)
+        User.objects.filter(pk=self.admin.pk).update(language="cs")
+        self.client.force_login(self.admin)
         response = self.client.post(reverse("position_create"), {"name": ""}, follow=True)
         self.assertIn("Zadejte název pozice.", [message["text"] for message in self.bootstrap(response)["messages"]])
 
@@ -138,13 +139,13 @@ class ServerTextTests(I18nTestCase):
                 self.assertEqual(document["title"], title)
 
     def test_legal_translations_have_the_same_structure(self):
-        from apps.legal.documents import NAMES, TRANSLATIONS
+        from apps.legal.documents import TRANSLATIONS
 
         def shape(document):
             return [(len(section.get("paragraphs", [])), len(section.get("bullets", []))) for section in document["sections"]]
 
         for code, content in TRANSLATIONS.items():
-            for name in NAMES:
+            for name in TRANSLATIONS["en"].DOCUMENTS:
                 with self.subTest(language=code, document=name):
                     self.assertEqual(shape(content.DOCUMENTS[name]), shape(TRANSLATIONS["en"].DOCUMENTS[name]))
                     self.assertEqual(len(content.DOCUMENTS[name]["intro"]), len(TRANSLATIONS["en"].DOCUMENTS[name]["intro"]))
@@ -169,9 +170,9 @@ class RecipientLanguageTests(I18nTestCase):
         self.assertEqual(payload["title"], "Pozice vytvořena")
 
     def test_emails_go_out_in_the_recipients_language(self):
-        self.client.force_login(self.manager)
-        self.client.post(reverse("employee_delete", args=[self.employee.pk]))
-        self.assertEqual(mail.outbox[0].subject, "Váš účet PlanShift byl smazán")
+        self.client.force_login(self.admin)
+        self.client.post(reverse("admin_user_delete", args=[self.employee.pk]))
+        self.assertEqual(mail.outbox[0].subject, "Váš účet ft_transcendence byl smazán")
 
     def test_navigation_is_named_by_id_for_the_browser_to_translate(self):
         self.client.force_login(self.manager)
