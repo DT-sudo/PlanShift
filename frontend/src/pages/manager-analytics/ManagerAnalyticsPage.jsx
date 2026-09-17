@@ -1,16 +1,16 @@
-import { formatDate, formatHours, formatNow } from '../../app/dates.js';
+import { formatDate, formatHours, formatMonth, formatNow } from '../../app/dates.js';
 import { getBootstrap } from '../../app/http.js';
 import { useLivePageData } from '../../app/live.js';
 import { statusOptions } from '../../app/shifts.js';
 import { AppShell } from '../../components/AppShell.jsx';
-import { DateRangeFields, ShiftFilterSelects } from '../../components/Field.jsx';
+import { ShiftFilterSelects } from '../../components/Field.jsx';
 import { ChevronDown } from '../../components/Icons.jsx';
 import { Dropdown } from '../../components/Menus.jsx';
 import { t } from '../../i18n/index.js';
-import { DonutChart, EmptyChart, XYChart } from './Charts.jsx';
+import { EmptyChart, LineChart, WorkerHoursChart } from './Charts.jsx';
 
 const KPIS = [
-  { key: 'shifts', label: 'analytics.shifts', accent: 'var(--color-primary)' },
+  { key: 'shifts', label: 'nav.shifts', accent: 'var(--color-primary)' },
   { key: 'workers', label: 'analytics.workers', accent: 'var(--color-info)' },
   { key: 'hours', label: 'analytics.hours', accent: 'var(--color-shift-published)', format: formatHours },
   { key: 'open_shifts', label: 'analytics.openShifts', accent: 'var(--color-warning)' },

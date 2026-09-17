@@ -5,7 +5,7 @@ from django.contrib.auth.forms import AuthenticationForm, BaseUserCreationForm
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from .models import User, UserRole
+from .models import ASSIGNABLE_ROLES, Position, User, UserRole
 
 
 def _split_full_name(full_name: str) -> tuple[str, str]:
@@ -26,6 +26,29 @@ def _unique_email(value: str | None, instance: User) -> str:
     if User.objects.filter(username=email).exclude(pk=instance.pk).exists():
         raise ValidationError(_("An account with this email already exists."))
     return email
+
+
+class NameAndEmailForm(forms.Form):
+    """The full name and email every account form asks for; the email doubles as the login username."""
+
+    full_name = forms.CharField(label=_("Full name"), max_length=150)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["email"].required = True
+
+    def clean_full_name(self) -> str:
+        full_name = " ".join((self.cleaned_data.get("full_name") or "").split())
+        if len(full_name) < 2:
+            raise ValidationError(_("Enter your full name."))
+        return full_name
+
+    def clean_email(self) -> str:
+        """The lowercased email, refused when another account already signs in with it."""
+        email = (self.cleaned_data.get("email") or "").strip().lower()
+        if User.objects.filter(username=email).exclude(pk=self.instance.pk).exists():
+            raise ValidationError(_("An account with this email already exists."))
+        return email
 
 
 class EmailAuthenticationForm(AuthenticationForm):
@@ -70,8 +93,8 @@ class SignUpForm(BaseUserCreationForm):
         super()._post_clean()
 
 
-class AccountForm(forms.ModelForm):
-    """Base for forms that set an account's name and email; the email doubles as the login username."""
+class AccountForm(NameAndEmailForm, forms.ModelForm):
+    """Base for forms that save an account's name and email."""
 
     full_name = forms.CharField(label=_("Full name"), max_length=150)
 
@@ -103,10 +126,46 @@ class EmployeeForm(AccountForm):
         self.fields["position"].required = True
 
 
-class UserForm(EmployeeForm):
-    """Admin-side create/edit of any account: the role is picked too, and only employees have a position."""
+class PositionForm(forms.ModelForm):
+    class Meta:
+        model = Position
+        fields = ["name"]
+        error_messages = {
+            "name": {
+                "required": _("Enter a position name."),
+                "unique": _("A position with this name already exists."),
+            }
+        }
 
-    class Meta(EmployeeForm.Meta):
+
+class RoleAndPositionMixin:
+    """The role an admin gives an account, and the position that only employees have.
+
+    The role field is the only way to make someone a manager; a position is a job title that gets
+    scheduled, nothing more. Guest is never offered: that is where sign-up puts an account, not a
+    role to hand out.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["role"].choices = [(role.value, role.label) for role in ASSIGNABLE_ROLES]
+
+    def clean(self) -> dict:
+        cleaned = super().clean()
+        role, position = cleaned.get("role"), cleaned.get("position")
+        if role == UserRole.EMPLOYEE:
+            if not position:
+                self.add_error("position", _("Employees need a position."))
+        elif role:
+            cleaned["position"] = None
+
+        return cleaned
+
+class UserForm(RoleAndPositionMixin, AccountForm):
+    """The admin's create/edit of any account: name, email, role and (for employees) position."""
+
+    class Meta:
+        model = User
         fields = ["email", "role", "position"]
 
     def __init__(self, *args, **kwargs):

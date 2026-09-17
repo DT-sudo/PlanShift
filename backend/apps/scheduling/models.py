@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, time
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -8,11 +8,12 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-class Position(models.Model):
-    name = models.CharField(max_length=25, unique=True)
+MIDNIGHT = time(0, 0)
 
-    def __str__(self) -> str:
-        return self.name
+
+def clock(value: time, *, end: bool = False) -> str:
+    """"09:30"; an end time of midnight is "24:00"."""
+    return "24:00" if end and value == MIDNIGHT else f"{value:%H:%M}"
 
 class ShiftStatus(models.TextChoices):
     DRAFT = "draft", _("Draft")
@@ -23,10 +24,12 @@ class Shift(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField()
     position = models.ForeignKey(
-        Position, 
-        on_delete=models.PROTECT,
+        "accounts.Position",
+        on_delete=models.SET_NULL,
+        null=True,
         related_name="shifts"
     )
+    position_name = models.CharField(max_length=25, editable=False)
     capacity = models.PositiveIntegerField(default=1)
     status = models.CharField(
         max_length=20, 
@@ -35,7 +38,8 @@ class Shift(models.Model):
     )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name="created_shifts",
     )
     version = models.PositiveIntegerField(default=1)
@@ -52,10 +56,18 @@ class Shift(models.Model):
         if errors:
             raise ValidationError(errors)
 
+    def save(self, *args, **kwargs) -> None:
+        if self.position_id:
+            self.position_name = self.position.name
+            if kwargs.get("update_fields") is not None and "position" in kwargs["update_fields"]:
+                kwargs["update_fields"] = {*kwargs["update_fields"], "position_name"}
+        super().save(*args, **kwargs)
+
     @property
     def is_past(self) -> bool:
-        dt_end = datetime.combine(self.date, self.end_time, tzinfo=timezone.get_current_timezone())
-        return dt_end < timezone.now()
+        """Started: from its first minute a shift is being worked, so it is history, not plan."""
+        start = datetime.combine(self.date, self.start_time, tzinfo=timezone.get_current_timezone())
+        return start <= timezone.now()
 
 class Assignment(models.Model):
 

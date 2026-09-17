@@ -1,4 +1,4 @@
-"""Profiles, account settings, profile pictures and friends (the "Major: Standard user management" module)."""
+"""Profiles, account settings, profile pictures and colleagues (the "Major: Standard user management" module)."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from apps.accounts.models import User
+from apps.accounts.views import colleague_required
 from apps.shell import field_errors, flash_redirect, render_app
 from apps.twofactor import views as two_factor
 
@@ -87,6 +88,8 @@ def account_settings(request: HttpRequest) -> HttpResponse:
 
     if section == "profile" and profile_form.is_valid():
         profile_form.save()
+        if profile_form.has_changed():
+            notify_everyone(DIRECTORY_CHANGED)
         return flash_redirect(request, messages.SUCCESS, _("Profile updated."), "account_settings")
     if section == "password" and password_form.is_valid():
         password_form.save()
@@ -94,9 +97,13 @@ def account_settings(request: HttpRequest) -> HttpResponse:
         return flash_redirect(request, messages.SUCCESS, _("Password changed."), "account_settings")
     if section == "avatar" and avatar_form.is_valid():
         avatars.replace_avatar(user, avatars.to_webp(avatar_form.cleaned_data["avatar"]))
+        notify_everyone(DIRECTORY_CHANGED)
         return flash_redirect(request, messages.SUCCESS, _("Profile picture updated."), "account_settings")
     if section == "remove_avatar":
+        had_avatar = bool(user.avatar)
         avatars.replace_avatar(user, None)
+        if had_avatar:
+            notify_everyone(DIRECTORY_CHANGED)
         return flash_redirect(request, messages.SUCCESS, _("Profile picture removed."), "account_settings")
 
     posted_profile = section == "profile"
@@ -122,10 +129,10 @@ def account_settings(request: HttpRequest) -> HttpResponse:
     )
 
 
-@login_required
+@colleague_required
 @require_GET
 def friends(request: HttpRequest) -> HttpResponse:
-    """Everyone the user has a friendship with, sorted by its state: friends, requests to answer, requests sent."""
+    """Friends, the requests waiting either way, and the colleagues you could still ask."""
     user = request.user
     lists = {"friends": [], "incoming": [], "outgoing": []}
     rows = services.involving(user).select_related("from_user__position", "to_user__position").order_by("-created_at")
@@ -138,13 +145,19 @@ def friends(request: HttpRequest) -> HttpResponse:
         lists[relation["state"]].append({**services.card(other), "relation": relation, **extra})
     lists["friends"].sort(key=lambda friend: (not friend["status"]["online"], friend["fullName"].lower()))
 
+    colleagues = [{**services.card(person), "relation": services.relation(user, person)} for person in services.colleagues_of(user)]
+
     return render_app(
         request,
         page="friends",
         title=_("Friends"),
         nav_active="friends",
-        data={**lists, "urls": services.friend_urls()},
+        data={**lists, "colleagues": colleagues, "urls": services.friend_urls()},
     )
+
+
+def _now_friends(request: HttpRequest, other: User) -> HttpResponse:
+    return _back(request, messages.SUCCESS, _("You and %(name)s are now friends.") % {"name": other.display_name})
 
 
 def _back(request: HttpRequest, level: int, text: str) -> HttpResponse:
@@ -155,27 +168,21 @@ def _back(request: HttpRequest, level: int, text: str) -> HttpResponse:
     return flash_redirect(request, level, text, target)
 
 
-@login_required
+@colleague_required
 @require_POST
 def friend_request(request: HttpRequest) -> HttpResponse:
-    """Ask by email (the Friends page) or by id (the button on a profile you can already see)."""
+    """Ask by id: the button on a profile or in the colleagues directory."""
     user_id = request.POST.get("user_id", "")
-    if user_id:
-        receiver = User.objects.filter(pk=user_id, is_active=True).first() if user_id.isdigit() else None
-        if receiver is None or not services.can_view(request.user, receiver):
-            return _back(request, messages.ERROR, _("That person was not found."))
-    else:
-        email = (request.POST.get("email") or "").strip().lower()
-        receiver = User.objects.filter(username=email, is_active=True).first() if email else None
-        if receiver is None:
-            return _back(request, messages.ERROR, _("No account uses that email address."))
+    receiver = User.objects.filter(pk=user_id, is_active=True).first() if user_id.isdigit() else None
+    if receiver is None or not services.can_view(request.user, receiver):
+        return _back(request, messages.ERROR, _("That person was not found."))
 
     try:
         friendship = services.send_request(request.user, receiver)
     except services.FriendshipError as error:
         return _back(request, messages.ERROR, str(error))
     if friendship.accepted:
-        return _back(request, messages.SUCCESS, _("You and %(name)s are now friends.") % {"name": receiver.display_name})
+        return _now_friends(request, receiver)
     return _back(request, messages.SUCCESS, _("Friend request sent to %(name)s.") % {"name": receiver.display_name})
 
 

@@ -25,9 +25,10 @@
     "search": "البحث",
     "analytics": "التحليلات",
     "users": "المستخدمون",
-    "team": "الفريق",
     "myShifts": "مناوباتي",
-    "friends": "الأصدقاء"
+    "friends": "الأصدقاء",
+    "requests": "الطلبات",
+    "team": "الفريق"
   },
   "header": {
     "userMenu": "قائمة المستخدم",
@@ -37,7 +38,7 @@
     "logout": "تسجيل الخروج"
   },
   "footer": {
-    "tagline": "© {year} PlanShift — جدولة المناوبات لفرق العمل بالساعة.",
+    "tagline": "© {year} ft_transcendence",
     "legal": "معلومات قانونية",
     "privacyPolicy": "سياسة الخصوصية",
     "terms": "شروط الخدمة"
@@ -68,7 +69,10 @@
     "lastSeen": "آخر ظهور {time}"
   },
   "dates": {
-    "justNow": "الآن"
+    "justNow": "الآن",
+    "placeholder": "DD.MM.YYYY",
+    "format": "اليوم والشهر والسنة، مثل 19.09.2026",
+    "pick": "اختر تاريخًا"
   },
   "status": {
     "draft": "مسودة",
@@ -102,11 +106,11 @@
     "passwordPlaceholder": "أدخل كلمة المرور",
     "submit": "تسجيل الدخول",
     "newHere": "جديد هنا؟",
+    "requestAccount": "اطلب حسابًا",
     "createManager": "أنشئ حساب مدير"
   },
   "signup": {
-    "title": "أنشئ حسابك",
-    "subtitle": "أنشئ حساب مدير وابدأ بجدولة مناوبات فريقك",
+    "subtitle": "يوافق المسؤول على طلبك ويمنحك دورك",
     "fullName": "الاسم الكامل",
     "fullNamePlaceholder": "سارة أحمد",
     "emailHint": "ستستخدم هذا العنوان لتسجيل الدخول.",
@@ -114,11 +118,12 @@
     "passwordHint": "8 أحرف على الأقل، وألا تكون أرقامًا فقط، وألا تشبه اسمك أو بريدك الإلكتروني.",
     "confirmPassword": "تأكيد كلمة المرور",
     "confirmPlaceholder": "أعد كتابة كلمة المرور",
-    "submit": "إنشاء حساب",
-    "agree": "بإنشاء حساب فإنك توافق على {terms} و{privacy}.",
+    "submit": "إرسال الطلب",
+    "agree": "بإرسال الطلب فإنك توافق على {terms} و{privacy}.",
     "haveAccount": "لديك حساب بالفعل؟",
-    "signIn": "تسجيل الدخول",
-    "employeesNote": "لا يسجّل الموظفون من هنا — ينشئ مديرك حسابك ويعطيك كلمة المرور."
+    "employeesNote": "يمكنك تسجيل الدخول فورًا، لكنك تصل إلى التطبيق بعد أن يوافق المسؤول على طلبك.",
+    "title": "أنشئ حسابك",
+    "signIn": "تسجيل الدخول"
   },
   "twoFactorLogin": {
     "title": "التحقق بخطوتين",
@@ -137,7 +142,6 @@
     "lastUpdated": "آخر تحديث: {date}"
   },
   "privacy": {
-    "title": "الخصوصية وبياناتي",
     "subtitle": "ما يحتفظ به PlanShift عن حسابك، وحقوقك عليه بموجب اللائحة العامة لحماية البيانات.",
     "holdTitle": "ما نحتفظ به عنك",
     "holdManager": "اسمك وبريدك الإلكتروني ورقم الموظف ودورك، وصورتك الشخصية ونبذتك، وأصدقاؤك، ووقت آخر اتصال لك، واللغة التي تستخدمها، والمناوبات التي أنشأتها.",
@@ -154,7 +158,8 @@
     "modalConfirm": "حذف حسابي نهائيًا",
     "modalText": "يؤدي هذا إلى حذف حسابك وتعييناتك في المناوبات وسجلات عدم إتاحتك نهائيًا. لا يمكن التراجع ولا توجد نسخة مؤرشفة - راجع {policy} (القسم 4) لمعرفة ما يعنيه ذلك بالضبط.",
     "typeEmail": "اكتب بريدك الإلكتروني ({email}) للتأكيد",
-    "confirmPassword": "أكّد كلمة مرورك"
+    "confirmPassword": "أكّد كلمة مرورك",
+    "title": "الخصوصية وبياناتي"
   },
   "employeeShifts": {
     "calendar": "تقويم الشهر",
@@ -165,7 +170,6 @@
   "shifts": {
     "employees": "الموظفون",
     "highlightShifts": "إبراز مناوبات {name}",
-    "unavailableDays": "غير متاح: {days}",
     "legend": "ألوان المناصب",
     "monthSchedule": "جدول الشهر",
     "weekSchedule": "جدول الأسبوع",
@@ -186,9 +190,7 @@
     "noneAssigned": "لم يُعيَّن أحد",
     "editingNow": "يعدّل الآن",
     "editTitle": "تعديل المناوبة",
-    "createTitle": "إنشاء مناوبة",
     "create": "إنشاء مناوبة",
-    "stale": "غيّر شخص آخر هذه المناوبة أو حذفها للتو، لذا سيُرفض الحفظ. أغلقها ثم افتحها من جديد لرؤية أحدث نسخة.",
     "alsoEditing": {
       "zero": "{names} يعدّل هذه المناوبة أيضًا.",
       "one": "{names} يعدّل هذه المناوبة أيضًا.",
@@ -205,17 +207,15 @@
     "assignEmployees": "تعيين الموظفين",
     "noStaff": "لا يوجد موظفون لهذا المنصب.",
     "selectPositionFirst": "اختر منصبًا أولًا.",
-    "unavailable": "غير متاح"
+    "unavailable": "غير متاح",
+    "unavailableDays": "غير متاح: {days}",
+    "createTitle": "إنشاء مناوبة",
+    "stale": "غيّر شخص آخر هذه المناوبة أو حذفها للتو، لذا سيُرفض الحفظ. أغلقها ثم افتحها من جديد لرؤية أحدث نسخة."
   },
   "search": {
     "placeholder": "ابحث حسب المنصب أو العامل…",
     "label": "البحث في المناوبات",
-    "date": "التاريخ",
-    "time": "الوقت",
-    "position": "المنصب",
-    "workers": "العاملون",
     "status": "الحالة",
-    "staffed": "المشغول",
     "results": {
       "zero": "{count} نتيجة",
       "one": "نتيجة واحدة ({count})",
@@ -229,10 +229,14 @@
     "nextPage": "الصفحة التالية",
     "noResults": "لا توجد مناوبات تطابق هذه الفلاتر.",
     "openInCalendar": "فتح في التقويم",
-    "unassigned": "غير معيَّنة"
+    "unassigned": "غير معيَّنة",
+    "date": "التاريخ",
+    "time": "الوقت",
+    "position": "المنصب",
+    "workers": "العاملون",
+    "staffed": "المشغول"
   },
   "analytics": {
-    "shifts": "المناوبات",
     "workers": "العاملون",
     "hours": "الساعات",
     "openShifts": "مناوبات شاغرة",
@@ -243,8 +247,6 @@
     "reportFilters": "{from} – {to} · المنصب: {position} · العامل: {worker} · الحالة: {status}",
     "generated": "أُنشئ في {time}",
     "overTime": "المناوبات عبر الزمن",
-    "byPosition": "المناوبات حسب المنصب",
-    "shiftStatus": "حالة المناوبات",
     "hoursPerWorker": "الساعات لكل عامل",
     "topWorkers": "أكثر العاملين ساعات",
     "topPositions": "أكثر المناصب مناوبات",
@@ -257,20 +259,18 @@
       "other": "{count} مناوبة"
     },
     "noData": "لا توجد بيانات لهذه الفلاتر.",
+    "shifts": "المناوبات",
+    "byPosition": "المناوبات حسب المنصب",
+    "shiftStatus": "حالة المناوبات",
     "total": "الإجمالي"
   },
   "team": {
     "addUser": "إضافة مستخدم",
-    "addEmployee": "إضافة موظف",
     "managePositions": "إدارة المناصب",
     "userList": "قائمة المستخدمين",
-    "employeeList": "قائمة الموظفين",
     "avatar": "الصورة",
     "employeeId": "رقم الموظف",
-    "fullName": "الاسم الكامل",
     "role": "الدور",
-    "position": "المنصب",
-    "email": "البريد الإلكتروني",
     "actions": "الإجراءات",
     "empty": "لا يوجد موظفون بعد. أضف أول موظف لتبدأ بتعيين المناوبات.",
     "twoFactorOn": "التحقق بخطوتين مفعّل",
@@ -282,17 +282,11 @@
     "resetTwoFactorNote": "افعل ذلك فقط لمن فقد هاتفه ورموز الاسترداد معًا. سيُبلَّغ بالبريد الإلكتروني ويمكنه تفعيله مجددًا.",
     "yesReset": "نعم، أعد التعيين",
     "deleteUser": "حذف المستخدم",
-    "deleteEmployee": "حذف الموظف",
     "deleteUserMessage": "هل تريد بالتأكيد حذف هذا المستخدم؟",
-    "deleteEmployeeMessage": "هل تريد بالتأكيد حذف هذا الموظف؟",
     "deleteUserNote": "سيؤدي ذلك إلى إزالة المستخدم وتعييناته.",
-    "deleteEmployeeNote": "سيؤدي ذلك إلى إزالة الموظف وتعييناته.",
     "editUser": "تعديل المستخدم",
-    "editEmployee": "تعديل الموظف",
     "newUser": "إضافة مستخدم جديد",
-    "newEmployee": "إضافة موظف جديد",
     "createUser": "إنشاء مستخدم",
-    "createEmployee": "إنشاء موظف",
     "fullNamePlaceholder": "أدخل الاسم الكامل",
     "emailLogin": "البريد الإلكتروني / اسم الدخول",
     "emailPlaceholder": "أدخل البريد الإلكتروني",
@@ -301,9 +295,7 @@
     "onlyOnce": "مرة واحدة فقط",
     "credentialsTitle": "بيانات الدخول (تُعرض مرة واحدة)",
     "login": "اسم الدخول",
-    "password": "كلمة المرور",
     "credentialsNote": "تُعرض كلمة المرور هذه مرة واحدة فقط. انسخها وشاركها بأمان.",
-    "positionsTitle": "إدارة المناصب",
     "newPosition": "اسم المنصب الجديد (مثل: باريستا)",
     "addPosition": "إضافة منصب",
     "positionList": "قائمة المناصب",
@@ -311,23 +303,32 @@
     "deletePositionLabel": "حذف المنصب {name}",
     "deletePosition": "حذف المنصب",
     "deletePositionMessage": "حذف هذا المنصب؟",
-    "deletePositionNote": "لا يمكن حذف منصب لا تزال مناوبة ما تحتاجه."
+    "deletePositionNote": "لا يمكن حذف منصب لا تزال مناوبة ما تحتاجه.",
+    "addEmployee": "إضافة موظف",
+    "employeeList": "قائمة الموظفين",
+    "fullName": "الاسم الكامل",
+    "position": "المنصب",
+    "email": "البريد الإلكتروني",
+    "deleteEmployee": "حذف الموظف",
+    "deleteEmployeeMessage": "هل تريد بالتأكيد حذف هذا الموظف؟",
+    "deleteEmployeeNote": "سيؤدي ذلك إلى إزالة الموظف وتعييناته.",
+    "editEmployee": "تعديل الموظف",
+    "newEmployee": "إضافة موظف جديد",
+    "createEmployee": "إنشاء موظف",
+    "password": "كلمة المرور",
+    "positionsTitle": "إدارة المناصب"
   },
   "profile": {
     "editProfile": "تعديل الملف الشخصي",
     "sentYouRequest": "أرسل إليك {name} طلب صداقة.",
     "noBio": "لا توجد نبذة بعد. {link} ليعرف الناس من أنت.",
     "addBio": "أضف نبذة",
-    "email": "البريد الإلكتروني",
     "memberSince": "عضو منذ",
-    "friends": "الأصدقاء",
-    "noFriends": "لا يوجد أصدقاء بعد."
+    "noFriends": "لا يوجد أصدقاء بعد.",
+    "email": "البريد الإلكتروني",
+    "friends": "الأصدقاء"
   },
   "friends": {
-    "addByEmail": "أضف صديقًا عبر البريد الإلكتروني",
-    "emailPlaceholder": "colleague@example.com",
-    "send": "إرسال الطلب",
-    "friends": "الأصدقاء",
     "online": "{online} من {total} متصلون",
     "noFriends": "لا يوجد أصدقاء بعد. أضف زميلًا عبر بريده الإلكتروني أعلاه.",
     "requests": "طلبات الصداقة",
@@ -342,10 +343,13 @@
     "remove": "إزالة الصديق",
     "removeMessage": "إزالة {name} من أصدقائك؟",
     "removeNote": "لن يرى بعد الآن حالة اتصالك ولا بريدك الإلكتروني.",
-    "yesRemove": "نعم، أزل"
+    "yesRemove": "نعم، أزل",
+    "addByEmail": "أضف صديقًا عبر البريد الإلكتروني",
+    "emailPlaceholder": "colleague@example.com",
+    "send": "إرسال الطلب",
+    "friends": "الأصدقاء"
   },
   "settings": {
-    "title": "إعدادات الحساب",
     "viewProfile": "عرض ملفي الشخصي",
     "privacyLink": "لتنزيل بياناتك أو حذفها، راجع صفحة {link}.",
     "avatarTitle": "الصورة الشخصية",
@@ -361,13 +365,9 @@
     "currentPassword": "كلمة المرور الحالية",
     "currentPasswordHint": "مطلوبة فقط لتغيير بريدك الإلكتروني.",
     "saveProfile": "حفظ الملف الشخصي",
-    "passwordTitle": "كلمة المرور",
     "newPassword": "كلمة المرور الجديدة",
     "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
     "changePassword": "تغيير كلمة المرور",
-    "languageTitle": "اللغة",
-    "languageHint": "يستخدم PlanShift هذه اللغة، وكذلك الرسائل التي يرسلها إليك وإشعاراتك.",
-    "twoFactorTitle": "التحقق بخطوتين",
     "on": "مفعّل",
     "off": "متوقف",
     "twoFactorIntro": "بعد كلمة المرور، سيتطلب تسجيل الدخول أيضًا رمزًا من 6 أرقام من تطبيق مصادقة على هاتفك، مثل Google Authenticator أو Microsoft Authenticator أو 1Password أو Authy. ولن يتمكن من يعرف كلمة مرورك من الدخول.",
@@ -398,6 +398,11 @@
     "download": "تنزيل",
     "copied": "تم النسخ إلى الحافظة.",
     "savedThem": "لقد حفظتها",
-    "codesFileHeading": "رموز استرداد PlanShift"
+    "codesFileHeading": "رموز استرداد PlanShift",
+    "title": "إعدادات الحساب",
+    "passwordTitle": "كلمة المرور",
+    "languageTitle": "اللغة",
+    "languageHint": "يستخدم PlanShift هذه اللغة، وكذلك الرسائل التي يرسلها إليك وإشعاراتك.",
+    "twoFactorTitle": "التحقق بخطوتين"
   }
 }

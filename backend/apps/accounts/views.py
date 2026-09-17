@@ -1,4 +1,5 @@
-"""Sign-up, login, logout, demo logins, and the manager-side employee directory."""
+"""Sign-up, login, logout, demo logins, the required password change, registration requests,
+and the admin-side account and position directory."""
 
 from __future__ import annotations
 
@@ -18,13 +19,14 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 from apps.notifications.services import managers, notify
 from apps.privacy.emails import send_account_deleted_email
 from apps.shell import field_errors, first_form_error, flash_redirect, render_app
+from apps.scheduling import notices
 from apps.scheduling.management.commands.seed_demo import DEMO_ACCOUNTS, DEMO_EMPLOYEE_EMAIL
 from apps.scheduling.services import position_options
 from apps.twofactor import services as two_factor
 from apps.twofactor.views import begin_login
 
-from .forms import EmailAuthenticationForm, EmployeeForm, SignUpForm, UserForm
-from .models import User, UserRole
+from .forms import EmailAuthenticationForm, PositionForm, SignUpForm, UserForm
+from .models import ASSIGNABLE_ROLES, Position, User, UserRole
 
 
 def _role_required(attr: str, other_home: str):
@@ -42,10 +44,37 @@ def _role_required(attr: str, other_home: str):
         return wrapped
 
     return decorator
+from .services import delete_position, position_options, release_from_upcoming
 
 
-manager_required = _role_required("is_manager", "employee_shifts")
-employee_required = _role_required("is_employee", "manager_shifts")
+def _home_page(user) -> str:
+    """The page that holds this account's own work: accounts, the schedule, your shifts, or the waiting room."""
+    if user.is_admin:
+        return "admin_users"
+    return "manager_shifts" if user.is_manager else "employee_shifts"
+
+
+def _requires(allowed):
+    """Require login and a role; anyone else is sent to their own home page."""
+
+    def decorator(view):
+        @wraps(view)
+        def wrapped(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect("login")
+            if not allowed(request.user):
+                return redirect(_home_page(request.user))
+            return view(request, *args, **kwargs)
+
+        return wrapped
+
+    return decorator
+
+
+admin_required = _requires(lambda user: user.is_admin)
+manager_required = _requires(lambda user: user.is_manager and not user.is_admin)
+employee_required = _requires(lambda user: user.is_employee)
+colleague_required = _requires(lambda user: user.role in (UserRole.MANAGER, UserRole.EMPLOYEE))
 
 
 @require_http_methods(["GET", "POST"])
@@ -132,11 +161,13 @@ def demo_login(request: HttpRequest, role: str) -> HttpResponse:
     if user is None:
         messages.error(request, _("Demo accounts are missing. Run `python manage.py seed_demo` first."))
         return redirect("login")
+    log_security("login.demo", request, actor=user, role=role)
     return begin_login(request, user)
 
 
 def _managed_user_or_404(request: HttpRequest, user_id: int) -> User:
-    return get_object_or_404(request.user.managed_users(), pk=user_id)
+    """An account on the Users page. Registration requests are answered on the Requests page instead."""
+    return get_object_or_404(request.user.managed_users().exclude(role=UserRole.GUEST), pk=user_id)
 
 
 def _account_form(request: HttpRequest):
@@ -145,15 +176,23 @@ def _account_form(request: HttpRequest):
 
 
 def _set_generated_password(request: HttpRequest, employee: User) -> None:
-    """Give the employee a fresh random password and keep it in the session to show once."""
+    """Give the employee a fresh random password and keep it in the session to show once.
+
+    The admin has seen it, so it only opens the page that replaces it (`must_change_password`).
+    """
     password = User.generate_password()
     employee.set_password(password)
+    employee.must_change_password = True
     employee.save()
     request.session["one_time_credentials"] = {"login": employee.email, "password": password}
 
 
+def _role_options() -> list[dict]:
+    return [{"id": role.value, "name": role.label} for role in ASSIGNABLE_ROLES]
+
+
 def _back(request: HttpRequest, level: int, text: str) -> HttpResponse:
-    return flash_redirect(request, level, text, "manager_employees")
+    return flash_redirect(request, level, text, "admin_users")
 
 
 @manager_required
@@ -187,11 +226,6 @@ def manager_employees(request: HttpRequest) -> HttpResponse:
             "positions": position_options(),
             "credentials": request.session.pop("one_time_credentials", None),
             "urls": {
-                "create": reverse("manager_employees_create"),
-                "update": reverse("employee_update", args=[0]),
-                "delete": reverse("employee_delete", args=[0]),
-                "resetPassword": reverse("reset_employee_password", args=[0]),
-                "resetTwoFactor": reverse("reset_employee_two_factor", args=[0]),
                 "positionCreate": reverse("position_create"),
                 "positionDelete": reverse("position_delete", args=[0]),
             },
@@ -270,3 +304,190 @@ def employee_delete(request: HttpRequest, user_id: int) -> HttpResponse:
     send_account_deleted_email(email, label, language)
     notify(managers(), "account.deleted", actor=request.user, level="warning", role=role, name=label)
     return _back(request, messages.SUCCESS, _("Deleted %(role)s: %(name)s.") % {"role": role_label.lower(), "name": label})
+
+
+def _directory_changed() -> None:
+    """Every open page re-reads itself: the accounts and positions directory is shared by all three roles."""
+    notify_everyone(DIRECTORY_CHANGED)
+
+
+@admin_required
+@require_GET
+def admin_users(request: HttpRequest) -> HttpResponse:
+    return render_app(
+        request,
+        page="admin-users",
+        title=_("User Management"),
+        nav_active="admin_users",
+        data={
+            "employees": [
+                {
+                    "id": e.id,
+                    "employeeId": e.employee_id,
+                    "fullName": e.display_name,
+                    "avatarUrl": e.avatar_url,
+                    "profileUrl": reverse("profile", args=[e.id]),
+                    "email": e.email,
+                    "role": e.role,
+                    "roleLabel": e.get_role_display(),
+                    "positionId": e.position_id,
+                    "position": e.position.name if e.position else "",
+                    "twoFactor": two_factor.is_enabled(e),
+                }
+                for e in request.user.managed_users().exclude(role=UserRole.GUEST).select_related("position", "totp_device")
+            ],
+            "roles": _role_options(),
+            "positions": position_options(),
+            "credentials": request.session.pop("one_time_credentials", None),
+            "urls": {
+                "create": reverse("admin_user_create"),
+                "update": reverse("admin_user_update", args=[0]),
+                "delete": reverse("admin_user_delete", args=[0]),
+                "resetPassword": reverse("admin_user_reset_password", args=[0]),
+                "resetTwoFactor": reverse("admin_user_reset_two_factor", args=[0]),
+                "positionCreate": reverse("position_create"),
+                "positionDelete": reverse("position_delete", args=[0]),
+            },
+        },
+    )
+
+
+@admin_required
+@require_POST
+def admin_user_create(request: HttpRequest) -> HttpResponse:
+    form = UserForm(request.POST)
+    if not form.is_valid():
+        return _back(request, messages.ERROR, first_form_error(form, _("Please fix the errors and try again.")))
+
+    account = form.save(commit=False)
+    _set_generated_password(request, account)
+    notify(managers(), "account.added", actor=request.user, role=account.role, name=account.display_name)
+    _directory_changed()
+    log_security("account.created", request, target=account, role=account.role)
+    return _back(request, messages.SUCCESS, _("%(role)s created.") % {"role": account.get_role_display()})
+
+
+@admin_required
+@require_POST
+def admin_user_update(request: HttpRequest, user_id: int) -> HttpResponse:
+    account = _managed_user_or_404(request, user_id)
+    was_role, was_position = account.role, account.position
+
+    form = UserForm(request.POST, instance=account)
+    if not form.is_valid():
+        return _back(request, messages.ERROR, first_form_error(form, _("Could not update the account.")))
+    account = form.save()
+
+    role_changed = account.role != was_role
+    position_changed = account.position_id != (was_position.pk if was_position else None)
+    position = account.position.name if account.position else None
+
+    if role_changed or position_changed:
+        release_from_upcoming(account, actor=request.user)
+        end_sessions(account, reason="role_changed" if role_changed else "position_changed", request=request)
+    if role_changed:
+        log_security("account.role_changed", request, target=account, was=was_role, now=account.role)
+
+    if form.has_changed():
+        actor = request.user
+        others = set(managers()) - {account.pk}
+        notify(others, "account.updated", actor=actor, role=account.role, name=account.display_name)
+        if role_changed:
+            notify(
+                [account],
+                "account.role_changed",
+                actor=actor,
+                level="warning",
+                by=actor.display_name,
+                was=was_role,
+                role=account.role,
+                position=position,
+            )
+        elif position_changed and position:
+            notify(
+                [account],
+                "account.position_changed",
+                actor=actor,
+                level="warning",
+                by=actor.display_name,
+                was=was_position.name if was_position else None,
+                position=position,
+            )
+        else:
+            notify([account], "account.details_updated", actor=actor, by=actor.display_name)
+        _directory_changed()
+        log_security("account.updated", request, target=account, fields=",".join(form.changed_data) or "-")
+    return _back(request, messages.SUCCESS, _("%(role)s updated.") % {"role": account.get_role_display()})
+
+
+@admin_required
+@require_POST
+def admin_user_reset_password(request: HttpRequest, user_id: int) -> HttpResponse:
+    employee = _managed_user_or_404(request, user_id)
+    _set_generated_password(request, employee)
+    end_sessions(employee, reason="password_reset", request=request)
+    notify([employee], "account.password_reset", actor=request.user, level="warning", by=request.user.display_name)
+    return _back(request, messages.SUCCESS, _("Password reset."))
+
+
+@admin_required
+@require_POST
+def admin_user_reset_two_factor(request: HttpRequest, user_id: int) -> HttpResponse:
+    """Turn off 2FA for someone who lost both their phone and their recovery codes; they are told by email."""
+    account = _managed_user_or_404(request, user_id)
+    if not two_factor.disable(account, actor=request.user):
+        return _back(request, messages.ERROR, _("%(name)s doesn't use two-factor authentication.") % {"name": account.display_name})
+    _directory_changed()
+    log_security("account.two_factor_reset", request, target=account)
+    return _back(request, messages.SUCCESS, _("Two-factor authentication reset for %(name)s.") % {"name": account.display_name})
+
+
+@admin_required
+@require_POST
+def admin_user_delete(request: HttpRequest, user_id: int) -> HttpResponse:
+    """Erase an account on the admin's initiative.
+
+    This is the other door to the same GDPR erasure right as
+    `apps.privacy.delete_my_account` - the Privacy Policy tells users they can
+    ask their manager to delete their account directly instead of using the
+    self-service page - so it closes with the same confirmation email, sent
+    to the employee (not the manager) once the data is actually gone.
+    """
+    account = _managed_user_or_404(request, user_id)
+    account_id = account.pk
+    label, email, role, language = account.display_name, account.email, account.role, account.language
+    role_label = str(account.get_role_display())
+    release_from_upcoming(account, actor=request.user, tell_account=False)
+    had_assignments = account.assignments.exists()
+    account.delete()
+    end_sessions_for(account_id, reason="account_deleted", request=request)
+    send_account_deleted_email(email, label, language)
+    notify(managers(), "account.deleted", actor=request.user, level="warning", role=role, name=label)
+    _directory_changed()
+    if had_assignments:
+        notices.shifts_changed()
+    log_security("account.deleted", request, account=account_id, role=role)
+    return _back(request, messages.SUCCESS, _("Deleted %(role)s: %(name)s.") % {"role": role_label.lower(), "name": label})
+
+
+@admin_required
+@require_POST
+def position_create(request: HttpRequest) -> HttpResponse:
+    form = PositionForm(request.POST)
+    if not form.is_valid():
+        return _back(request, messages.ERROR, first_form_error(form, _("Could not create position.")))
+    position = form.save()
+    notify(managers(), "position.created", actor=request.user, name=position.name)
+    _directory_changed()
+    log_security("position.created", request, position=position.pk)
+    return _back(request, messages.SUCCESS, _("Position created: %(name)s.") % {"name": position.name})
+
+
+@admin_required
+@require_POST
+def position_delete(request: HttpRequest, position_id: int) -> HttpResponse:
+    position = get_object_or_404(Position, pk=position_id)
+    delete_position(position, actor=request.user)
+    _directory_changed()
+    log_security("position.deleted", request, position=position_id)
+    return _back(request, messages.SUCCESS, _("Position deleted: %(name)s.") % {"name": position.name})

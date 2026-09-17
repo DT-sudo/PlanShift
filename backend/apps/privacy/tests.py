@@ -8,8 +8,8 @@ from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
-from apps.scheduling.models import Assignment, EmployeeUnavailability, Position, Shift, ShiftStatus
-from apps.accounts.models import UserRole
+from apps.scheduling.models import Assignment, EmployeeUnavailability, Shift, ShiftStatus
+from apps.accounts.models import Position, UserRole
 
 User = get_user_model()
 
@@ -169,34 +169,7 @@ class DeleteMyAccountTests(TestCase):
         self.assertEqual(sent.to, ["employee@example.com"])
         self.assertIn("deleted", sent.subject.lower())
 
-    def test_manager_who_created_shifts_cannot_self_delete_and_no_email_is_sent(self):
-        """Shift.created_by is PROTECT: erasure must not silently orphan schedule history."""
-        manager = User.objects.create_user(
-            username="manager@example.com",
-            email="manager@example.com",
-            password=self.password,
-            role=UserRole.MANAGER,
-        )
-        Shift.objects.create(
-            date=date(2026, 9, 20),
-            start_time=time(9, 0),
-            end_time=time(13, 0),
-            position=self.position,
-            created_by=manager,
-        )
-        self.client.force_login(manager)
-
-        response = self.client.post(
-            reverse("privacy_delete_account"),
-            {"confirm_email": manager.email, "confirm_password": self.password},
-            follow=True,
-        )
-
-        self.assertTrue(User.objects.filter(email="manager@example.com").exists())
-        self.assertRedirects(response, reverse("privacy_center"))
-        self.assertEqual(len(mail.outbox), 0)
-
-    def test_deleting_own_account_removes_assignments_and_unavailability(self):
+    def _manager_with_a_shift(self) -> tuple[User, Shift]:
         manager = User.objects.create_user(
             username="manager@example.com",
             email="manager@example.com",
@@ -210,6 +183,51 @@ class DeleteMyAccountTests(TestCase):
             position=self.position,
             created_by=manager,
         )
+        return manager, shift
+
+    def test_manager_who_created_shifts_can_self_delete_and_the_shifts_stay(self):
+        """The schedule is shared: a manager's erasure unlinks the shifts they wrote, it doesn't remove them."""
+        manager, shift = self._manager_with_a_shift()
+        self.client.force_login(manager)
+
+        response = self.client.post(
+            reverse("privacy_delete_account"),
+            {"confirm_email": manager.email, "confirm_password": self.password},
+            follow=True,
+        )
+
+        self.assertFalse(User.objects.filter(email="manager@example.com").exists())
+        self.assertRedirects(response, reverse("login"))
+        shift.refresh_from_db()
+        self.assertIsNone(shift.created_by)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def _admin(self, email: str) -> User:
+        return User.objects.create_user(username=email, email=email, password=self.password, role=UserRole.ADMIN)
+
+    def test_the_only_admin_can_not_delete_their_account(self):
+        """Nobody would be left to approve registrations or manage accounts."""
+        admin = self._admin("admin@example.com")
+        self.client.force_login(admin)
+
+        self.assertTrue(self.client.get(reverse("privacy_center")).context["bootstrap"]["data"]["lastAdmin"])
+        self.client.post(reverse("privacy_delete_account"), {"confirm_email": admin.email, "confirm_password": self.password})
+
+        self.assertTrue(User.objects.filter(pk=admin.pk).exists())
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_an_admin_can_leave_while_another_admin_remains(self):
+        admin = self._admin("admin@example.com")
+        self._admin("second-admin@example.com")
+        self.client.force_login(admin)
+
+        self.assertFalse(self.client.get(reverse("privacy_center")).context["bootstrap"]["data"]["lastAdmin"])
+        self.client.post(reverse("privacy_delete_account"), {"confirm_email": admin.email, "confirm_password": self.password})
+
+        self.assertFalse(User.objects.filter(pk=admin.pk).exists())
+
+    def test_deleting_own_account_removes_assignments_and_unavailability(self):
+        _, shift = self._manager_with_a_shift()
         Assignment.objects.create(shift=shift, employee=self.employee)
         EmployeeUnavailability.objects.create(employee=self.employee, date=date(2026, 9, 25))
 

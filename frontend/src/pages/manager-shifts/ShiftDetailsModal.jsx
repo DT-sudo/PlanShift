@@ -5,12 +5,14 @@ import { t } from '../../i18n/index.js';
 
 export function ShiftDetailsModal({ shift, assignedNames, editors, onClose, onEdit, onDelete, onPublish }) {
   const isDraft = shift.status === 'draft';
+  const started = shift.is_past;
 
   return (
     <Modal
       title={t('shifts.detailsTitle')}
       onClose={onClose}
       titleExtra={<ShiftStatusBadge status={shift.status} />}
+      closeLabel={started ? t('common.close') : null}
       footer={
         <>
           <button className="btn btn-destructive" type="button" onClick={onDelete}>
@@ -32,7 +34,7 @@ export function ShiftDetailsModal({ shift, assignedNames, editors, onClose, onEd
         <dd>{formatDate(shift.date)}</dd>
         <dt className="text-muted-foreground">{t('shifts.time')}</dt>
         <dd>
-          {shift.start_time}-{shift.end_time} ({formatDuration(shiftDurationMinutes(shift))})
+          {shiftTimes(shift)} ({formatDuration(shiftDurationMinutes(shift))})
         </dd>
         <dt className="text-muted-foreground">{t('shifts.position')}</dt>
         <dd>{shift.position}</dd>
@@ -49,6 +51,7 @@ export function ShiftDetailsModal({ shift, assignedNames, editors, onClose, onEd
           </>
         ) : null}
       </dl>
+      {started ? <p className="px-6 pb-6 text-sm text-muted-foreground">{t('shifts.startedLocked')}</p> : null}
     </Modal>
   );
 }

@@ -5,9 +5,10 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from django.conf import settings
+from django.core.mail import send_mail
 from django.utils import translation
 
-from apps.accounts.models import MANAGER_ROLES, User
+from apps.accounts.models import MANAGER_ROLES, User, UserRole
 from apps.realtime.events import push_to_user
 
 from .messages import render
@@ -44,14 +45,31 @@ def notify(
     )
     languages = dict(User.objects.filter(pk__in=recipient_ids).values_list("pk", "language"))
     for notification in created:
-        with translation.override(languages.get(notification.recipient_id) or settings.LANGUAGE_CODE):
-            payload = notification.as_dict()
+        payload = notification.as_dict()
         push_to_user(notification.recipient_id, {"type": "notification", "notification": payload})
+
+
+def send_email(to: str, subject: str, body: str) -> None:
+    """Best-effort: by the time someone is emailed the change has happened, and a flaky mail
+    relay must not undo it or make it look like it failed."""
+    if to:
+        send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [to], fail_silently=True)
 
 
 def managers():
     """Every active manager and admin. Employees and positions are one shared directory, so all of them are concerned."""
     return User.objects.filter(role__in=MANAGER_ROLES, is_active=True).values_list("pk", flat=True)
+
+
+def schedulers():
+    """Every active manager: the people who run the schedule. Admins provision accounts and
+    positions and never open the schedule, so what happens on it is not theirs to be told."""
+    return User.objects.filter(role=UserRole.MANAGER, is_active=True).values_list("pk", flat=True)
+
+
+def admins():
+    """Every active admin: the people who answer registration requests."""
+    return User.objects.filter(role=UserRole.ADMIN, is_active=True).values_list("pk", flat=True)
 
 
 def recent_notifications(user: User, limit: int | None = HISTORY_LIMIT) -> list[dict]:

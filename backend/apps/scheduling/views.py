@@ -8,26 +8,26 @@ from datetime import date, datetime, timedelta
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db.models.deletion import ProtectedError
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.utils.translation import ngettext
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.views import employee_required, manager_required
 from apps.accounts.models import User, UserRole
 from apps.notifications.messages import shift_params
-from apps.notifications.services import managers, notify
-from apps.shell import first_form_error, flash_redirect, render_app
-from apps.realtime.events import notify_managers, push_to_user
+from apps.accounts.services import position_options
+from apps.notifications.services import notify, schedulers
+from apps.shell import flash_redirect, json_error, render_app
+from apps.realtime.events import notify_managers
 
-from .forms import PositionForm
-from .models import Assignment, EmployeeUnavailability, Position, Shift, ShiftStatus
+from . import notices
+from .models import Assignment, EmployeeUnavailability, Shift, ShiftStatus
 from .services import (
-    position_options,
     publish_shift,
     publish_shifts_in_period,
     save_shift,
@@ -41,8 +41,6 @@ from .services import (
 # Open calendars and analytics dashboards re-fetch their data when a shift is written.
 SHIFTS_CHANGED = {"type": "shifts.changed"}
 
-# ── Query parameters and periods ────────────────────────────────────────────
-
 
 def _parse_date(value: str | None, default: date | None) -> date | None:
     """Parse YYYY-MM-DD, return default if missing or invalid."""
@@ -50,6 +48,12 @@ def _parse_date(value: str | None, default: date | None) -> date | None:
         return datetime.strptime((value or "").strip(), "%Y-%m-%d").date()
     except ValueError:
         return default
+
+
+def _today_and_anchor(request: HttpRequest) -> tuple[date, date]:
+    """Today, and the day the calendar is showing (`?date=`, today by default)."""
+    today = timezone.localdate()
+    return today, _parse_date(request.GET.get("date"), today)
 
 
 def _parse_id(value: str | None) -> int | None:
@@ -87,6 +91,11 @@ def _period(view: str, anchor: date) -> tuple[date, date]:
 
 def _manager_shift_or_404(request: HttpRequest, shift_id: int) -> Shift:
     return get_object_or_404(Shift, pk=shift_id, created_by=request.user)
+
+
+def _shift_or_404(shift_id: int) -> Shift:
+    """Any shift on the schedule: every manager runs the same one."""
+    return get_object_or_404(Shift, pk=shift_id)
 
 
 def _active_employees():
@@ -128,8 +137,7 @@ def _unavailability_payload(*, since: date) -> dict[str, list[str]]:
 @manager_required
 @require_GET
 def manager_shifts(request: HttpRequest) -> HttpResponse:
-    today = timezone.localdate()
-    anchor = _parse_date(request.GET.get("date"), today)
+    today, anchor = _today_and_anchor(request)
     view = _calendar_view(request)
     start, end = _period(view, anchor)
 
@@ -138,7 +146,6 @@ def manager_shifts(request: HttpRequest) -> HttpResponse:
     understaffed = request.GET.get("show") == "understaffed"
 
     shift_qs = shifts_for_manager(
-        manager_id=request.user.id,
         start=start,
         end=end,
         position_id=position_id,
@@ -213,6 +220,15 @@ def _notify_published_shift_edited(actor: User, shift: Shift, before_ids: set[in
         notify(after_ids & before_ids, "shift.changed", actor=actor, before=before, after=after)
 
 
+STARTED_SHIFT = gettext_lazy("This shift has already started, so it can't be changed.")
+
+
+def _refuse_if_started(request: HttpRequest, shift: Shift) -> HttpResponse | None:
+    if shift.is_past:
+        return flash_redirect(request, messages.ERROR, str(STARTED_SHIFT), _calendar_url(shift))
+    return None
+
+
 @manager_required
 @require_POST
 def save_shift_view(request: HttpRequest, shift_id: int | None = None) -> HttpResponse:
@@ -236,66 +252,42 @@ def save_shift_view(request: HttpRequest, shift_id: int | None = None) -> HttpRe
 @manager_required
 @require_POST
 def delete_shift(request: HttpRequest, shift_id: int) -> HttpResponse:
-    shift = _manager_shift_or_404(request, shift_id)
-    employee_ids = _assigned_ids(shift) if shift.status == ShiftStatus.PUBLISHED else set()
-    details = shift_params(shift)
-    shift.delete()
-    _shifts_changed(employee_ids)
-    notify(employee_ids, "shift.cancelled", actor=request.user, level="warning", shift=details)
+    shift = get_object_or_404(Shift.objects.prefetch_related("assignments"), pk=shift_id)
+    if refused := _refuse_if_started(request, shift):
+        return refused
+    Shift.objects.filter(pk=shift.pk).delete()
+    notices.cancelled(request.user, [shift])
+    notices.to_colleagues(request.user, "shift.deleted", shift=shift_fields(shift))
     return flash_redirect(request, messages.SUCCESS, _("Shift deleted."), "manager_shifts")
 
 
 @manager_required
 @require_POST
 def publish_shift_view(request: HttpRequest, shift_id: int) -> HttpResponse:
-    shift = _manager_shift_or_404(request, shift_id)
+    shift = _shift_or_404(shift_id)
+    if refused := _refuse_if_started(request, shift):
+        return refused
     was_draft = shift.status == ShiftStatus.DRAFT
     publish_shift(shift)
     if was_draft:
-        _notify_published(request.user, [shift])
+        notices.published(request.user, [shift])
+        notices.to_colleagues(request.user, "shift.published", shifts=[shift_fields(shift)])
     return flash_redirect(request, messages.SUCCESS, _("Shift published."), _calendar_url(shift))
 
 
 @manager_required
 @require_POST
 def publish_all_shifts(request: HttpRequest) -> HttpResponse:
-    """Publish all draft shifts in the visible month or week."""
+    """Publish all draft shifts in the visible month or week that have not started yet."""
     start, end = _period(_calendar_view(request), _parse_date(request.POST.get("date"), timezone.localdate()))
-    published = publish_shifts_in_period(manager_id=request.user.id, start=start, end=end)
+    published = publish_shifts_in_period(start=start, end=end)
     if published:
-        _notify_published(request.user, published)
+        notices.published(request.user, published)
+        notices.to_colleagues(request.user, "shift.published", shifts=[shift_fields(shift) for shift in published])
         count = len(published)
         text = ngettext("Published %(count)d shift.", "Published %(count)d shifts.", count) % {"count": count}
         return flash_redirect(request, messages.SUCCESS, text, "manager_shifts")
     return flash_redirect(request, messages.INFO, _("No draft shifts to publish."), "manager_shifts")
-
-
-# ── Positions ───────────────────────────────────────────────────────────────
-
-
-@manager_required
-@require_POST
-def position_create(request: HttpRequest) -> HttpResponse:
-    form = PositionForm(request.POST)
-    if not form.is_valid():
-        return flash_redirect(request, messages.ERROR, first_form_error(form, _("Could not create position.")), "manager_employees")
-    position = form.save()
-    notify(managers(), "position.created", actor=request.user, name=position.name)
-    return flash_redirect(request, messages.SUCCESS, _("Position created: %(name)s.") % {"name": position.name}, "manager_employees")
-
-
-@manager_required
-@require_POST
-def position_delete(request: HttpRequest, position_id: int) -> HttpResponse:
-    position = get_object_or_404(Position, pk=position_id)
-    try:
-        position.delete()
-    except ProtectedError:
-        return flash_redirect(
-            request, messages.ERROR, _("Cannot delete position: it is referenced by existing data."), "manager_employees"
-        )
-    notify(managers(), "position.deleted", actor=request.user, level="warning", name=position.name)
-    return flash_redirect(request, messages.SUCCESS, _("Position deleted: %(name)s.") % {"name": position.name}, "manager_employees")
 
 
 # ── Search and analytics ────────────────────────────────────────────────────
@@ -357,13 +349,29 @@ def manager_shift_search(request: HttpRequest) -> HttpResponse:
     )
 
 
+def _parse_month(value: str | None, default: date) -> date:
+    """Parse YYYY-MM as the first of that month; the default when it is missing or invalid."""
+    try:
+        return datetime.strptime((value or "").strip(), "%Y-%m").date()
+    except ValueError:
+        return default
+
+
 def _analytics_rows(request: HttpRequest) -> tuple[dict, list[dict]]:
-    """The filters, with the date range defaulting to the 30 days up to today, and the rows they select."""
+    """The filters and the rows they select.
+
+    Analytics is read by the month: the range runs from the first of one month to the last day
+    of another, this month by default. Drafts are never counted - they are a plan nobody has
+    been told about, so they say nothing about the work done or promised.
+    """
     filters = _shift_filters(request)
-    end = filters["end"] or timezone.localdate()
-    start = filters["start"] or end - timedelta(days=ANALYTICS_DEFAULT_DAYS - 1)
-    filters["start"], filters["end"] = min(start, end), max(start, end)
-    return filters, shift_rows(manager_id=request.user.id, **filters)
+    first_of_this_month = timezone.localdate().replace(day=1)
+    start = _parse_month(request.GET.get("date_from"), first_of_this_month)
+    last = _parse_month(request.GET.get("date_to"), first_of_this_month)
+    start, last = min(start, last), max(start, last)
+    filters["start"], filters["end"] = start, _month_bounds(last)[1]
+    filters["status"] = ShiftStatus.PUBLISHED
+    return filters, shift_rows(**filters)
 
 
 @manager_required
@@ -376,8 +384,10 @@ def manager_analytics(request: HttpRequest) -> HttpResponse:
         title=_("Workforce Analytics"),
         nav_active="manager_analytics",
         data={
-            **_filter_bar(request, date_from=filters["start"].isoformat(), date_to=filters["end"].isoformat()),
-            "analytics": shift_analytics(rows, worker_id=filters["worker_id"]),
+            **_filter_bar(
+                request, date_from=filters["start"].strftime("%Y-%m"), date_to=filters["end"].strftime("%Y-%m")
+            ),
+            "analytics": shift_analytics(rows, start=filters["start"], end=filters["end"], worker_id=filters["worker_id"]),
             "urls": {"exportCsv": reverse("manager_analytics_export_csv")},
         },
     )
@@ -393,7 +403,7 @@ def manager_analytics_export_csv(request: HttpRequest) -> HttpResponse:
 
     writer = csv.writer(response)
     writer.writerow(
-        [_("Date"), _("Start"), _("End"), _("Position"), _("Status"), _("Capacity"), _("Assigned"), _("Worker hours"), _("Workers")]
+        [_("Date"), _("Start"), _("End"), _("Position"), _("Capacity"), _("Assigned"), _("Worker hours"), _("Workers")]
     )
     for row in rows:
         writer.writerow(
@@ -402,7 +412,6 @@ def manager_analytics_export_csv(request: HttpRequest) -> HttpResponse:
                 row["start_time"],
                 row["end_time"],
                 row["position"],
-                ShiftStatus(row["status"]).label,
                 row["capacity"],
                 len(row["workers"]),
                 round(row["hours"] * len(row["workers"]), 2),
@@ -446,20 +455,27 @@ def employee_shifts_view(request: HttpRequest) -> HttpResponse:
 def employee_unavailability_toggle(request: HttpRequest) -> JsonResponse:
     day = _parse_date(request.POST.get("date"), None)
     if day is None:
-        return JsonResponse({"ok": False, "error": _("Enter a valid date.")}, status=400)
+        return json_error(_("Enter a valid date."))
     if day <= timezone.localdate():
-        return JsonResponse(
-            {"ok": False, "error": _("Only dates from tomorrow onwards can be marked as unavailable.")}, status=400
-        )
-    if Assignment.objects.filter(employee_id=request.user.id, shift__date=day).exists():
-        return JsonResponse({"ok": False, "error": _("You have a shift assigned on this day.")}, status=400)
+        return json_error(_("Only dates from tomorrow onwards can be marked as unavailable."))
+    assignments = Assignment.objects.filter(employee_id=request.user.id, shift__date=day).select_related("shift")
+    drafts = [assignment for assignment in assignments if assignment.shift.status == ShiftStatus.DRAFT]
+    if len(drafts) != len(assignments):
+        return json_error(_("You have a shift assigned on this day."))
 
     existing = EmployeeUnavailability.objects.filter(employee_id=request.user.id, date=day)
     unavailable = not existing.exists()
+    released = []
     if unavailable:
         EmployeeUnavailability.objects.create(employee_id=request.user.id, date=day)
+        released = [assignment.shift for assignment in drafts]
+        Assignment.objects.filter(pk__in=[assignment.pk for assignment in drafts]).delete()
     else:
         existing.delete()
+
+    if released:
+        notices.shifts_changed()
+        notices.staff_released(request.user, request.user.display_name, released)
 
     notify_managers(
         {
@@ -471,11 +487,11 @@ def employee_unavailability_toggle(request: HttpRequest) -> JsonResponse:
         }
     )
     notify(
-        managers(),
+        schedulers(),
         "availability.changed",
         actor=request.user,
         name=request.user.display_name,
         date=day.isoformat(),
         unavailable=unavailable,
     )
-    return JsonResponse({"ok": True, "date": day.isoformat(), "unavailable": unavailable})
+    return JsonResponse({"date": day.isoformat(), "unavailable": unavailable})

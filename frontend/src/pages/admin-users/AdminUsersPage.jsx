@@ -1,23 +1,24 @@
 import { useState } from 'react';
 
 import { getBootstrap, submitPost, urlFromTemplate } from '../../app/http.js';
+import { useLivePageData } from '../../app/live.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Avatar } from '../../components/Avatar.jsx';
+import { ListTable } from '../../components/ListTable.jsx';
 import { Plus } from '../../components/Icons.jsx';
 import { ConfirmModal } from '../../components/Modal.jsx';
 import { t } from '../../i18n/index.js';
-import { CredentialsModal, EmployeeFormModal, PositionsModal } from './EmployeeModals.jsx';
+import { CredentialsModal, UserFormModal, PositionsModal } from './UserModals.jsx';
 
-/** "EMP-123456 (maya@example.com)": names the account in a confirmation. */
 const accountLabel = (employee) => `${employee.employeeId} (${employee.email})`;
 
-function EmployeeRow({ employee, showRole, onEdit, onResetPassword, onResetTwoFactor, onDelete }) {
+function UserRow({ employee, onEdit, onResetPassword, onResetTwoFactor, onDelete }) {
   return (
     <tr>
       <td>
         <Avatar name={employee.fullName} src={employee.avatarUrl} />
       </td>
-      <td className="text-sm">{employee.employeeId}</td>
+      <td className="text-sm whitespace-nowrap">{employee.employeeId}</td>
       <td>
         <a className="person-name" href={employee.profileUrl}>
           {employee.fullName}
@@ -28,16 +29,14 @@ function EmployeeRow({ employee, showRole, onEdit, onResetPassword, onResetTwoFa
           </span>
         ) : null}
       </td>
-      {showRole ? (
-        <td>
-          <span className="badge badge-outline">{employee.roleLabel}</span>
-        </td>
-      ) : null}
+      <td>
+        <span className="badge badge-outline">{employee.roleLabel}</span>
+      </td>
       <td>{employee.position ? <span className="badge badge-default">{employee.position}</span> : null}</td>
       <td className="text-sm" dir="ltr">
         {employee.email}
       </td>
-      <td className="text-end whitespace-nowrap">
+      <td className="cell-actions">
         <button className="btn btn-ghost btn-sm" type="button" onClick={() => onEdit(employee)}>
           {t('common.edit')}
         </button>
@@ -57,11 +56,9 @@ function EmployeeRow({ employee, showRole, onEdit, onResetPassword, onResetTwoFa
   );
 }
 
-/** The Team page. Admins get every other account plus a role column and picker (`roles`); managers get employees. */
-export function ManagerEmployeesPage() {
-  const { data } = getBootstrap();
-  const { employees, roles, positions, credentials, urls } = data;
-  const isUsers = Boolean(roles);
+export function AdminUsersPage() {
+  const [credentials] = useState(() => getBootstrap().data.credentials);
+  const { employees, roles, positions, urls } = useLivePageData([DIRECTORY_CHANGED]);
 
   const [employeeForm, setEmployeeForm] = useState(null);
   const [showPositions, setShowPositions] = useState(false);
@@ -81,7 +78,7 @@ export function ManagerEmployeesPage() {
               onClick={() => setEmployeeForm({ employee: {}, action: urls.create })}
             >
               <Plus size={16} />
-              {isUsers ? t('team.addUser') : t('team.addEmployee')}
+              {t('team.addUser')}
             </button>
             <button className="btn btn-outline" type="button" onClick={() => setShowPositions(true)}>
               {t('team.managePositions')}
@@ -89,46 +86,26 @@ export function ManagerEmployeesPage() {
           </div>
         </div>
 
-        <div className="card mt-3">
-          <table className="table" aria-label={isUsers ? t('team.userList') : t('team.employeeList')}>
-            <thead>
-              <tr>
-                <th>{t('team.avatar')}</th>
-                <th>{t('team.employeeId')}</th>
-                <th>{t('team.fullName')}</th>
-                {roles ? <th>{t('team.role')}</th> : null}
-                <th>{t('team.position')}</th>
-                <th>{t('team.email')}</th>
-                <th>{t('team.actions')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {employees.length === 0 ? (
-                <tr>
-                  <td colSpan={roles ? 7 : 6} className="p-8 text-center text-sm text-muted-foreground">
-                    {t('team.empty')}
-                  </td>
-                </tr>
-              ) : (
-                employees.map((employee) => (
-                  <EmployeeRow
-                    key={employee.id}
-                    employee={employee}
-                    showRole={isUsers}
-                    onEdit={(target) => setEmployeeForm({ employee: target, action: urlFromTemplate(urls.update, target.id) })}
-                    onResetPassword={setPendingReset}
-                    onResetTwoFactor={setPendingTwoFactorReset}
-                    onDelete={setPendingDelete}
-                  />
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <ListTable
+          label={t('team.userList')}
+          columns={[t('team.avatar'), t('team.employeeId'), t('signup.fullName'), t('team.role'), t('shifts.position'), t('login.email')]}
+          empty={t('team.empty')}
+        >
+          {employees.map((employee) => (
+            <UserRow
+              key={employee.id}
+              employee={employee}
+              onEdit={(target) => setEmployeeForm({ employee: target, action: urlFromTemplate(urls.update, target.id) })}
+              onResetPassword={setPendingReset}
+              onResetTwoFactor={setPendingTwoFactorReset}
+              onDelete={setPendingDelete}
+            />
+          ))}
+        </ListTable>
       </main>
 
       {employeeForm ? (
-        <EmployeeFormModal
+        <UserFormModal
           employee={employeeForm.employee}
           action={employeeForm.action}
           roles={roles}
@@ -169,15 +146,13 @@ export function ManagerEmployeesPage() {
       ) : null}
 
       {pendingDelete ? (
-        <ConfirmModal
-          title={isUsers ? t('team.deleteUser') : t('team.deleteEmployee')}
-          message={isUsers ? t('team.deleteUserMessage') : t('team.deleteEmployeeMessage')}
+        <DeleteConfirmModal
+          title={t('team.deleteUser')}
+          message={t('team.deleteUserMessage')}
           detail={accountLabel(pendingDelete)}
-          footnote={isUsers ? t('team.deleteUserNote') : t('team.deleteEmployeeNote')}
-          confirmText={t('common.yesDelete')}
-          destructive
+          footnote={t('team.deleteUserNote')}
+          action={urlFromTemplate(urls.delete, pendingDelete.id)}
           onCancel={() => setPendingDelete(null)}
-          onConfirm={() => submitPost(urlFromTemplate(urls.delete, pendingDelete.id))}
         />
       ) : null}
     </AppShell>
