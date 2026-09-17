@@ -3,16 +3,27 @@ from __future__ import annotations
 from django.db import transaction
 
 from apps.notifications.services import managers, notify
+from apps.realtime.events import notify_managers
 from apps.scheduling import notices
 from apps.scheduling.models import ShiftStatus
 from apps.scheduling.services import delete_upcoming_shifts_of_position, release_from_future_shifts, shift_fields
 
-from .models import Position, User
+from .models import Position, User, UserRole
 
 
 def position_options() -> list[dict]:
     """Every position as `{id, name}`, for the React selects."""
     return [{"id": p.id, "name": p.name} for p in Position.objects.order_by("name")]
+
+
+def waiting_requests() -> int:
+    """How many registration requests are waiting for an admin - the count on the Requests link."""
+    return User.objects.filter(role=UserRole.GUEST).count()
+
+
+def announce_waiting_requests() -> None:
+    """Move that count on every open page without a reload: a request arrived, or was answered."""
+    notify_managers({"type": "requests.changed", "count": waiting_requests()})
 
 
 def release_from_upcoming(account: User, *, actor: User | None, tell_account: bool = True) -> None:
