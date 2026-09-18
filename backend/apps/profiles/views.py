@@ -187,7 +187,7 @@ def friend_request(request: HttpRequest) -> HttpResponse:
     return _back(request, messages.SUCCESS, _("Friend request sent to %(name)s.") % {"name": receiver.display_name})
 
 
-@login_required
+@colleague_required
 @require_POST
 def friend_accept(request: HttpRequest, friendship_id: int) -> HttpResponse:
     friendship = get_object_or_404(
@@ -197,10 +197,10 @@ def friend_accept(request: HttpRequest, friendship_id: int) -> HttpResponse:
         status=FriendshipStatus.PENDING,
     )
     services.accept(friendship)
-    return _back(request, messages.SUCCESS, _("You and %(name)s are now friends.") % {"name": friendship.from_user.display_name})
+    return _now_friends(request, friendship.from_user)
 
 
-@login_required
+@colleague_required
 @require_POST
 def friend_end(request: HttpRequest, friendship_id: int) -> HttpResponse:
     """Decline an incoming request, cancel your own, or unfriend."""
