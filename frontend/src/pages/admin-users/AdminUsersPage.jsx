@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { getBootstrap, submitPost, urlFromTemplate } from '../../app/http.js';
-import { useLivePageData } from '../../app/live.js';
+import { DIRECTORY_CHANGED, useLivePageData } from '../../app/live.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Avatar } from '../../components/Avatar.jsx';
 import { ListTable } from '../../components/ListTable.jsx';

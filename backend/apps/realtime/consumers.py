@@ -9,7 +9,7 @@ from django.urls import path
 
 from apps.profiles import presence
 
-from .events import MANAGERS_GROUP, user_group
+from .events import EVERYONE_GROUP, MANAGERS_GROUP, session_group, user_group
 
 
 class ScheduleConsumer(AsyncJsonWebsocketConsumer):
@@ -27,7 +27,10 @@ class ScheduleConsumer(AsyncJsonWebsocketConsumer):
         if not user.is_authenticated:
             await self.close()
             return
-        self.subscriptions = [user_group(user.id)] + ([MANAGERS_GROUP] if user.is_manager else [])
+        self.subscriptions = [user_group(user.id), EVERYONE_GROUP] + ([MANAGERS_GROUP] if user.is_manager else [])
+        session_key = getattr(self.scope.get("session"), "session_key", None)
+        if session_key:
+            self.subscriptions.append(session_group(session_key))
         for group in self.subscriptions:
             await self.channel_layer.group_add(group, self.channel_name)
         self.presence_id = secrets.token_hex(4)

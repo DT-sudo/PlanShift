@@ -1,4 +1,7 @@
+import { useState } from 'react';
+
 import { getBootstrap, submitPost } from '../app/http.js';
+import { useLiveEvents } from '../app/live.js';
 import { t } from '../i18n/index.js';
 import { Avatar } from './Avatar.jsx';
 import { LanguageSwitcher } from './LanguageSwitcher.jsx';
@@ -6,6 +9,11 @@ import { Dropdown } from './Menus.jsx';
 import { NotificationBell, ToastProvider } from './Notifications.jsx';
 
 function Header({ user, nav, urls }) {
+  const [waiting, setWaiting] = useState(null);
+  useLiveEvents((event) => {
+    if (event.type === 'requests.changed') setWaiting(event.count);
+  });
+
   return (
     <header className="sticky top-0 z-45 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 border-b border-border bg-card px-4 py-1.5 shadow-header">
       <div>{user ? <NotificationBell /> : null}</div>
@@ -14,12 +22,12 @@ function Header({ user, nav, urls }) {
         {nav.map((link) => (
           <a key={link.href} href={link.href} className={`nav-link ${link.active ? 'nav-link-active' : ''}`}>
             {t(`nav.${link.id}`)}
+            {countFor(link, waiting) ? <span className="nav-count">{countFor(link, waiting)}</span> : null}
           </a>
         ))}
       </nav>
 
       <div className="justify-self-end">
-        {/* The legal pages are public, so there may be nobody signed in. */}
         {user ? (
           <Dropdown
             trigger={({ toggle }) => (
@@ -54,6 +62,8 @@ function Header({ user, nav, urls }) {
   );
 }
 
+const countFor = (link, waiting) => (link.id === 'requests' && waiting !== null ? waiting : link.count);
+
 export function Footer({ children }) {
   const { urls } = getBootstrap();
 
@@ -64,9 +74,7 @@ export function Footer({ children }) {
       <div className="flex flex-wrap items-center gap-4">
         <LanguageSwitcher id="footerLanguage" />
         <nav className="flex items-center gap-4" aria-label={t('footer.legal')}>
-          <a className="footer-link" href={urls.privacy}>
-            {t('footer.privacyPolicy')}
-          </a>
+          <PrivacyPolicyLink />
           <a className="footer-link" href={urls.terms}>
             {t('footer.terms')}
           </a>

@@ -20,7 +20,7 @@ from apps.accounts.models import Position, User, UserRole
 from apps.scheduling.models import EmployeeUnavailability, Shift
 
 from .consumers import ScheduleConsumer
-from .events import MANAGERS_GROUP, user_group
+from .events import EVERYONE_GROUP, MANAGERS_GROUP, user_group
 
 IN_MEMORY_LAYER = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 PING = {"type": "schedule.event", "event": {"type": "ping"}}

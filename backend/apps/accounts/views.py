@@ -18,6 +18,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from apps.notifications.services import admins, managers, notify
 from apps.privacy.emails import send_account_deleted_email
+from apps.realtime.events import DIRECTORY_CHANGED, notify_everyone
 from apps.shell import field_errors, first_form_error, flash_redirect, render_app
 from apps.scheduling import notices
 from apps.scheduling.management.commands.seed_demo import DEMO_ACCOUNTS, DEMO_EMPLOYEE_EMAIL

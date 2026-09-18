@@ -18,7 +18,7 @@ from django.contrib.sessions.models import Session
 from django.http import HttpRequest
 from django.utils import timezone
 
-from apps.realtime.events import push_to_user
+from apps.realtime.events import SESSION_ENDED, push_to_user, send_to_session
 
 logger = logging.getLogger("transcendence.security")
 

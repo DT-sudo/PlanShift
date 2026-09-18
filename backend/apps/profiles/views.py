@@ -14,6 +14,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from apps.accounts.models import User
 from apps.accounts.views import colleague_required
+from apps.realtime.events import DIRECTORY_CHANGED, notify_everyone
 from apps.shell import field_errors, flash_redirect, render_app
 from apps.twofactor import views as two_factor
 

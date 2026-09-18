@@ -13,6 +13,16 @@ logger = logging.getLogger(__name__)
 
 MANAGERS_GROUP = "managers"
 
+EVERYONE_GROUP = "everyone"
+
+DIRECTORY_CHANGED = {"type": "directory.changed"}
+
+SHIFTS_CHANGED = {"type": "shifts.changed"}
+
+REGISTRATION_APPROVED = {"type": "registration.approved"}
+
+SESSION_ENDED = {"type": "session.ended"}
+
 
 def _send(group: str, event: dict[str, Any]) -> None:
     try:
@@ -26,9 +36,24 @@ def user_group(user_id: int) -> str:
     return f"user_{user_id}"
 
 
+def session_group(session_key: str) -> str:
+    """The pages one browser session has open - its tabs, and only its tabs."""
+    return f"session_{session_key}"
+
+
 def notify_managers(event: dict[str, Any]) -> None:
     """Send `event` to every connected manager once the current transaction commits."""
     transaction.on_commit(lambda: _send(MANAGERS_GROUP, event))
+
+
+def notify_everyone(event: dict[str, Any]) -> None:
+    """Send `event` to every open page once the current transaction commits."""
+    transaction.on_commit(lambda: _send(EVERYONE_GROUP, event))
+
+
+def send_to_session(session_key: str, event: dict[str, Any]) -> None:
+    """Send `event` to every tab of one browser session, right away."""
+    _send(session_group(session_key), event)
 
 
 def send_to_user(user_id: int, event: dict[str, Any]) -> None:
