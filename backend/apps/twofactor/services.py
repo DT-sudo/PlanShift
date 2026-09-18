@@ -8,8 +8,9 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.mail import send_mail
+
 from django.db import transaction
-from django.utils import timezone, translation
+from django.utils import timezone
 from django.utils.crypto import salted_hmac
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -24,6 +25,8 @@ from .models import RecoveryCode, TOTPDevice
 MAX_FAILED_ATTEMPTS = 5
 LOCK_DURATION = timedelta(minutes=5)
 LOCKED_MESSAGE = gettext_lazy("Too many incorrect codes. Wait 5 minutes, then try again.")
+CODE_REQUIRED = gettext_lazy("Enter the code from your authenticator app, or a recovery code.")
+INVALID_CODE = gettext_lazy("That code is not valid. Try again.")
 
 RECOVERY_CODE_COUNT = 10
 RECOVERY_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"

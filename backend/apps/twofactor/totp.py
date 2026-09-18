@@ -17,10 +17,15 @@ from urllib.parse import quote, urlencode
 
 import segno
 
-ISSUER = "PlanShift"
+ISSUER = "ft_transcendence"
 DIGITS = 6
 STEP_SECONDS = 30
 WINDOW = 1
+
+
+def looks_like_code(code: str) -> bool:
+    """Six digits: what an authenticator app shows, as opposed to a recovery code."""
+    return code.isdigit() and len(code) == DIGITS
 
 
 def new_secret() -> str:
