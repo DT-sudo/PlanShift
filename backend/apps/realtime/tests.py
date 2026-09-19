@@ -279,3 +279,30 @@ class LiveDirectoryTests(TestCase):
         with self.captureOnCommitCallbacks(execute=True):
             self.client.post(reverse("account_settings"), {"section": "remove_avatar"})
         self.assertIn({"type": "directory.changed"}, self._events())
+
+    def test_deleting_an_account_reaches_every_page(self):
+        self._post("admin_user_delete", self.employee.id)
+
+        self.assertIn({"type": "directory.changed"}, self._events())
+
+    def test_adding_and_removing_a_position_reaches_every_page(self):
+        self._post("position_create", name="Cook")
+        self.assertIn({"type": "directory.changed"}, self._events())
+
+        self._post("position_delete", Position.objects.get(name="Cook").id)
+        self.assertIn({"type": "directory.changed"}, self._events())
+
+    def test_a_role_change_tells_that_accounts_pages_to_sign_out(self):
+        theirs = async_to_sync(self.layer.new_channel)()
+        async_to_sync(self.layer.group_add)(user_group(self.employee.id), theirs)
+
+        self._post("admin_user_update", self.employee.id, full_name="Alice N",
+                   email=self.employee.email, role=UserRole.MANAGER, position="")
+
+        events = []
+        while True:
+            try:
+                events.append(next_event(self.layer, theirs))
+            except TimeoutError:
+                break
+        self.assertIn({"type": "session.ended"}, events)
