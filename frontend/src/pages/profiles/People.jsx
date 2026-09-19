@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { submitPost, urlFromTemplate } from '../../app/http.js';
+import { DIRECTORY_CHANGED } from '../../app/live.js';
 import { Avatar } from '../../components/Avatar.jsx';
 import { Plus } from '../../components/Icons.jsx';
 import { ConfirmModal } from '../../components/Modal.jsx';

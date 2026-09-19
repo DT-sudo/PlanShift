@@ -16,8 +16,9 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-from apps.notifications.services import managers, notify
+from apps.notifications.services import admins, managers, notify
 from apps.privacy.emails import send_account_deleted_email
+from apps.realtime.events import DIRECTORY_CHANGED, notify_everyone
 from apps.shell import field_errors, first_form_error, flash_redirect, render_app
 from apps.scheduling import notices
 from apps.scheduling.management.commands.seed_demo import DEMO_ACCOUNTS, DEMO_EMPLOYEE_EMAIL
@@ -44,7 +45,8 @@ def _role_required(attr: str, other_home: str):
         return wrapped
 
     return decorator
-from .services import delete_position, position_options, release_from_upcoming
+from .security import end_sessions, end_sessions_for, end_this_session, log_security
+from .services import announce_waiting_requests, delete_position, position_options, release_from_upcoming
 
 
 def _home_page(user) -> str:
@@ -83,8 +85,11 @@ def login_view(request: HttpRequest) -> HttpResponse:
         return redirect("home")
 
     form = EmailAuthenticationForm(request, data=request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        return begin_login(request, form.get_user())
+    if request.method == "POST":
+        if form.is_valid():
+            log_security("login.password_ok", request, actor=form.get_user())
+            return begin_login(request, form.get_user())
+        log_security("login.failed", request, email=form["username"].value() or "-")
 
     errors = field_errors(form)
     if "username" in errors:
@@ -110,7 +115,7 @@ def login_view(request: HttpRequest) -> HttpResponse:
 
 @require_http_methods(["GET", "POST"])
 def signup_view(request: HttpRequest) -> HttpResponse:
-    """Open a manager account: email + password, hashed by Django's PBKDF2."""
+    """Register: email + password (hashed by Django's PBKDF2), signed in as a guest until an admin approves."""
     if request.user.is_authenticated:
         return redirect("home")
 
@@ -119,7 +124,14 @@ def signup_view(request: HttpRequest) -> HttpResponse:
     if posted and form.is_valid():
         user = form.save()
         login(request, user)
-        messages.success(request, _("Welcome, %(name)s. Your account is ready.") % {"name": user.get_full_name()})
+        log_security("signup", request, actor=user, role=user.role)
+        notify(admins(), "registration.requested", actor=user, name=user.display_name, email=user.email)
+        _directory_changed()
+        announce_waiting_requests()
+        messages.success(
+            request,
+            _("Welcome, %(name)s. Your registration request was sent to an administrator.") % {"name": user.get_full_name()},
+        )
         return redirect("home")
 
     return render_app(
@@ -141,6 +153,8 @@ def signup_view(request: HttpRequest) -> HttpResponse:
 @login_required
 @require_POST
 def logout_view(request: HttpRequest) -> HttpResponse:
+    end_this_session(request)
+    log_security("logout", request)
     logout(request)
     return redirect("login")
 

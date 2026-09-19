@@ -1,4 +1,5 @@
 import { Footer } from '../../components/AppShell.jsx';
+import { tx } from '../../i18n/index.js';
 import { ToastProvider } from '../../components/Notifications.jsx';
 
 export function AuthLayout({ title, subtitle, messages = [], children }) {
@@ -28,5 +29,13 @@ export function FormError({ message }) {
     <div className="card mb-4 p-3" role="alert">
       <div className="text-sm text-destructive">{message}</div>
     </div>
+  );
+}
+
+export function SigningInAs({ email }) {
+  return (
+    <p className="mb-4 text-center text-sm text-muted-foreground">
+      {tx('twoFactorLogin.signingInAs', { email: <bdi className="font-medium text-foreground">{email}</bdi> })}
+    </p>
   );
 }

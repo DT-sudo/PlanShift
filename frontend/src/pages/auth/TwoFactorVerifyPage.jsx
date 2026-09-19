@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 import { getBootstrap, submitPost } from '../../app/http.js';
-import { CsrfInput, Field } from '../../components/Field.jsx';
-import { t, tx } from '../../i18n/index.js';
-import { AuthLayout } from './AuthLayout.jsx';
+import { Field } from '../../components/Field.jsx';
+import { t } from '../../i18n/index.js';
+import { AuthLayout, SigningInAs } from './AuthLayout.jsx';
 
 export function TwoFactorVerifyPage() {
   const { data, messages } = getBootstrap();
@@ -16,13 +16,9 @@ export function TwoFactorVerifyPage() {
       subtitle={useRecoveryCode ? t('twoFactorLogin.subtitleRecovery') : t('twoFactorLogin.subtitleApp')}
       messages={messages}
     >
-      <p className="mb-4 text-center text-sm text-muted-foreground">
-        {tx('twoFactorLogin.signingInAs', { email: <bdi className="font-medium text-foreground">{data.email}</bdi> })}
-      </p>
+      <SigningInAs email={data.email} />
 
-      <form method="post" action={data.urls.verify}>
-        <CsrfInput />
-        <input type="hidden" name="mode" value={useRecoveryCode ? 'recovery' : 'app'} />
+      <PostForm action={data.urls.verify} fields={{ mode: useRecoveryCode ? 'recovery' : 'app' }}>
 
         {useRecoveryCode ? (
           <Field
@@ -62,7 +58,7 @@ export function TwoFactorVerifyPage() {
         <button type="submit" className="btn btn-primary w-full">
           {t('twoFactorLogin.verify')}
         </button>
-      </form>
+      </PostForm>
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-2 text-sm">
         <button

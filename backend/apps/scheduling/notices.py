@@ -11,7 +11,7 @@ from collections.abc import Iterable
 
 from apps.accounts.models import User
 from apps.notifications.services import notify, schedulers
-from apps.realtime.events import notify_managers, push_to_user
+from apps.realtime.events import SHIFTS_CHANGED, notify_managers, push_to_user
 
 from .models import Shift, ShiftStatus
 from .services import shift_fields

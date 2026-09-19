@@ -76,8 +76,13 @@ export function useLiveEvents(onEvent, { onReconnect, onOpen, enabled = true } =
   }, [enabled]);
 }
 
-export function useLivePageData(initial, eventTypes = ['shifts.changed'], patch = null) {
-  const [data, setData] = useState(initial);
+const SHIFTS_CHANGED = 'shifts.changed';
+export const DIRECTORY_CHANGED = 'directory.changed';
+
+const SCHEDULE_EVENTS = [SHIFTS_CHANGED, DIRECTORY_CHANGED];
+
+export function useLivePageData(eventTypes = SCHEDULE_EVENTS, patch = null) {
+  const [data, setData] = useState(() => getBootstrap().data);
   const refresh = () => getPageData().then(setData).catch(() => {});
   useEffect(() => onLanguageChange(() => setData(getBootstrap().data)), []);
   useLiveEvents(

@@ -12,9 +12,10 @@ services:
       DB_NAME: "/app/data/db.sqlite3"
       MEDIA_ROOT: "/app/data/media"
       SEED_DEMO_DATA: "${SEED_DEMO_DATA:-1}"
-      ENABLE_DEMO_LOGIN: "${ENABLE_DEMO_LOGIN:-1}"
+      ENABLE_DEMO_LOGIN: "${ENABLE_DEMO_LOGIN:-0}"
       SECURE_COOKIES: "${SECURE_COOKIES:-1}"
       HTTPS_PORT: "${HTTPS_PORT:-8443}"
+      SECURE_HSTS_SECONDS: "${SECURE_HSTS_SECONDS:-3600}"
       REDIS_URL: "redis://redis:6379/0"
       EMAIL_BACKEND: "${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}"
       EMAIL_HOST: "${EMAIL_HOST:-}"
@@ -22,20 +23,20 @@ services:
       EMAIL_HOST_USER: "${EMAIL_HOST_USER:-}"
       EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD:-}"
       EMAIL_USE_TLS: "${EMAIL_USE_TLS:-1}"
-      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL:-privacy@planshift.example}"
+      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL:-privacy@ft-transcendence.example}"
     depends_on:
       - redis
     volumes:
       - db_data:/app/data
     networks:
-      - planshift
+      - transcendence
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     command: ["redis-server", "--save", "", "--appendonly", "no"]
     networks:
-      - planshift
+      - transcendence
     restart: unless-stopped
 
   proxy:
@@ -53,11 +54,11 @@ services:
       - tls_certs:/etc/nginx/certs
     entrypoint: ["/bin/sh", "/docker-entrypoint-init.sh"]
     networks:
-      - planshift
+      - transcendence
     restart: unless-stopped
 
 networks:
-  planshift:
+  transcendence:
 
 volumes:
   db_data:
