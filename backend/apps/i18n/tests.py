@@ -177,4 +177,9 @@ class RecipientLanguageTests(I18nTestCase):
     def test_navigation_is_named_by_id_for_the_browser_to_translate(self):
         self.client.force_login(self.manager)
         nav = self.bootstrap(self.client.get(reverse("manager_shifts")))["nav"]
-        self.assertEqual([link["id"] for link in nav], ["shifts", "search", "analytics", "team", "friends"])
+        self.assertEqual([link["id"] for link in nav], ["shifts", "search", "analytics", "friends"])
+
+    def test_the_admin_navigation_is_the_users_and_requests_pages(self):
+        self.client.force_login(self.admin)
+        nav = self.bootstrap(self.client.get(reverse("admin_users")))["nav"]
+        self.assertEqual([link["id"] for link in nav], ["users", "requests"])
