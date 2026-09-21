@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { submitPost } from '../app/http.js';
 import { t } from '../i18n/index.js';
 import { X } from './Icons.jsx';
 import { isTopLayer, pushLayer } from './hooks.js';
@@ -95,4 +96,8 @@ export function ConfirmModal({ title, message, detail, footnote, confirmText = t
       </div>
     </Modal>
   );
+}
+
+export function DeleteConfirmModal({ action, ...props }) {
+  return <ConfirmModal {...props} confirmText={t('common.yesDelete')} destructive onConfirm={() => submitPost(action)} />;
 }

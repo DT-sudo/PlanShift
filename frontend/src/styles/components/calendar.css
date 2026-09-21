@@ -63,7 +63,7 @@
   }
 
   .month-shift-chip {
-    height: 30px;
+    height: 1.875rem;
     padding: 0.1rem 0.25rem;
     display: flex;
     flex-direction: column;

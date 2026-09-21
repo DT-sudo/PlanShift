@@ -8,6 +8,8 @@ const toISODate = (date) => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-
 
 const dateFromISO = (iso) => new Date(`${iso}T00:00:00`);
 
+export const todayISO = () => toISODate(new Date());
+
 export function addMonths(iso, months) {
   const date = dateFromISO(iso);
   date.setMonth(date.getMonth() + months);
@@ -47,12 +49,44 @@ export function weekdayLabels() {
   );
 }
 
+const DAY_MONTH_YEAR = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
+
+export function formatDayMonthYear(iso) {
+  if (!iso) return '';
+  const [year, month, day] = iso.split('-');
+  return `${day}.${month}.${year}`;
+}
+
+export function formatMonthYear(iso) {
+  if (!iso) return '';
+  const [year, month] = iso.split('-');
+  return `${month}.${year}`;
+}
+
+export function parseMonthYear(text) {
+  const match = /^(\d{1,2})\.(\d{4})$/.exec(text.trim());
+  if (!match) return '';
+  const [month, year] = match.slice(1).map(Number);
+  return month >= 1 && month <= 12 ? `${year}-${pad2(month)}` : '';
+}
+
+export function parseDayMonthYear(text) {
+  const match = DAY_MONTH_YEAR.exec(text.trim());
+  if (!match) return '';
+  const [day, month, year] = match.slice(1).map(Number);
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return '';
+  return toISODate(date);
+}
+
 export const minutesOf = (time) => {
   const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
 };
 
-export const shiftDurationMinutes = (shift) => minutesOf(shift.end_time) - minutesOf(shift.start_time);
+export const endMinutesOf = (time) => (time === '00:00' ? 24 * 60 : minutesOf(time));
+
+export const shiftDurationMinutes = (shift) => endMinutesOf(shift.end_time) - minutesOf(shift.start_time);
 
 const inUnit = (value, unit) => new Intl.NumberFormat(intlLocale(), { style: 'unit', unit, unitDisplay: 'narrow' }).format(value);
 

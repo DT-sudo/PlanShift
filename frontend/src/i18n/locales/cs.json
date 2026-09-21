@@ -407,6 +407,11 @@
   "requests": {
     "title": "Žádosti o registraci",
     "subtitle": "Lidé, kteří se zaregistrovali a čekají na roli. Schválením je pustíte dovnitř, zamítnutím žádost smažete.",
-    "requested": "Odesláno"
+    "requested": "Odesláno",
+    "empty": "Žádné čekající žádosti.",
+    "approve": "Schválit",
+    "decline": "Zamítnout",
+    "approveTitle": "Schválit žádost",
+    "approveMessage": "Zvolte, kým bude {name}."
   }
 }

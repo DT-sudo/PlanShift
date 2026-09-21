@@ -6,7 +6,7 @@ import { AppShell } from '../../components/AppShell.jsx';
 import { Avatar } from '../../components/Avatar.jsx';
 import { ListTable } from '../../components/ListTable.jsx';
 import { Plus } from '../../components/Icons.jsx';
-import { ConfirmModal } from '../../components/Modal.jsx';
+import { ConfirmModal, DeleteConfirmModal } from '../../components/Modal.jsx';
 import { t } from '../../i18n/index.js';
 import { CredentialsModal, UserFormModal, PositionsModal } from './UserModals.jsx';
 

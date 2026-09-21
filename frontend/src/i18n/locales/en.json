@@ -397,6 +397,11 @@
   "requests": {
     "title": "Registration requests",
     "subtitle": "People who signed up and are waiting for a role. Approve to let them in, or decline to delete the request.",
-    "requested": "Requested"
+    "requested": "Requested",
+    "empty": "No requests waiting.",
+    "approve": "Approve",
+    "decline": "Decline",
+    "approveTitle": "Approve request",
+    "approveMessage": "Choose what {name} becomes."
   }
 }
