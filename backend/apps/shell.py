@@ -22,6 +22,7 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.translation import get_language
 
+from apps.accounts.services import waiting_requests
 from apps.i18n.languages import direction
 from apps.i18n.languages import options as language_options
 from apps.notifications.services import recent_notifications
@@ -77,7 +78,8 @@ def _nav_links(user, active: str) -> list[dict[str, Any]]:
         return []
     counts = {}
     if user.is_admin:
-        items = [("admin_users", "users")]
+        items = [("admin_users", "users"), ("registration_requests", "requests")]
+        counts["registration_requests"] = waiting_requests()
     elif user.is_manager:
         items = [
             ("manager_shifts", "shifts"),

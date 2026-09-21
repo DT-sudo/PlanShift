@@ -17,8 +17,8 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from apps.notifications.services import admins, managers, notify
-from apps.privacy.emails import send_account_deleted_email
-from apps.realtime.events import DIRECTORY_CHANGED, notify_everyone
+from apps.privacy.emails import send_account_deleted_email, send_registration_declined_email
+from apps.realtime.events import DIRECTORY_CHANGED, REGISTRATION_APPROVED, notify_everyone, push_to_user
 from apps.shell import field_errors, first_form_error, flash_redirect, render_app
 from apps.scheduling import notices
 from apps.scheduling.management.commands.seed_demo import DEMO_ACCOUNTS, DEMO_EMPLOYEE_EMAIL
@@ -26,7 +26,7 @@ from apps.scheduling.services import position_options
 from apps.twofactor import services as two_factor
 from apps.twofactor.views import begin_login
 
-from .forms import EmailAuthenticationForm, PositionForm, SignUpForm, UserForm
+from .forms import ApproveRequestForm, EmailAuthenticationForm, PositionForm, SignUpForm, UserForm
 from .models import ASSIGNABLE_ROLES, Position, User, UserRole
 
 
@@ -501,6 +501,92 @@ def admin_user_delete(request: HttpRequest, user_id: int) -> HttpResponse:
         notices.shifts_changed()
     log_security("account.deleted", request, account=account_id, role=role)
     return _back(request, messages.SUCCESS, _("Deleted %(role)s: %(name)s.") % {"role": role_label.lower(), "name": label})
+
+
+def _request_or_404(request: HttpRequest, user_id: int) -> User:
+    return get_object_or_404(request.user.managed_users().filter(role=UserRole.GUEST), pk=user_id)
+
+
+def _back_to_requests(request: HttpRequest, level: int, text: str) -> HttpResponse:
+    return flash_redirect(request, level, text, "registration_requests")
+
+
+@admin_required
+@require_GET
+def registration_requests(request: HttpRequest) -> HttpResponse:
+    """Everyone who signed up and is waiting, oldest first: approve with a role, or decline."""
+    guests = request.user.managed_users().filter(role=UserRole.GUEST).order_by("date_joined")
+    return render_app(
+        request,
+        page="registration-requests",
+        title=_("Registration requests"),
+        nav_active="registration_requests",
+        data={
+            "requests": [
+                {
+                    "id": guest.id,
+                    "fullName": guest.display_name,
+                    "avatarUrl": guest.avatar_url,
+                    "email": guest.email,
+                    "requestedAt": guest.date_joined.isoformat(),
+                }
+                for guest in guests
+            ],
+            "roles": _role_options(),
+            "positions": position_options(),
+            "urls": {
+                "approve": reverse("registration_approve", args=[0]),
+                "decline": reverse("registration_decline", args=[0]),
+            },
+        },
+    )
+
+
+@admin_required
+@require_POST
+def registration_approve(request: HttpRequest, user_id: int) -> HttpResponse:
+    """Turn a guest into a manager or an employee; their waiting page moves on to their new home page."""
+    account = _request_or_404(request, user_id)
+    form = ApproveRequestForm(request.POST, instance=account)
+    if not form.is_valid():
+        return _back_to_requests(request, messages.ERROR, first_form_error(form, _("Could not approve the request.")))
+    account = form.save()
+
+    actor = request.user
+    position = account.position.name if account.position else None
+    notify(
+        [account],
+        "registration.approved",
+        actor=actor,
+        by=actor.display_name,
+        role=account.role,
+        position=position,
+    )
+    notify(set(managers()) - {account.pk}, "account.added", actor=actor, role=account.role, name=account.display_name)
+    push_to_user(account.pk, REGISTRATION_APPROVED)
+    _directory_changed()
+    announce_waiting_requests()
+    log_security("registration.approved", request, target=account, role=account.role)
+    return _back_to_requests(
+        request,
+        messages.SUCCESS,
+        _("%(name)s approved as %(role)s.") % {"name": account.display_name, "role": account.get_role_display()},
+    )
+
+
+@admin_required
+@require_POST
+def registration_decline(request: HttpRequest, user_id: int) -> HttpResponse:
+    """Refuse a request: the account and everything it entered are erased, and they are told by email."""
+    account = _request_or_404(request, user_id)
+    account_id, label, email, language = account.pk, account.display_name, account.email, account.language
+    account.delete()
+    end_sessions_for(account_id, reason="registration_declined", request=request)
+    send_registration_declined_email(email, label, language)
+    _directory_changed()
+    announce_waiting_requests()
+    log_security("registration.declined", request, account=account_id)
+    return _back_to_requests(request, messages.SUCCESS, _("Request from %(name)s declined.") % {"name": label})
 
 
 @admin_required

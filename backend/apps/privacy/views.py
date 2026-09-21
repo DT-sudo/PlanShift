@@ -4,8 +4,8 @@ Every signed-in user - manager or employee - can reach these from the
 account menu: see what personal data is held about them, download it in a
 readable format, and delete their own account. See also
 `apps.legal.documents` for the Privacy Policy text this implements, and
-`apps.accounts.views` for the manager-initiated equivalent (deleting an
-employee's account, which already existed before this module).
+`apps.accounts.views` for the admin-initiated equivalent (deleting an
+account, which already existed before this module).
 """
 
 from __future__ import annotations
@@ -16,22 +16,34 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import ProtectedError
+from django.db import transaction
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 from django.views.decorators.http import require_GET, require_POST
 
-from apps.notifications.services import recent_notifications
+from apps.accounts.models import User, UserRole
+from apps.accounts.security import end_sessions_for
+from apps.accounts.services import announce_waiting_requests, release_from_upcoming
+from apps.notifications.services import managers, notify, recent_notifications
 from apps.profiles.services import involving
+from apps.realtime.events import DIRECTORY_CHANGED, notify_everyone
+from apps.scheduling import notices
 from apps.scheduling.models import Assignment, EmployeeUnavailability, Shift
 from apps.scheduling.services import shift_fields
 from apps.shell import render_app
 from apps.twofactor.services import export_data as two_factor_export
 
 from .emails import send_account_deleted_email, send_data_export_email
+
+LAST_ADMIN = gettext_noop("You are the only admin. Make someone else an admin before deleting your account.")
+
+
+def _is_last_admin(user) -> bool:
+    return user.is_admin and not User.objects.filter(role=UserRole.ADMIN, is_active=True).exclude(pk=user.pk).exists()
 
 
 def _collect_user_data(user) -> dict:
@@ -67,7 +79,7 @@ def _collect_user_data(user) -> dict:
     if user.is_employee:
         assignments = (
             Assignment.objects.filter(employee=user)
-            .select_related("shift", "shift__position")
+            .select_related("shift")
             .order_by("shift__date", "shift__start_time")
         )
         data["assigned_shifts"] = [{**shift_fields(a.shift), "status": a.shift.status} for a in assignments]
@@ -78,7 +90,7 @@ def _collect_user_data(user) -> dict:
             )
         ]
     else:
-        created = Shift.objects.filter(created_by=user).select_related("position").order_by("date", "start_time")
+        created = Shift.objects.filter(created_by=user).order_by("date", "start_time")
         data["shifts_created"] = [
             {**shift_fields(shift), "status": shift.status, "capacity": shift.capacity} for shift in created
         ]
@@ -97,6 +109,7 @@ def privacy_center(request: HttpRequest) -> HttpResponse:
         data={
             "email": request.user.email,
             "isManager": request.user.is_manager,
+            "lastAdmin": _(LAST_ADMIN) if _is_last_admin(request.user) else "",
             "urls": {
                 "exportData": reverse("privacy_export_data"),
                 "deleteAccount": reverse("privacy_delete_account"),
@@ -115,7 +128,7 @@ def export_my_data(request: HttpRequest) -> HttpResponse:
     send_data_export_email(user)
 
     response = HttpResponse(payload, content_type="application/json")
-    filename = f"planshift-my-data-{timezone.localdate().isoformat()}.json"
+    filename = f"ft_transcendence-my-data-{timezone.localdate().isoformat()}.json"
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
@@ -135,19 +148,25 @@ def delete_my_account(request: HttpRequest) -> HttpResponse:
         messages.error(request, _("Email or password didn't match - account not deleted."))
         return redirect("privacy_center")
 
-    email, name, language = user.email, user.display_name, user.language
+    user_id, email, name, language, role = user.pk, user.email, user.display_name, user.language, user.role
+    was_guest = user.is_guest
 
-    try:
+    with transaction.atomic():
+        if _is_last_admin(user):
+            messages.error(request, _(LAST_ADMIN))
+            return redirect("privacy_center")
+        release_from_upcoming(user, actor=user, tell_account=False)
+        had_assignments = user.assignments.exists()
         user.delete()
-    except ProtectedError:
-        messages.error(
-            request,
-            _(
-                "Your account can't be deleted while you still have shifts on the schedule. "
-                "Reassign or delete them first, then try again."
-            ),
-        )
-        return redirect("privacy_center")
+
+    if was_guest:
+        announce_waiting_requests()
+    else:
+        notify(managers(), "account.deleted", level="warning", role=role, name=name)
+    if had_assignments:
+        notices.shifts_changed()
+    notify_everyone(DIRECTORY_CHANGED)
+    end_sessions_for(user_id, reason="account_self_deleted", request=request, keep=request.session.session_key)
 
     logout(request)
     send_account_deleted_email(email, name, language)

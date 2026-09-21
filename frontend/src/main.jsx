@@ -17,6 +17,7 @@ import { ManagerShiftsPage } from './pages/manager-shifts/ManagerShiftsPage.jsx'
 import { PrivacyCenterPage } from './pages/privacy/PrivacyCenterPage.jsx';
 import { FriendsPage } from './pages/profiles/FriendsPage.jsx';
 import { RegistrationPendingPage } from './pages/registration/RegistrationPendingPage.jsx';
+import { RegistrationRequestsPage } from './pages/registration/RegistrationRequestsPage.jsx';
 import { ProfilePage } from './pages/profiles/ProfilePage.jsx';
 import { AccountSettingsPage } from './pages/profiles/AccountSettingsPage.jsx';
 
@@ -25,6 +26,7 @@ const PAGES = {
   signup: SignUpPage,
   'two-factor-verify': TwoFactorVerifyPage,
   'registration-pending': RegistrationPendingPage,
+  'registration-requests': RegistrationRequestsPage,
   legal: LegalPage,
   'manager-shifts': ManagerShiftsPage,
   'manager-shift-search': ManagerShiftSearchPage,

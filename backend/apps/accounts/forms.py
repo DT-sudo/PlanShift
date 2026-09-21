@@ -188,3 +188,11 @@ class UserForm(RoleAndPositionMixin, AccountForm):
         if switches_side and (self.instance.created_shifts.exists() or self.instance.assignments.exists()):
             raise ValidationError(_("Reassign or remove this user's shifts before switching between employee and manager roles."))
         return cleaned
+
+
+class ApproveRequestForm(RoleAndPositionMixin, forms.ModelForm):
+    """Approving a registration request: the guest's name and email stay as they signed up."""
+
+    class Meta:
+        model = User
+        fields = ["role", "position"]
