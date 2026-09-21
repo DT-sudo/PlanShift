@@ -1,7 +1,8 @@
 """Give an existing account the admin role: `python manage.py make_admin someone@example.com`.
 
-Sign-up only ever opens manager accounts, so this is how a deployment gets its first admin;
-from then on admins assign roles from the Users page.
+Sign-up only ever sends a registration request (a guest account) for an admin to approve, so
+this is how a deployment gets its first admin: sign up, then run this on that email. From then on
+admins approve requests and assign roles from the Requests and Users pages.
 """
 
 from __future__ import annotations

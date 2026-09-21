@@ -3,7 +3,7 @@ import { getBootstrap } from '../../app/http.js';
 import { useLivePageData } from '../../app/live.js';
 import { statusOptions } from '../../app/shifts.js';
 import { AppShell } from '../../components/AppShell.jsx';
-import { ShiftFilterSelects } from '../../components/Field.jsx';
+import { MonthRangeFields, ShiftFilterSelects } from '../../components/Field.jsx';
 import { ChevronDown } from '../../components/Icons.jsx';
 import { Dropdown } from '../../components/Menus.jsx';
 import { t } from '../../i18n/index.js';

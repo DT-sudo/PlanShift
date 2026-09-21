@@ -320,8 +320,10 @@
     "friends": "Friends"
   },
   "friends": {
+    "colleagues": "All colleagues",
+    "noColleagues": "No colleagues yet.",
     "online": "{online} of {total} online",
-    "noFriends": "No friends yet. Add a colleague by their email address above.",
+    "noFriends": "No friends yet. Add one from the colleagues list below.",
     "requests": "Friend requests",
     "noRequests": "No requests to answer.",
     "sentRequests": "Sent requests",
@@ -344,7 +346,7 @@
     "viewProfile": "View my profile",
     "privacyLink": "To download or delete your data, see {link}.",
     "avatarTitle": "Profile picture",
-    "avatarHint": "JPEG, PNG, WebP or GIF, up to {size} MB. It is cropped to a square; without one, your initials are shown.",
+    "avatarHint": "JPEG, PNG, WebP or GIF, up to {size} MB. It is cropped to a square.",
     "avatarTooBig": "The picture must be {size} MB or smaller.",
     "avatarFile": "New profile picture",
     "upload": "Upload",

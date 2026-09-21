@@ -328,8 +328,10 @@
     "friends": "Přátelé"
   },
   "friends": {
+    "colleagues": "Všichni kolegové",
+    "noColleagues": "Zatím žádní kolegové.",
     "online": "{online} z {total} online",
-    "noFriends": "Zatím žádní přátelé. Přidejte kolegu podle jeho e-mailové adresy výše.",
+    "noFriends": "Zatím žádní přátelé. Přidejte si jednoho ze seznamu kolegů níže.",
     "requests": "Žádosti o přátelství",
     "noRequests": "Žádné žádosti k vyřízení.",
     "sentRequests": "Odeslané žádosti",
@@ -352,7 +354,7 @@
     "viewProfile": "Zobrazit můj profil",
     "privacyLink": "Chcete-li stáhnout nebo smazat své údaje, přejděte na stránku {link}.",
     "avatarTitle": "Profilová fotografie",
-    "avatarHint": "JPEG, PNG, WebP nebo GIF do {size} MB. Ořízne se na čtverec; bez fotografie se zobrazí vaše iniciály.",
+    "avatarHint": "JPEG, PNG, WebP nebo GIF do {size} MB. Ořízne se na čtverec.",
     "avatarTooBig": "Obrázek může mít nejvýše {size} MB.",
     "avatarFile": "Nová profilová fotografie",
     "upload": "Nahrát",

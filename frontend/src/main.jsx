@@ -6,6 +6,7 @@ import { getBootstrap } from './app/http.js';
 import { watchBackForwardCache } from './app/session.js';
 import { useLanguage } from './i18n/index.js';
 import { LoginPage } from './pages/auth/LoginPage.jsx';
+import { PasswordChangeRequiredPage } from './pages/auth/PasswordChangeRequiredPage.jsx';
 import { SignUpPage } from './pages/auth/SignUpPage.jsx';
 import { TwoFactorVerifyPage } from './pages/auth/TwoFactorVerifyPage.jsx';
 import { EmployeeShiftsPage } from './pages/employee-shifts/EmployeeShiftsPage.jsx';
@@ -25,6 +26,7 @@ const PAGES = {
   login: LoginPage,
   signup: SignUpPage,
   'two-factor-verify': TwoFactorVerifyPage,
+  'password-change-required': PasswordChangeRequiredPage,
   'registration-pending': RegistrationPendingPage,
   'registration-requests': RegistrationRequestsPage,
   legal: LegalPage,
