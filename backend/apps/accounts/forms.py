@@ -66,12 +66,13 @@ class EmailAuthenticationForm(AuthenticationForm):
         return (self.cleaned_data.get("username") or "").strip().lower()
 
 
-class SignUpForm(BaseUserCreationForm):
-    """Public registration of a manager account.
+class SignUpForm(NameAndEmailForm, BaseUserCreationForm):
+    """Public registration: a registration request, not a working account.
 
-    Employees are provisioned by their manager, so the only account someone can
-    open for themselves is a manager account. Django's creation form handles the
-    two password fields and runs the password validators against the instance.
+    The account signs in, but as a guest who can reach nothing until an admin approves
+    it as a manager or an employee (`apps.accounts.views.registration_approve`). Django's
+    creation form handles the two password fields and runs the password validators
+    against the instance.
     """
 
     full_name = forms.CharField(label=_("Full name"), max_length=150)
@@ -89,7 +90,7 @@ class SignUpForm(BaseUserCreationForm):
     def _post_clean(self) -> None:
         self.instance.first_name, self.instance.last_name = _split_full_name(self.cleaned_data.get("full_name", ""))
         self.instance.username = self.cleaned_data.get("email", "")
-        self.instance.role = UserRole.MANAGER
+        self.instance.role = UserRole.GUEST
         super()._post_clean()
 
 

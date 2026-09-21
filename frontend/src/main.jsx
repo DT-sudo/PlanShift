@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 
 import './styles/index.css';
 import { getBootstrap } from './app/http.js';
+import { watchBackForwardCache } from './app/session.js';
 import { useLanguage } from './i18n/index.js';
 import { LoginPage } from './pages/auth/LoginPage.jsx';
 import { SignUpPage } from './pages/auth/SignUpPage.jsx';
@@ -15,6 +16,7 @@ import { ManagerShiftSearchPage } from './pages/manager-shift-search/ManagerShif
 import { ManagerShiftsPage } from './pages/manager-shifts/ManagerShiftsPage.jsx';
 import { PrivacyCenterPage } from './pages/privacy/PrivacyCenterPage.jsx';
 import { FriendsPage } from './pages/profiles/FriendsPage.jsx';
+import { RegistrationPendingPage } from './pages/registration/RegistrationPendingPage.jsx';
 import { ProfilePage } from './pages/profiles/ProfilePage.jsx';
 import { AccountSettingsPage } from './pages/profiles/AccountSettingsPage.jsx';
 
@@ -22,6 +24,7 @@ const PAGES = {
   login: LoginPage,
   signup: SignUpPage,
   'two-factor-verify': TwoFactorVerifyPage,
+  'registration-pending': RegistrationPendingPage,
   legal: LegalPage,
   'manager-shifts': ManagerShiftsPage,
   'manager-shift-search': ManagerShiftSearchPage,
@@ -40,6 +43,8 @@ function App() {
   useLanguage();
   return <Page />;
 }
+
+watchBackForwardCache();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

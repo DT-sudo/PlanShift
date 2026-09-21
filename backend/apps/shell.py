@@ -73,7 +73,7 @@ def _nav_links(user, active: str) -> list[dict[str, Any]]:
     One nav per job: admins provision accounts, managers run the schedule, employees work it.
     A guest has no job yet, so no nav. The admin's Requests link counts the requests waiting.
     """
-    if not user.is_authenticated:
+    if not user.is_authenticated or user.is_guest:
         return []
     counts = {}
     if user.is_admin:

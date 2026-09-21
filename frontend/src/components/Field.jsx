@@ -1,9 +1,20 @@
 import { getBootstrap } from '../app/http.js';
 import { statusOptions } from '../app/shifts.js';
 import { t } from '../i18n/index.js';
-
 export function CsrfInput() {
   return <input type="hidden" name="csrfmiddlewaretoken" value={getBootstrap().csrfToken} readOnly />;
+}
+
+export function PostForm({ fields = {}, children, ...formProps }) {
+  return (
+    <form method="post" {...formProps}>
+      <input type="hidden" name="csrfmiddlewaretoken" value={getBootstrap().csrfToken} readOnly />
+      {Object.entries(fields).map(([name, value]) => (
+        <input key={name} type="hidden" name={name} value={value} readOnly />
+      ))}
+      {children}
+    </form>
+  );
 }
 
 function Label({ id, label, required }) {
@@ -34,13 +45,26 @@ export function Field({ id, label, error, hint, required = false, as: Control = 
           {hint}
         </p>
       ) : null}
-      {error ? (
-        <p id={`${id}-error`} className="form-error-text" role="alert">
-          {error}
-        </p>
-      ) : null}
+      <ErrorText id={`${id}-error`} message={error} />
     </div>
   );
+}
+
+export function ErrorText({ id, message }) {
+  if (!message) return null;
+  return (
+    <p id={id} className="form-error-text" role="alert">
+      {message}
+    </p>
+  );
+}
+
+export function FullNameField(props) {
+  return <Field name="full_name" label={t('signup.fullName')} autoComplete="name" required minLength={2} maxLength={150} {...props} />;
+}
+
+export function EmailField(props) {
+  return <Field name="email" type="email" dir="ltr" label={t('login.email')} autoComplete="email" required {...props} />;
 }
 
 const submitForm = (event) => event.target.form.requestSubmit();

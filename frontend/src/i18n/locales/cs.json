@@ -205,6 +205,9 @@
     "selectPositionFirst": "Nejprve vyberte pozici.",
     "unavailable": "Nedostupný",
     "endAfterStart": "Konec musí být později než začátek.",
+    "inPast": "Směna nemůže začínat v minulosti. Zvolte pozdější datum nebo čas začátku.",
+    "endTimeFormat": "Čas ve 24hodinovém formátu, např. 17:30; 24:00 je půlnoc",
+    "startedLocked": "Tato směna už začala, takže ji nelze měnit ani smazat.",
     "unavailableDays": "Nedostupnost: {days}",
     "createTitle": "Vytvořit směnu",
     "stale": "Tuto směnu právě změnil nebo smazal někdo jiný, takže uložení bude odmítnuto. Zavřete ji a otevřete znovu, abyste viděli aktuální verzi."
@@ -239,10 +242,11 @@
     "csv": "CSV (surová data)",
     "pdf": "PDF (přehled)",
     "reportTitle": "Přehled analýzy pracovníků",
-    "reportFilters": "{from} – {to} · Pozice: {position} · Pracovník: {worker} · Stav: {status}",
+    "reportFilters": "{from} – {to} · Pozice: {position} · Zaměstnanec: {worker}",
     "generated": "Vytvořeno {time}",
     "overTime": "Směny v čase",
     "hoursPerWorker": "Hodiny na pracovníka",
+    "legalMax": "Zákonné maximum",
     "topWorkers": "Nejvytíženější pracovníci",
     "topPositions": "Nejčastější pozice",
     "shiftCount": {

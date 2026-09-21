@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { urlFromTemplate } from '../../app/http.js';
-import { SelectField } from '../../components/Field.jsx';
+import { EmailField, FullNameField, PostForm, SelectField } from '../../components/Field.jsx';
 import { Trash } from '../../components/Icons.jsx';
 import { Modal } from '../../components/Modal.jsx';
 import { t, tx } from '../../i18n/index.js';

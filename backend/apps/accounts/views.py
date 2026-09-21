@@ -53,6 +53,8 @@ def _home_page(user) -> str:
     """The page that holds this account's own work: accounts, the schedule, your shifts, or the waiting room."""
     if user.is_admin:
         return "admin_users"
+    if user.is_guest:
+        return "registration_pending"
     return "manager_shifts" if user.is_manager else "employee_shifts"
 
 
@@ -77,6 +79,7 @@ admin_required = _requires(lambda user: user.is_admin)
 manager_required = _requires(lambda user: user.is_manager and not user.is_admin)
 employee_required = _requires(lambda user: user.is_employee)
 colleague_required = _requires(lambda user: user.role in (UserRole.MANAGER, UserRole.EMPLOYEE))
+guest_required = _requires(lambda user: user.is_guest)
 
 
 @require_http_methods(["GET", "POST"])
@@ -163,6 +166,22 @@ def logout_view(request: HttpRequest) -> HttpResponse:
 def home(request: HttpRequest) -> HttpResponse:
     """Send each role to its own landing page."""
     return redirect("manager_shifts" if request.user.is_manager else "employee_shifts")
+
+
+@guest_required
+@require_GET
+def registration_pending(request: HttpRequest) -> HttpResponse:
+    """A guest's only page: their request, waiting for an admin."""
+    return render_app(
+        request,
+        page="registration-pending",
+        title=_("Waiting for approval"),
+        data={
+            "email": request.user.email,
+            "requestedAt": request.user.date_joined.isoformat(),
+            "urls": {"home": reverse("home")},
+        },
+    )
 
 
 @require_GET

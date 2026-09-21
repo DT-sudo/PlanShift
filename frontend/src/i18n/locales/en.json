@@ -201,6 +201,9 @@
     "selectPositionFirst": "Select a position first.",
     "unavailable": "Unavailable",
     "endAfterStart": "End time must be after start time.",
+    "inPast": "A shift can't start in the past. Choose a later date or start time.",
+    "endTimeFormat": "24-hour time, e.g. 17:30; 24:00 is midnight",
+    "startedLocked": "This shift has already started, so it can no longer be changed or deleted.",
     "unavailableDays": "Unavailable: {days}",
     "createTitle": "Create shift",
     "stale": "Someone else just changed or deleted this shift, so saving will be refused. Close and reopen it to see the latest version."
@@ -233,10 +236,11 @@
     "csv": "CSV (raw data)",
     "pdf": "PDF (report)",
     "reportTitle": "Workforce Analytics Report",
-    "reportFilters": "{from} – {to} · Position: {position} · Worker: {worker} · Status: {status}",
+    "reportFilters": "{from} – {to} · Position: {position} · Worker: {worker}",
     "generated": "Generated {time}",
     "overTime": "Shifts over time",
     "hoursPerWorker": "Hours per worker",
+    "legalMax": "Legal maximum",
     "topWorkers": "Top workers",
     "topPositions": "Top positions",
     "shiftCount": {
