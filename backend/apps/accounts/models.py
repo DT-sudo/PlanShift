@@ -22,6 +22,7 @@ class UserRole(models.TextChoices):
     ADMIN = "admin", _("Admin")
     MANAGER = "manager", _("Manager")
     EMPLOYEE = "employee", _("Employee")
+    GUEST = "guest", _("Guest")
 
 
 ASSIGNABLE_ROLES = (UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE)
@@ -51,6 +52,7 @@ class User(AbstractUser):
     open_sockets = models.PositiveIntegerField(default=0, editable=False)
     last_seen = models.DateTimeField(null=True, blank=True, editable=False)
     language = models.CharField(max_length=8, blank=True)
+    must_change_password = models.BooleanField(default=False)
 
     @property
     def display_name(self) -> str:
@@ -74,6 +76,10 @@ class User(AbstractUser):
     @property
     def is_employee(self) -> bool:
         return self.role == UserRole.EMPLOYEE
+    @property
+    def is_guest(self) -> bool:
+        """A registration request: signed up, not yet approved by an admin."""
+        return self.role == UserRole.GUEST
     def managed_users(self) -> models.QuerySet[User]:
         """The accounts on the admin's Users page: every account but their own.
 

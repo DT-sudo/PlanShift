@@ -4,14 +4,10 @@ import { formatDate } from '../../app/dates.js';
 import { getBootstrap, submitPost } from '../../app/http.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { Avatar } from '../../components/Avatar.jsx';
-import { CsrfInput, Field } from '../../components/Field.jsx';
+import { EmailField, ErrorText, Field, FullNameField, PasswordChangeFields, PostForm } from '../../components/Field.jsx';
 import { Settings, Trash, UserIcon } from '../../components/Icons.jsx';
-import { LanguageSwitcher } from '../../components/LanguageSwitcher.jsx';
 import { Modal } from '../../components/Modal.jsx';
 import { t, tx } from '../../i18n/index.js';
-
-/** Names the card a native form belongs to; the server re-renders that card's errors in place. */
-const Section = ({ name }) => <input type="hidden" name="section" value={name} />;
 
 function AvatarCard({ person, limits, error, action }) {
   const [preview, setPreview] = useState(null);
@@ -36,15 +32,15 @@ function AvatarCard({ person, limits, error, action }) {
 
   return (
     <section className="card p-4" aria-labelledby="avatarTitle">
-      <h2 id="avatarTitle" className="card-title">
-        {t('settings.avatarTitle')}
-      </h2>
-      <p className="mt-1 text-sm text-muted-foreground">{t('settings.avatarHint', { size: maxMegabytes })}</p>
-      <div className="mt-4 flex flex-wrap items-center gap-4">
-        <Avatar name={person.fullName} src={preview || person.avatarUrl} size="lg" primary />
-        <form className="flex flex-wrap items-center gap-2" method="post" action={action} encType="multipart/form-data">
-          <CsrfInput />
-          <Section name="avatar" />
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <Avatar name={person.fullName} src={preview || person.avatarUrl} size="md" primary />
+        <div className="min-w-0 flex-1">
+          <h2 id="avatarTitle" className="card-title">
+            {t('settings.avatarTitle')}
+          </h2>
+          <p className="text-sm text-muted-foreground">{t('settings.avatarHint', { size: maxMegabytes })}</p>
+        </div>
+        <PostForm className="flex flex-wrap items-center gap-2" action={action} encType="multipart/form-data" fields={{ section: 'avatar' }}>
           <label className="sr-only" htmlFor="avatarFile">
             {t('settings.avatarFile')}
           </label>
@@ -59,13 +55,13 @@ function AvatarCard({ person, limits, error, action }) {
             required
             onChange={pick}
           />
-          <button className="btn btn-primary" type="submit" disabled={!preview}>
+          <button className="btn btn-primary btn-sm" type="submit" disabled={!preview}>
             {t('settings.upload')}
           </button>
-        </form>
+        </PostForm>
         {person.avatarUrl ? (
           <button
-            className="btn btn-ghost btn-icon-destructive"
+            className="btn btn-ghost btn-sm btn-icon-destructive"
             type="button"
             onClick={() => submitPost(action, { section: 'remove_avatar' })}
           >
@@ -74,11 +70,7 @@ function AvatarCard({ person, limits, error, action }) {
           </button>
         ) : null}
       </div>
-      {message ? (
-        <p id="avatarError" className="form-error-text" role="alert">
-          {message}
-        </p>
-      ) : null}
+      <ErrorText id="avatarError" message={message} />
     </section>
   );
 }
@@ -89,32 +81,9 @@ function ProfileCard({ values, errors, action }) {
       <h2 id="profileTitle" className="card-title">
         {t('settings.profileTitle')}
       </h2>
-      <form className="mt-4" method="post" action={action}>
-        <CsrfInput />
-        <Section name="profile" />
-        <Field
-          id="fullName"
-          name="full_name"
-          label={t('signup.fullName')}
-          autoComplete="name"
-          required
-          minLength={2}
-          maxLength={150}
-          defaultValue={values.fullName}
-          error={errors.full_name}
-        />
-        <Field
-          id="email"
-          name="email"
-          type="email"
-          dir="ltr"
-          label={t('login.email')}
-          autoComplete="email"
-          hint={t('settings.emailHint')}
-          required
-          defaultValue={values.email}
-          error={errors.email}
-        />
+      <PostForm className="mt-4" action={action} fields={{ section: 'profile' }}>
+        <FullNameField id="fullName" defaultValue={values.fullName} error={errors.full_name} />
+        <EmailField id="email" hint={t('settings.emailHint')} defaultValue={values.email} error={errors.email} />
         <Field
           as="textarea"
           id="bio"
@@ -138,7 +107,7 @@ function ProfileCard({ values, errors, action }) {
         <button className="btn btn-primary" type="submit">
           {t('settings.saveProfile')}
         </button>
-      </form>
+      </PostForm>
     </section>
   );
 }
@@ -147,65 +116,18 @@ function PasswordCard({ errors, action }) {
   return (
     <section className="card p-4" aria-labelledby="passwordTitle">
       <h2 id="passwordTitle" className="card-title">
-        {t('settings.passwordTitle')}
+        {t('login.password')}
       </h2>
-      <form className="mt-4" method="post" action={action}>
-        <CsrfInput />
-        <Section name="password" />
-        <Field
-          id="oldPassword"
-          name="old_password"
-          type="password"
-          label={t('settings.currentPassword')}
-          autoComplete="current-password"
-          required
-          error={errors.old_password}
-        />
-        <Field
-          id="newPassword1"
-          name="new_password1"
-          type="password"
-          label={t('settings.newPassword')}
-          autoComplete="new-password"
-          hint={t('signup.passwordHint')}
-          required
-          minLength={8}
-          error={errors.new_password1}
-        />
-        <Field
-          id="newPassword2"
-          name="new_password2"
-          type="password"
-          label={t('settings.confirmNewPassword')}
-          autoComplete="new-password"
-          required
-          minLength={8}
-          error={errors.new_password2}
-        />
+      <PostForm className="mt-4" action={action} fields={{ section: 'password' }}>
+        <PasswordChangeFields errors={errors} />
         <button className="btn btn-primary" type="submit">
           {t('settings.changePassword')}
         </button>
-      </form>
+      </PostForm>
     </section>
   );
 }
 
-/** The same switcher as the footer's; the choice is saved on the account. */
-function LanguageCard() {
-  return (
-    <section className="card p-4" aria-labelledby="languageTitle">
-      <h2 id="languageTitle" className="card-title">
-        {t('settings.languageTitle')}
-      </h2>
-      <p className="mt-1 text-sm text-muted-foreground">{t('settings.languageHint')}</p>
-      <div className="mt-3">
-        <LanguageSwitcher id="settingsLanguage" showLabel />
-      </div>
-    </section>
-  );
-}
-
-/** "JBSWY3DPEHPK3PXP..." -> "JBSW Y3DP EHPK 3PXP ...", easier to type into an app by hand. */
 const groupKey = (secret) => secret.match(/.{1,4}/g).join(' ');
 
 function TwoFactorSetup({ setup, errors, action }) {
@@ -217,9 +139,7 @@ function TwoFactorSetup({ setup, errors, action }) {
           <img
             src={setup.qr}
             alt={t('settings.qrAlt')}
-            width="180"
-            height="180"
-            className="rounded-md border border-border bg-white"
+            className="size-45 rounded-md border border-border bg-white"
           />
           <div className="min-w-0 flex-1">
             <p className="text-muted-foreground">{t('settings.manualKey')}</p>
@@ -231,9 +151,7 @@ function TwoFactorSetup({ setup, errors, action }) {
       </li>
       <li>
         <p className="font-medium">{t('settings.codeStep')}</p>
-        <form className="mt-3" method="post" action={action}>
-          <CsrfInput />
-          <Section name="2fa_confirm" />
+        <PostForm className="mt-3" action={action} fields={{ section: '2fa_confirm' }}>
           <Field
             id="setupCode"
             name="code"
@@ -255,7 +173,7 @@ function TwoFactorSetup({ setup, errors, action }) {
               {t('common.cancel')}
             </button>
           </div>
-        </form>
+        </PostForm>
       </li>
     </ol>
   );
@@ -272,9 +190,7 @@ function TwoFactorManage({ state, action }) {
       <p className={`mt-1 text-sm ${recoveryCodesLeft <= 2 ? 'text-destructive' : 'text-muted-foreground'}`}>
         {t('settings.codesLeft', { count: recoveryCodesLeft })}
       </p>
-      {/* One form, two actions: each submit button posts its own `section`. */}
-      <form className="mt-4" method="post" action={action}>
-        <CsrfInput />
+      <PostForm className="mt-4" action={action}>
         <p className="mb-3 text-sm">{t('settings.confirmItsYou')}</p>
         <Field
           id="twoFactorPassword"
@@ -305,7 +221,7 @@ function TwoFactorManage({ state, action }) {
             {t('settings.turnOff')}
           </button>
         </div>
-      </form>
+      </PostForm>
     </>
   );
 }
@@ -322,13 +238,11 @@ function TwoFactorCard({ state, action }) {
     body = (
       <>
         <p className="mt-1 text-sm text-muted-foreground">{t('settings.twoFactorIntro')}</p>
-        <form className="mt-4" method="post" action={action}>
-          <CsrfInput />
-          <Section name="2fa_start" />
+        <PostForm className="mt-4" action={action} fields={{ section: '2fa_start' }}>
           <button className="btn btn-primary" type="submit">
             {t('settings.setUpTwoFactor')}
           </button>
-        </form>
+        </PostForm>
       </>
     );
   }
@@ -337,7 +251,7 @@ function TwoFactorCard({ state, action }) {
     <section id="security" className="card p-4" aria-labelledby="twoFactorTitle">
       <div className="flex flex-wrap items-center gap-2">
         <h2 id="twoFactorTitle" className="card-title">
-          {t('settings.twoFactorTitle')}
+          {t('twoFactorLogin.title')}
         </h2>
         <span className={`badge ${enabled ? 'badge-success' : 'badge-outline'}`}>
           {enabled ? t('settings.on') : t('settings.off')}
@@ -366,7 +280,7 @@ function RecoveryCodesModal({ codes, onClose }) {
     const url = URL.createObjectURL(new Blob([file], { type: 'text/plain' }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'planshift-recovery-codes.txt';
+    link.download = 'ft_transcendence-recovery-codes.txt';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   };
@@ -375,11 +289,7 @@ function RecoveryCodesModal({ codes, onClose }) {
     <Modal
       title={t('settings.codesTitle')}
       onClose={onClose}
-      footer={
-        <button className="btn btn-primary" type="button" onClick={onClose}>
-          {t('settings.savedThem')}
-        </button>
-      }
+      closeLabel={t('settings.savedThem')}
     >
       <div className="modal-body">
         <p className="text-sm">{t('settings.codesText')}</p>
@@ -414,22 +324,17 @@ export function AccountSettingsPage() {
   return (
     <AppShell>
       <main className="p-4 pt-0">
-        <div className="card page-toolbar-card">
-          <div className="flex flex-wrap items-center gap-3">
-            <Settings size={20} className="text-muted-foreground" />
-            <h1 className="card-title flex-1">{t('settings.title')}</h1>
-            <a className="btn btn-outline" href={person.profileUrl}>
-              <UserIcon size={16} />
-              {t('settings.viewProfile')}
-            </a>
-          </div>
-        </div>
+        <PageHeader icon={Settings} title={t('header.accountSettings')}>
+          <a className="btn btn-outline" href={person.profileUrl}>
+            <UserIcon size={16} />
+            {t('settings.viewProfile')}
+          </a>
+        </PageHeader>
 
         <div className="mx-auto mt-3 flex max-w-3xl flex-col gap-3">
           <AvatarCard person={person} limits={avatar} error={errors.avatar} action={urls.settings} />
           <ProfileCard values={values} errors={errors.profile} action={urls.settings} />
           <PasswordCard errors={errors.password} action={urls.settings} />
-          <LanguageCard />
           <TwoFactorCard state={twoFactor} action={urls.settings} />
           <p className="text-sm text-muted-foreground">
             {tx('settings.privacyLink', {

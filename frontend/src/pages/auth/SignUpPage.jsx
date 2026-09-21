@@ -1,5 +1,5 @@
 import { getBootstrap } from '../../app/http.js';
-import { CsrfInput, Field } from '../../components/Field.jsx';
+import { EmailField, Field, FullNameField, PostForm } from '../../components/Field.jsx';
 import { t, tx } from '../../i18n/index.js';
 import { AuthLayout, FormError } from './AuthLayout.jsx';
 
@@ -8,35 +8,22 @@ export function SignUpPage() {
   const errors = data.fieldErrors;
 
   return (
-    <AuthLayout title={t('signup.title')} subtitle={t('signup.subtitle')} messages={messages}>
+    <AuthLayout title={t('login.requestAccount')} subtitle={t('signup.subtitle')} messages={messages}>
       <FormError message={data.error} />
 
-      <form className="mt-3" method="post" action={data.urls.signup}>
-        <CsrfInput />
+      <PostForm className="mt-3" action={data.urls.signup}>
 
-        <Field
+        <FullNameField
           id="fullName"
-          name="full_name"
-          type="text"
-          label={t('signup.fullName')}
           placeholder={t('signup.fullNamePlaceholder')}
-          autoComplete="name"
-          required
-          minLength={2}
           defaultValue={data.values.fullName}
           error={errors.full_name}
         />
 
-        <Field
+        <EmailField
           id="email"
-          name="email"
-          type="email"
-          dir="ltr"
-          label={t('login.email')}
           placeholder={t('login.emailPlaceholder')}
-          autoComplete="email"
           hint={t('signup.emailHint')}
-          required
           defaultValue={data.values.email}
           error={errors.email}
         />
@@ -69,7 +56,7 @@ export function SignUpPage() {
         <button type="submit" className="btn btn-primary w-full">
           {t('signup.submit')}
         </button>
-      </form>
+      </PostForm>
 
       <p className="mt-5 text-center text-xs text-muted-foreground">
         {tx('signup.agree', {
@@ -89,7 +76,7 @@ export function SignUpPage() {
       <p className="mt-4 text-center text-sm text-muted-foreground">
         {t('signup.haveAccount')}{' '}
         <a className="font-medium text-primary hover:underline" href={data.urls.login}>
-          {t('signup.signIn')}
+          {t('login.submit')}
         </a>
       </p>
 

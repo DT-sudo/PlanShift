@@ -9,6 +9,12 @@ from django.contrib.sessions.models import Session
 from django.core.management import call_command
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
+from apps.realtime.events import MANAGERS_GROUP
+from apps.realtime.tests import IN_MEMORY_LAYER, next_event
 from apps.scheduling.management.commands.seed_demo import DEMO_EMPLOYEE_EMAIL, DEMO_MANAGER_EMAIL
 from apps.scheduling.models import Shift
 
@@ -30,16 +36,6 @@ class SignUpTests(TestCase):
         }
         payload.update(overrides)
         return payload
-
-    def test_signup_creates_a_manager_and_logs_them_in(self):
-        response = self.client.post(reverse("signup"), self._payload(), follow=True)
-
-        user = User.objects.get(email="jane.doe@example.com")
-        self.assertEqual(user.role, UserRole.MANAGER)
-        self.assertEqual(user.first_name, "Jane")
-        self.assertEqual(user.last_name, "Doe")
-        self.assertEqual(user.username, "jane.doe@example.com")
-        self.assertEqual(response.wsgi_request.user, user)
 
     def test_signup_creates_a_guest_and_logs_them_in(self):
         """Sign-up is a registration request: signed in, but only as far as the waiting page."""
@@ -199,53 +195,6 @@ class DemoLoginTests(TestCase):
         self.assertFalse(response.wsgi_request.user.is_authenticated)
 
 
-class EmployeeFormValidationTests(TestCase):
-    """The manager-side employee form validates on the server, not only in the browser."""
-
-    @classmethod
-    def setUpTestData(cls) -> None:
-        cls.position = Position.objects.create(name="Barista")
-        cls.manager = User.objects.create_user(
-            username="boss@example.com",
-            email="boss@example.com",
-            password="correct-horse-42",
-            role=UserRole.MANAGER,
-        )
-
-    def setUp(self) -> None:
-        self.client.force_login(self.manager)
-
-    def _create(self, **overrides):
-        payload = {
-            "full_name": "Pat Smith",
-            "email": "pat@example.com",
-            "position": self.position.id,
-        }
-        payload.update(overrides)
-        return self.client.post(reverse("manager_employees_create"), payload, follow=True)
-
-    def test_valid_employee_is_created_with_a_hashed_generated_password(self):
-        self._create()
-
-        employee = User.objects.get(email="pat@example.com")
-        self.assertEqual(employee.role, UserRole.EMPLOYEE)
-        self.assertTrue(employee.password.startswith("pbkdf2_"))
-
-    def test_invalid_email_is_rejected_server_side(self):
-        self._create(email="definitely-not-an-email")
-        self.assertFalse(User.objects.filter(first_name="Pat").exists())
-
-    def test_missing_position_is_rejected_server_side(self):
-        self._create(position="")
-        self.assertFalse(User.objects.filter(first_name="Pat").exists())
-
-    def test_duplicate_email_is_rejected(self):
-        self._create()
-        self._create(full_name="Other Person")
-
-        self.assertEqual(User.objects.filter(email="pat@example.com").count(), 1)
-
-
 class AccountFormValidationTests(TestCase):
     """The admin's account form validates on the server, not only in the browser."""
 
@@ -324,15 +273,6 @@ class EmployeeDeleteGdprTests(TestCase):
         self.client.post(reverse("admin_user_delete", args=[self.employee.id]), follow=True)
         self.assertFalse(User.objects.filter(email="pat@example.com").exists())
 
-    def test_delete_sends_a_confirmation_email_to_the_employee_not_the_manager(self):
-        self.client.post(reverse("employee_delete", args=[self.employee.id]), follow=True)
-
-        self.assertEqual(len(mail.outbox), 1)
-        sent = mail.outbox[0]
-        self.assertEqual(sent.to, ["pat@example.com"])
-        self.assertIn("deleted", sent.subject.lower())
-        self.assertIn("Pat Smith", sent.body)
-
     def test_delete_sends_a_confirmation_email_to_the_employee_not_the_admin(self):
         self.client.post(reverse("admin_user_delete", args=[self.employee.id]), follow=True)
 
@@ -393,12 +333,6 @@ class RolePermissionTests(TestCase):
         self.assertEqual({row["email"] for row in data["employees"]}, {"boss@example.com", "pat@example.com"})
         self.assertEqual([role["id"] for role in data["roles"]], ["admin", "manager", "employee"])
 
-    def test_manager_sees_only_employees_and_no_roles(self):
-        data = self._team(self.manager)
-
-        self.assertEqual([row["email"] for row in data["employees"]], ["pat@example.com"])
-        self.assertIsNone(data["roles"])
-
     def test_managers_have_no_account_management_at_all(self):
         """Provisioning accounts and positions is the admin's job; a manager is sent back to the schedule."""
         self.client.force_login(self.manager)
@@ -435,39 +369,12 @@ class RolePermissionTests(TestCase):
         self.assertEqual(User.objects.get(email="new@example.com").role, UserRole.MANAGER)
         self.assertFalse(User.objects.filter(email="nopost@example.com").exists())
 
-    def test_manager_cannot_manage_other_managers_or_assign_roles(self):
-        self.assertEqual(self._update(self.manager, self.admin).status_code, 404)
-
-        self._update(self.manager, self.employee, role=UserRole.ADMIN)
-        self.employee.refresh_from_db()
-        self.assertEqual(self.employee.role, UserRole.EMPLOYEE)
-
     def test_employees_have_no_account_management_either(self):
         self.client.force_login(self.employee)
         self.assertRedirects(self.client.get(reverse("admin_users")), reverse("employee_shifts"))
 
     def test_admin_cannot_manage_their_own_account(self):
         self.assertEqual(self._update(self.admin, self.admin, role=UserRole.EMPLOYEE).status_code, 404)
-
-    def test_role_switch_that_would_strand_shifts_is_refused(self):
-        self._shift_by(self.manager)
-
-        self._update(self.admin, self.manager, role=UserRole.EMPLOYEE, position=self.position.id)
-
-        self.manager.refresh_from_db()
-        self.assertEqual(self.manager.role, UserRole.MANAGER)
-
-    def test_manager_with_shifts_cannot_be_deleted(self):
-        self._shift_by(self.manager)
-        self.client.force_login(self.admin)
-
-        self.client.post(reverse("employee_delete", args=[self.manager.id]))
-
-        self.assertTrue(User.objects.filter(pk=self.manager.pk).exists())
-
-    def test_admin_runs_the_schedule_like_a_manager(self):
-        self.client.force_login(self.admin)
-        self.assertEqual(self.client.get(reverse("manager_shifts")).status_code, 200)
 
     def test_demoting_a_manager_keeps_the_shifts_they_wrote(self):
         shift = self._shift_by(self.manager)
@@ -649,3 +556,123 @@ class RegistrationRequestTests(TestCase):
             with self.subTest(name=name):
                 self.assertRedirects(self.client.get(reverse(name)), reverse("registration_pending"))
         self.assertEqual(self.client.get(reverse("registration_pending")).status_code, 200)
+
+    def test_a_guest_is_nobodys_colleague(self):
+        self.client.force_login(self.manager)
+        self.assertEqual(self.client.get(reverse("profile", args=[self.guest.id])).status_code, 404)
+
+    def test_the_admin_sees_the_waiting_requests_but_not_on_the_users_page(self):
+        self.client.force_login(self.admin)
+        requests = self.client.get(reverse("registration_requests")).context["bootstrap"]["data"]["requests"]
+        users = self.client.get(reverse("admin_users")).context["bootstrap"]["data"]["employees"]
+        self.assertEqual([r["id"] for r in requests], [self.guest.id])
+        self.assertNotIn(self.guest.id, [u["id"] for u in users])
+
+    def test_approving_gives_the_role_and_tells_the_new_account(self):
+        self._as_admin("registration_approve", role=UserRole.EMPLOYEE, position=self.barista.id)
+
+        self.guest.refresh_from_db()
+        self.assertEqual((self.guest.role, self.guest.position), (UserRole.EMPLOYEE, self.barista))
+        notification = self.guest.notifications.get()
+        self.assertEqual(notification.title, "Your registration was approved")
+
+    def test_an_approved_guest_keeps_their_session(self):
+        """The waiting page held nothing, so the session just carries on as the new role."""
+        guest_browser = Client()
+        guest_browser.force_login(self.guest)
+        guest_browser.get(reverse("registration_pending"))
+
+        self._as_admin("registration_approve", role=UserRole.MANAGER)
+
+        self.assertEqual(guest_browser.get(reverse("manager_shifts")).status_code, 200)
+
+    def test_a_request_cannot_be_approved_as_a_guest(self):
+        self._as_admin("registration_approve", role=UserRole.GUEST)
+        self.guest.refresh_from_db()
+        self.assertEqual(self.guest.role, UserRole.GUEST)
+
+    def test_declining_erases_the_request_and_emails_the_person(self):
+        self._as_admin("registration_decline")
+
+        self.assertFalse(User.objects.filter(pk=self.guest.pk).exists())
+        self.assertEqual(mail.outbox[0].to, ["jane@example.com"])
+        self.assertIn("declined", mail.outbox[0].subject.lower())
+
+    def test_only_an_admin_answers_requests(self):
+        self.client.force_login(self.manager)
+        self.client.post(reverse("registration_decline", args=[self.guest.id]))
+        self.assertTrue(User.objects.filter(pk=self.guest.pk).exists())
+
+
+class RequiredPasswordChangeTests(TestCase):
+    """A password the admin generated opens only the page that replaces it."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.admin = User.objects.create_user(username="admin@example.com", email="admin@example.com", role=UserRole.ADMIN)
+
+    def setUp(self) -> None:
+        self.client.force_login(self.admin)
+        self.client.post(
+            reverse("admin_user_create"),
+            {"full_name": "Maya Rossi", "email": "maya@example.com", "role": UserRole.MANAGER},
+        )
+        self.given = self.client.session["one_time_credentials"]["password"]
+        self.maya = User.objects.get(email="maya@example.com")
+        self.client.force_login(self.maya)
+
+    def _change(self, old: str, new: str):
+        return self.client.post(
+            reverse("password_change_required"), {"old_password": old, "new_password1": new, "new_password2": new}
+        )
+
+    def test_every_other_page_waits_for_the_new_password(self):
+        self.assertTrue(self.maya.must_change_password)
+        self.assertRedirects(self.client.get(reverse("manager_shifts")), reverse("password_change_required"))
+
+    def test_the_given_password_cannot_be_kept(self):
+        response = self._change(self.given, self.given)
+        self.assertIn("new_password1", response.context["bootstrap"]["data"]["fieldErrors"])
+
+    def test_a_new_password_opens_the_app(self):
+        self.assertRedirects(self._change(self.given, "a-fresh-Password-77"), reverse("home"), fetch_redirect_response=False)
+        self.maya.refresh_from_db()
+        self.assertFalse(self.maya.must_change_password)
+        self.assertEqual(self.client.get(reverse("manager_shifts")).status_code, 200)
+
+
+@override_settings(CHANNEL_LAYERS=IN_MEMORY_LAYER)
+class WaitingRequestCountTests(TestCase):
+    """The count beside the admin's Requests link follows the socket, with no page reload."""
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.admin = User.objects.create_user(username="admin@example.com", email="admin@example.com", role=UserRole.ADMIN)
+
+    def setUp(self) -> None:
+        self.layer = get_channel_layer()
+        self.channel = async_to_sync(self.layer.new_channel)()
+        async_to_sync(self.layer.group_add)(MANAGERS_GROUP, self.channel)
+
+    def _pushed_count(self) -> int:
+        return next_event(self.layer, self.channel)["count"]
+
+    def _post(self, name, *args, **data):
+        with self.captureOnCommitCallbacks(execute=True):
+            return self.client.post(reverse(name, args=args), data)
+
+    def test_a_request_and_its_answer_each_push_the_new_count(self):
+        self._post(
+            "signup",
+            full_name="Jane Doe",
+            email="jane.doe@example.com",
+            password1="correct-horse-42",
+            password2="correct-horse-42",
+        )
+        self.assertEqual(self._pushed_count(), 1)
+
+        guest = User.objects.get(email="jane.doe@example.com")
+        self.client.force_login(self.admin)
+        self._post("registration_decline", guest.id)
+
+        self.assertEqual(self._pushed_count(), 0)

@@ -1,5 +1,5 @@
 import { getBootstrap } from '../../app/http.js';
-import { CsrfInput, Field } from '../../components/Field.jsx';
+import { EmailField, Field, PostForm } from '../../components/Field.jsx';
 import { t } from '../../i18n/index.js';
 import { AuthLayout, FormError } from './AuthLayout.jsx';
 
@@ -30,18 +30,12 @@ export function LoginPage() {
 
       <FormError message={data.error} />
 
-      <form className="mt-3" method="post" action={data.urls.login}>
-        <CsrfInput />
+      <PostForm className="mt-3" action={data.urls.login}>
 
-        <Field
+        <EmailField
           id="email"
           name="username"
-          type="email"
-          dir="ltr"
-          label={t('login.email')}
           placeholder={t('login.emailPlaceholder')}
-          autoComplete="email"
-          required
           defaultValue={data.email}
           error={data.fieldErrors.email}
         />
@@ -60,12 +54,12 @@ export function LoginPage() {
         <button type="submit" className="btn btn-primary w-full">
           {t('login.submit')}
         </button>
-      </form>
+      </PostForm>
 
       <p className="mt-5 text-center text-sm text-muted-foreground">
         {t('login.newHere')}{' '}
         <a className="font-medium text-primary hover:underline" href={data.urls.signup}>
-          {t('login.createManager')}
+          {t('login.requestAccount')}
         </a>
       </p>
     </AuthLayout>

@@ -73,7 +73,7 @@ def can_view(viewer: User, person: User) -> bool:
     """
     if viewer.pk == person.pk or viewer.manages(person):
         return True
-    return not (person.is_admin)
+    return not (viewer.is_guest or person.is_guest or person.is_admin)
 
 
 def friendship_relation(friendship: Friendship, viewer: User) -> dict:

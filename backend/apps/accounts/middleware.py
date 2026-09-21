@@ -26,12 +26,21 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
+from django.urls import Resolver404, resolve
 from django.utils.translation import gettext as _
 
 from .models import UserRole
 from .security import SESSION_ROLE_KEY, log_security
 
 NO_STORE = "no-store, no-cache, must-revalidate, private, max-age=0"
+
+OPEN_BEFORE_PASSWORD_CHANGE = {
+    "password_change_required",
+    "logout",
+    "set_language",
+    "privacy_policy",
+    "terms_of_service",
+}
 
 
 class SessionSecurityMiddleware:
@@ -42,7 +51,7 @@ class SessionSecurityMiddleware:
         self.get_response = get_response
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
-        guarded = self._role_guard(request)
+        guarded = self._role_guard(request) or self._password_guard(request)
         return self._no_store(request, guarded or self.get_response(request))
 
     @staticmethod
@@ -66,6 +75,18 @@ class SessionSecurityMiddleware:
         logout(request)
         messages.warning(request, _("Your role was changed. Please sign in again."))
         return redirect("login")
+
+    @staticmethod
+    def _password_guard(request: HttpRequest) -> HttpResponse | None:
+        """Send to the password page an account still signed in with a password it was given."""
+        user = request.user
+        if not user.is_authenticated or not user.must_change_password:
+            return None
+        try:
+            name = resolve(request.path_info).url_name
+        except Resolver404:
+            return None
+        return None if name in OPEN_BEFORE_PASSWORD_CHANGE else redirect("password_change_required")
 
     @staticmethod
     def _no_store(request: HttpRequest, response: HttpResponse) -> HttpResponse:

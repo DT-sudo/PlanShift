@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { getBootstrap, submitPost } from '../../app/http.js';
-import { Field } from '../../components/Field.jsx';
+import { Field, PostForm } from '../../components/Field.jsx';
 import { t } from '../../i18n/index.js';
 import { AuthLayout, SigningInAs } from './AuthLayout.jsx';
 

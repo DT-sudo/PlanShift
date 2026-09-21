@@ -190,7 +190,43 @@ def _shift_changed(p):
 
 @_renders("shift.cancelled")
 def _shift_cancelled(p):
-    return _("Shift cancelled"), shift_label(p["shift"])
+    return _("Shift cancelled"), _shift_label(p["shift"])
+
+
+@_renders("shift.released")
+def _shift_released(p):
+    """Told to the worker: upcoming shifts they are no longer on, and why."""
+    count = len(p["shifts"])
+    title = ngettext(
+        "Taken off %(count)d upcoming shift", "Taken off %(count)d upcoming shifts", count
+    ) % {"count": count}
+    return title, _shift_list(p["shifts"])
+
+
+@_renders("shift.staff_released")
+def _shift_staff_released(p):
+    """Told to the managers: an upcoming shift lost a worker, and needs restaffing."""
+    count = len(p["shifts"])
+    title = ngettext(
+        "%(name)s came off %(count)d upcoming shift", "%(name)s came off %(count)d upcoming shifts", count
+    ) % {"name": p["name"], "count": count}
+    return title, _shift_list(p["shifts"])
+
+
+@_renders("shift.created")
+def _shift_created(p):
+    return _("%(by)s added a shift") % p, _shift_label(p["shift"])
+
+
+@_renders("shift.updated")
+def _shift_updated(p):
+    title = _("%(by)s edited a shift") % p
+    if p["before"] == p["after"]:
+        return title, _shift_label(p["after"])
+    return title, _("%(before)s is now %(after)s") % {
+        "before": _shift_label(p["before"]),
+        "after": _shift_label(p["after"]),
+    }
 
 
 @_renders("position.created")
