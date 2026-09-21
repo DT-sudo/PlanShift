@@ -8,7 +8,7 @@ import { Avatar } from '../../components/Avatar.jsx';
 import { ListTable } from '../../components/ListTable.jsx';
 import { PostForm } from '../../components/Field.jsx';
 import { UserIcon } from '../../components/Icons.jsx';
-import { ConfirmModal, Modal } from '../../components/Modal.jsx';
+import { ConfirmModal, FormFooter, Modal } from '../../components/Modal.jsx';
 import { t, tx } from '../../i18n/index.js';
 import { RoleAndPositionFields } from '../admin-users/UserModals.jsx';
 

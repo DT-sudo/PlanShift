@@ -382,7 +382,7 @@
     "twoFactorIntro": "بعد كلمة المرور، سيتطلب تسجيل الدخول أيضًا رمزًا من 6 أرقام من تطبيق مصادقة على هاتفك، مثل Google Authenticator أو Microsoft Authenticator أو 1Password أو Authy. ولن يتمكن من يعرف كلمة مرورك من الدخول.",
     "setUpTwoFactor": "إعداد التحقق بخطوتين",
     "scanStep": "1. امسح رمز QR هذا بتطبيق مصادقة.",
-    "qrAlt": "رمز QR يضيف PlanShift إلى تطبيق مصادقة",
+    "qrAlt": "رمز QR يضيف ft_transcendence إلى تطبيق مصادقة",
     "manualKey": "لا يمكنك مسحه؟ اكتب هذا المفتاح في التطبيق بدلًا من ذلك:",
     "codeStep": "2. أدخل الرمز المكوّن من 6 أرقام الذي يعرضه التطبيق الآن.",
     "codeFromApp": "الرمز من التطبيق",
@@ -407,11 +407,16 @@
     "download": "تنزيل",
     "copied": "تم النسخ إلى الحافظة.",
     "savedThem": "لقد حفظتها",
-    "codesFileHeading": "رموز استرداد PlanShift",
+    "codesFileHeading": "رموز استرداد ft_transcendence",
     "title": "إعدادات الحساب",
     "passwordTitle": "كلمة المرور",
     "languageTitle": "اللغة",
     "languageHint": "يستخدم PlanShift هذه اللغة، وكذلك الرسائل التي يرسلها إليك وإشعاراتك.",
     "twoFactorTitle": "التحقق بخطوتين"
+  },
+  "requests": {
+    "title": "طلبات التسجيل",
+    "subtitle": "أشخاص سجّلوا وينتظرون دورًا. وافق للسماح لهم بالدخول، أو ارفض لحذف الطلب.",
+    "requested": "تاريخ الطلب"
   }
 }

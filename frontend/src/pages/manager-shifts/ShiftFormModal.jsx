@@ -1,20 +1,28 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { isUnavailable } from '../../app/shifts.js';
-import { CsrfInput, Field, SelectField } from '../../components/Field.jsx';
-import { Modal } from '../../components/Modal.jsx';
-import { t } from '../../i18n/index.js';
+import { DateField, Field, PostForm, SelectField } from '../../components/Field.jsx';
+import { FormFooter, Modal } from '../../components/Modal.jsx';
+import { intlLocale, t } from '../../i18n/index.js';
 
-const timeInput = () => ({
+const timeInput = ({ end = false } = {}) => ({
   type: 'text',
   dir: 'ltr',
   inputMode: 'numeric',
-  pattern: '([01][0-9]|2[0-3]):[0-5][0-9]',
+  pattern: end ? '([01][0-9]|2[0-3]):[0-5][0-9]|24:00' : '([01][0-9]|2[0-3]):[0-5][0-9]',
   placeholder: 'HH:MM',
   maxLength: 5,
-  title: t('shifts.timeFormat'),
+  title: end ? t('shifts.endTimeFormat') : t('shifts.timeFormat'),
   autoComplete: 'off',
 });
+
+function controlFor(form, field, employeeId) {
+  let control = null;
+  if (employeeId) control = form.querySelector(`input[name="employee_ids"][value="${employeeId}"]`);
+  else if (field === 'date') control = form.querySelector('#shiftDate');
+  else if (field) control = form.elements[field];
+  return control || document.querySelector(`[type="submit"][form="${form.id}"]`);
+}
 
 export function ShiftFormModal({ shift, action, positions, employees, availability, stale, editors, onClose }) {
   const isEdit = Boolean(shift.id);

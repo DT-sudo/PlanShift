@@ -6,7 +6,6 @@ import csv
 from datetime import date, datetime, timedelta
 
 from django.contrib import messages
-from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -28,6 +27,7 @@ from apps.realtime.events import notify_managers
 from . import notices
 from .models import Assignment, EmployeeUnavailability, Shift, ShiftStatus
 from .services import (
+    ShiftError,
     publish_shift,
     publish_shifts_in_period,
     save_shift,
@@ -231,22 +231,30 @@ def _refuse_if_started(request: HttpRequest, shift: Shift) -> HttpResponse | Non
 
 @manager_required
 @require_POST
-def save_shift_view(request: HttpRequest, shift_id: int | None = None) -> HttpResponse:
+def save_shift_view(request: HttpRequest, shift_id: int | None = None) -> JsonResponse:
+    """Answered in JSON for the shift form, which stays open to show a refusal at the field it
+    concerns; a save goes on to the calendar, where the flash message confirms it."""
     is_update = shift_id is not None
-    shift = _manager_shift_or_404(request, shift_id) if is_update else Shift(created_by=request.user)
+    shift = _shift_or_404(shift_id) if is_update else Shift(created_by=request.user)
     was_published = shift.status == ShiftStatus.PUBLISHED
-    before_ids, before = (_assigned_ids(shift), shift_params(shift)) if was_published else (set(), None)
+    before = shift_fields(shift) if is_update else None
+    before_ids = notices.assigned_ids(shift) if was_published else set()
     try:
+        if is_update and shift.is_past:
+            raise ShiftError(STARTED_SHIFT)
         saved = save_shift(shift, request.POST)
-    except ValidationError as exc:
-        return flash_redirect(request, messages.ERROR, " ".join(exc.messages), "manager_shifts")
+    except ShiftError as error:
+        return json_error(" ".join(error.messages), field=error.field, employee=error.employee_id)
     if was_published:
-        _notify_published_shift_edited(request.user, saved, before_ids, before)
+        notices.published_shift_edited(request.user, saved, before_ids, before)
     else:
-        _shifts_changed()
-    return flash_redirect(
-        request, messages.SUCCESS, _("Shift updated.") if is_update else _("Shift created."), _calendar_url(saved)
-    )
+        notices.shifts_changed()
+    if is_update:
+        notices.to_colleagues(request.user, "shift.updated", before=before, after=shift_fields(saved))
+    else:
+        notices.to_colleagues(request.user, "shift.created", shift=shift_fields(saved))
+    messages.success(request, _("Shift updated.") if is_update else _("Shift created."))
+    return JsonResponse({"redirect": _calendar_url(saved)})
 
 
 @manager_required

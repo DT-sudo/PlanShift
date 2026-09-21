@@ -22,8 +22,15 @@ function useModalLayer(onClose) {
   return { zIndex: BASE_Z_INDEX + layer.depth, isTop: layer.isTop };
 }
 
-export function Modal({ title, onClose, children, footer, maxWidth = '500px', titleExtra = null }) {
+export function Modal({ title, onClose, children, footer, closeLabel, maxWidth = '31.25rem', titleExtra = null }) {
   const { zIndex, isTop } = useModalLayer(onClose);
+  const actions = closeLabel ? (
+    <button className="btn btn-primary" type="button" onClick={onClose}>
+      {closeLabel}
+    </button>
+  ) : (
+    footer
+  );
 
   return (
     <div
@@ -46,9 +53,22 @@ export function Modal({ title, onClose, children, footer, maxWidth = '500px', ti
 
         {children}
 
-        {footer ? <div className="modal-footer">{footer}</div> : null}
+        {actions ? <div className="modal-footer">{actions}</div> : null}
       </div>
     </div>
+  );
+}
+
+export function FormFooter({ form, submitLabel, onCancel, destructive = false }) {
+  return (
+    <>
+      <button className="btn btn-outline" type="button" onClick={onCancel}>
+        {t('common.cancel')}
+      </button>
+      <button className={`btn ${destructive ? 'btn-destructive' : 'btn-primary'}`} type="submit" form={form}>
+        {submitLabel}
+      </button>
+    </>
   );
 }
 

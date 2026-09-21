@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { urlFromTemplate } from '../../app/http.js';
 import { EmailField, FullNameField, PostForm, SelectField } from '../../components/Field.jsx';
 import { Trash } from '../../components/Icons.jsx';
-import { Modal } from '../../components/Modal.jsx';
+import { FormFooter, Modal } from '../../components/Modal.jsx';
 import { t, tx } from '../../i18n/index.js';
 
 export function UserFormModal({ employee, action, roles, positions, onClose }) {

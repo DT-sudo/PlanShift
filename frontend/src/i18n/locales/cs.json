@@ -374,7 +374,7 @@
     "twoFactorIntro": "Po zadání hesla bude přihlášení vyžadovat ještě šestimístný kód z ověřovací aplikace v telefonu, například Google Authenticator, Microsoft Authenticator, 1Password nebo Authy. Kdo zjistí vaše heslo, se stejně nepřihlásí.",
     "setUpTwoFactor": "Nastavit dvoufázové ověření",
     "scanStep": "1. Naskenujte tento QR kód ověřovací aplikací.",
-    "qrAlt": "QR kód, který přidá PlanShift do ověřovací aplikace",
+    "qrAlt": "QR kód, který přidá ft_transcendence do ověřovací aplikace",
     "manualKey": "Nejde to naskenovat? Zadejte do aplikace tento klíč:",
     "codeStep": "2. Zadejte šestimístný kód, který aplikace teď zobrazuje.",
     "codeFromApp": "Kód z aplikace",
@@ -397,11 +397,16 @@
     "download": "Stáhnout",
     "copied": "Zkopírováno do schránky.",
     "savedThem": "Mám je uložené",
-    "codesFileHeading": "Záložní kódy PlanShift",
+    "codesFileHeading": "Záložní kódy ft_transcendence",
     "title": "Nastavení účtu",
     "passwordTitle": "Heslo",
     "languageTitle": "Jazyk",
     "languageHint": "V tomto jazyce se vám zobrazuje PlanShift, e-maily, které vám posílá, i vaše oznámení.",
     "twoFactorTitle": "Dvoufázové ověření"
+  },
+  "requests": {
+    "title": "Žádosti o registraci",
+    "subtitle": "Lidé, kteří se zaregistrovali a čekají na roli. Schválením je pustíte dovnitř, zamítnutím žádost smažete.",
+    "requested": "Odesláno"
   }
 }
