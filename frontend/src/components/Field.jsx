@@ -4,10 +4,6 @@ import { formatDayMonthYear, formatMonthYear, parseDayMonthYear, parseMonthYear 
 import { getBootstrap } from '../app/http.js';
 import { statusOptions } from '../app/shifts.js';
 import { t } from '../i18n/index.js';
-export function CsrfInput() {
-  return <input type="hidden" name="csrfmiddlewaretoken" value={getBootstrap().csrfToken} readOnly />;
-}
-
 
 export function PostForm({ fields = {}, children, ...formProps }) {
   return (

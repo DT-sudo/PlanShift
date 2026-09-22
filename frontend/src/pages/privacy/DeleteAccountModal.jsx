@@ -1,5 +1,5 @@
 import { getBootstrap } from '../../app/http.js';
-import { CsrfInput, Field } from '../../components/Field.jsx';
+import { Field } from '../../components/Field.jsx';
 import { Modal } from '../../components/Modal.jsx';
 import { t, tx } from '../../i18n/index.js';
 

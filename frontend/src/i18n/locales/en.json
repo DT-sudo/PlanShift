@@ -402,6 +402,13 @@
     "approve": "Approve",
     "decline": "Decline",
     "approveTitle": "Approve request",
-    "approveMessage": "Choose what {name} becomes."
+    "approveMessage": "Choose what {name} becomes.",
+    "declineTitle": "Decline request",
+    "declineMessage": "Decline this registration request?",
+    "declineNote": "The account and everything entered in it are deleted, and the person is told by email.",
+    "yesDecline": "Yes, decline"
+  },
+  "pending": {
+    "title": "Waiting for approval"
   }
 }

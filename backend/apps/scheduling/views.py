@@ -18,7 +18,6 @@ from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.views import employee_required, manager_required
 from apps.accounts.models import User, UserRole
-from apps.notifications.messages import shift_params
 from apps.accounts.services import position_options
 from apps.notifications.services import notify, schedulers
 from apps.shell import flash_redirect, json_error, render_app
@@ -37,9 +36,6 @@ from .services import (
     shifts_for_employee,
     shifts_for_manager,
 )
-
-# Open calendars and analytics dashboards re-fetch their data when a shift is written.
-SHIFTS_CHANGED = {"type": "shifts.changed"}
 
 
 def _parse_date(value: str | None, default: date | None) -> date | None:
@@ -87,10 +83,6 @@ def _period(view: str, anchor: date) -> tuple[date, date]:
         start = anchor - timedelta(days=anchor.weekday())
         return start, start + timedelta(days=6)
     return _month_bounds(anchor)
-
-
-def _manager_shift_or_404(request: HttpRequest, shift_id: int) -> Shift:
-    return get_object_or_404(Shift, pk=shift_id, created_by=request.user)
 
 
 def _shift_or_404(shift_id: int) -> Shift:
@@ -189,37 +181,6 @@ def manager_shifts(request: HttpRequest) -> HttpResponse:
     )
 
 
-def _assigned_ids(shift: Shift) -> set[int]:
-    return {assignment.employee_id for assignment in shift.assignments.all()}
-
-
-def _shifts_changed(employee_ids=()) -> None:
-    """Open manager pages re-fetch, and so do the calendars of employees whose published shifts changed."""
-    notify_managers(SHIFTS_CHANGED)
-    for employee_id in employee_ids:
-        push_to_user(employee_id, SHIFTS_CHANGED)
-
-
-def _notify_published(actor: User, shifts: list[Shift]) -> None:
-    """Refresh open calendars, then one notification per assigned employee, however many of their shifts were published."""
-    published: dict[int, list[dict]] = {}
-    for shift in shifts:
-        for employee_id in _assigned_ids(shift):
-            published.setdefault(employee_id, []).append(shift_params(shift))
-    _shifts_changed(published)
-    for employee_id, theirs in published.items():
-        notify([employee_id], "shift.published", actor=actor, shifts=theirs)
-
-
-def _notify_published_shift_edited(actor: User, shift: Shift, before_ids: set[int], before: dict) -> None:
-    after_ids, after = _assigned_ids(shift), shift_params(shift)
-    _shifts_changed(before_ids | after_ids)
-    notify(after_ids - before_ids, "shift.assigned", actor=actor, shift=after)
-    notify(before_ids - after_ids, "shift.removed", actor=actor, level="warning", shift=before)
-    if after != before:
-        notify(after_ids & before_ids, "shift.changed", actor=actor, before=before, after=after)
-
-
 STARTED_SHIFT = gettext_lazy("This shift has already started, so it can't be changed.")
 
 
@@ -298,18 +259,12 @@ def publish_all_shifts(request: HttpRequest) -> HttpResponse:
     return flash_redirect(request, messages.INFO, _("No draft shifts to publish."), "manager_shifts")
 
 
-# ── Search and analytics ────────────────────────────────────────────────────
-
 FILTER_PARAMS = ("q", "position", "worker", "status", "date_from", "date_to")
 SEARCH_PAGE_SIZE = 25
 SEARCH_SORTS = {
     "date": lambda row: (row["date"], row["start_time"]),
-    "time": lambda row: (row["start_time"], row["date"]),
     "position": lambda row: (row["position"].lower(), row["date"]),
-    # Unassigned shifts sort after every name.
-    "worker": lambda row: (row["workers"][0]["name"].lower() if row["workers"] else "￿", row["date"]),
 }
-ANALYTICS_DEFAULT_DAYS = 30
 
 
 def _shift_filters(request: HttpRequest) -> dict:
@@ -335,7 +290,7 @@ def _filter_bar(request: HttpRequest, **values: str) -> dict:
 @manager_required
 @require_GET
 def manager_shift_search(request: HttpRequest) -> HttpResponse:
-    rows = shift_rows(manager_id=request.user.id, query=request.GET.get("q", "").strip(), **_shift_filters(request))
+    rows = shift_rows(query=request.GET.get("q", "").strip(), **_shift_filters(request))
     sort = request.GET.get("sort") if request.GET.get("sort") in SEARCH_SORTS else "date"
     direction = "desc" if request.GET.get("dir") == "desc" else "asc"
     rows.sort(key=SEARCH_SORTS[sort], reverse=direction == "desc")
@@ -432,8 +387,7 @@ def manager_analytics_export_csv(request: HttpRequest) -> HttpResponse:
 @employee_required
 @require_GET
 def employee_shifts_view(request: HttpRequest) -> HttpResponse:
-    today = timezone.localdate()
-    anchor = _parse_date(request.GET.get("date"), today)
+    today, anchor = _today_and_anchor(request)
     start, end = _month_bounds(anchor)
 
     unavailable = EmployeeUnavailability.objects.filter(

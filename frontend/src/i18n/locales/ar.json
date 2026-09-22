@@ -422,6 +422,13 @@
     "approve": "موافقة",
     "decline": "رفض",
     "approveTitle": "الموافقة على الطلب",
-    "approveMessage": "اختر ما سيصبح عليه {name}."
+    "approveMessage": "اختر ما سيصبح عليه {name}.",
+    "declineTitle": "رفض الطلب",
+    "declineMessage": "هل تريد رفض طلب التسجيل هذا؟",
+    "declineNote": "يُحذف الحساب وكل ما أُدخل فيه، ويُبلَّغ صاحبه عبر البريد الإلكتروني.",
+    "yesDecline": "نعم، ارفض"
+  },
+  "pending": {
+    "title": "بانتظار الموافقة"
   }
 }

@@ -15,7 +15,9 @@ const getLanguage = () => language;
 
 export const isRtl = () => document.documentElement.dir === 'rtl';
 
-export const intlLocale = () => (language === 'ar' ? 'ar-u-nu-latn' : language);
+const INTL_LOCALES = { en: 'en-GB', ar: 'ar-u-nu-latn' };
+
+export const intlLocale = () => INTL_LOCALES[language] ?? language;
 
 const lookup = (catalog, key) => key.split('.').reduce((node, part) => node?.[part], catalog);
 

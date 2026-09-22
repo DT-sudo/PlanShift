@@ -235,4 +235,11 @@
     overflow: hidden;
     pointer-events: auto;
   }
+  @container (max-width: 9.375rem) {
+    .month-shift-sep,
+    .month-shift-time {
+      display: none;
+    }
+  }
+
 }

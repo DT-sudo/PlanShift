@@ -412,6 +412,13 @@
     "approve": "Schválit",
     "decline": "Zamítnout",
     "approveTitle": "Schválit žádost",
-    "approveMessage": "Zvolte, kým bude {name}."
+    "approveMessage": "Zvolte, kým bude {name}.",
+    "declineTitle": "Zamítnout žádost",
+    "declineMessage": "Zamítnout tuto žádost o registraci?",
+    "declineNote": "Účet i vše, co do něj bylo zadáno, se smaže a dotyčný dostane e-mail.",
+    "yesDecline": "Ano, zamítnout"
+  },
+  "pending": {
+    "title": "Čeká na schválení"
   }
 }
