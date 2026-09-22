@@ -13,7 +13,6 @@ from django.utils.translation import get_language
 from .content import ar, cs, en
 
 TRANSLATIONS = {"en": en, "cs": cs, "ar": ar}
-NAMES = ("privacy", "terms")
 
 
 def document(name: str) -> dict:
