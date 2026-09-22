@@ -1,4 +1,4 @@
-"""The languages PlanShift ships in (`settings.LANGUAGES`) and their writing direction."""
+"""The languages ft_transcendence ships in (`settings.LANGUAGES`) and their writing direction."""
 
 from __future__ import annotations
 
@@ -8,6 +8,15 @@ from django.utils import translation
 
 def is_supported(code: str | None) -> bool:
     return code in dict(settings.LANGUAGES)
+
+
+def speaking(code: str | None):
+    """Translate in `code` for the `with` block: an account's language, or the default when it has none yet.
+
+    For what is written to someone other than the person making the request: their emails
+    and live notifications.
+    """
+    return translation.override(code or settings.LANGUAGE_CODE)
 
 
 def direction(code: str | None = None) -> str:

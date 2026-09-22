@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from apps.profiles.services import card
+from apps.shell import json_error
 
 from .languages import direction, is_supported
 from .middleware import set_language_cookie
@@ -22,12 +23,11 @@ def set_language(request: HttpRequest) -> JsonResponse:
     """
     code = request.POST.get("language", "")
     if not is_supported(code):
-        return JsonResponse({"error": _("That language is not available.")}, status=400)
+        return json_error(_("That language is not available."))
 
     user = request.user
-    if user.is_authenticated and user.language != code:
-        user.language = code
-        user.save(update_fields=["language"])
+    if user.is_authenticated:
+        user.save_language(code)
 
     translation.activate(code)
     response = JsonResponse(
