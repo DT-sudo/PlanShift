@@ -27,8 +27,7 @@
     "users": "Uživatelé",
     "myShifts": "Moje směny",
     "friends": "Přátelé",
-    "requests": "Žádosti",
-    "team": "Tým"
+    "requests": "Žádosti"
   },
   "header": {
     "userMenu": "Uživatelská nabídka",
@@ -104,8 +103,7 @@
     "passwordPlaceholder": "Zadejte heslo",
     "submit": "Přihlásit se",
     "newHere": "Jste tu poprvé?",
-    "requestAccount": "Požádat o účet",
-    "createManager": "Vytvořit účet manažera"
+    "requestAccount": "Požádat o účet"
   },
   "signup": {
     "subtitle": "Administrátor vaši žádost schválí a přidělí vám roli",
@@ -119,9 +117,7 @@
     "submit": "Odeslat žádost",
     "agree": "Odesláním žádosti souhlasíte s našimi {terms} a {privacy}.",
     "haveAccount": "Už máte účet?",
-    "employeesNote": "Přihlásit se můžete hned, do aplikace se ale dostanete, až administrátor vaši žádost schválí.",
-    "title": "Vytvořte si účet",
-    "signIn": "Přihlásit se"
+    "employeesNote": "Přihlásit se můžete hned, do aplikace se ale dostanete, až administrátor vaši žádost schválí."
   },
   "twoFactorLogin": {
     "title": "Dvoufázové ověření",
@@ -156,8 +152,7 @@
     "modalConfirm": "Trvale smazat můj účet",
     "modalText": "Tím se trvale smaže váš účet, vaše přiřazení ke směnám a záznamy o nedostupnosti. Nelze to vrátit a neexistuje žádná archivní kopie – co přesně to znamená, najdete v dokumentu {policy} (oddíl 4).",
     "typeEmail": "Pro potvrzení napište svůj e-mail ({email})",
-    "confirmPassword": "Potvrďte své heslo",
-    "title": "Soukromí a moje údaje"
+    "confirmPassword": "Potvrďte své heslo"
   },
   "employeeShifts": {
     "calendar": "Měsíční kalendář",
@@ -207,10 +202,7 @@
     "endAfterStart": "Konec musí být později než začátek.",
     "inPast": "Směna nemůže začínat v minulosti. Zvolte pozdější datum nebo čas začátku.",
     "endTimeFormat": "Čas ve 24hodinovém formátu, např. 17:30; 24:00 je půlnoc",
-    "startedLocked": "Tato směna už začala, takže ji nelze měnit ani smazat.",
-    "unavailableDays": "Nedostupnost: {days}",
-    "createTitle": "Vytvořit směnu",
-    "stale": "Tuto směnu právě změnil nebo smazal někdo jiný, takže uložení bude odmítnuto. Zavřete ji a otevřete znovu, abyste viděli aktuální verzi."
+    "startedLocked": "Tato směna už začala, takže ji nelze měnit ani smazat."
   },
   "search": {
     "placeholder": "Hledat podle pozice nebo pracovníka…",
@@ -227,12 +219,7 @@
     "nextPage": "Další strana",
     "noResults": "Těmto filtrům neodpovídají žádné směny.",
     "openInCalendar": "Otevřít v kalendáři",
-    "unassigned": "Nepřiřazeno",
-    "date": "Datum",
-    "time": "Čas",
-    "position": "Pozice",
-    "workers": "Pracovníci",
-    "staffed": "Obsazeno"
+    "unassigned": "Nepřiřazeno"
   },
   "analytics": {
     "workers": "Pracovníci",
@@ -257,11 +244,7 @@
       "many": "{count} směny",
       "other": "{count} směn"
     },
-    "noData": "Pro tyto filtry nejsou žádná data.",
-    "shifts": "Směny",
-    "byPosition": "Směny podle pozice",
-    "shiftStatus": "Stav směn",
-    "total": "celkem"
+    "noData": "Pro tyto filtry nejsou žádná data."
   },
   "team": {
     "addUser": "Přidat uživatele",
@@ -302,20 +285,7 @@
     "deletePositionLabel": "Smazat pozici {name}",
     "deletePosition": "Smazat pozici",
     "deletePositionMessage": "Smazat tuto pozici?",
-    "deletePositionNote": "Spolu s ní se smažou její nadcházející směny. Směny, které už začaly, zůstanou v rozvrhu pod jejím názvem a zaměstnanci, kteří ji mají, zůstanou bez pozice.",
-    "addEmployee": "Přidat zaměstnance",
-    "employeeList": "Seznam zaměstnanců",
-    "fullName": "Celé jméno",
-    "position": "Pozice",
-    "email": "E-mail",
-    "deleteEmployee": "Smazat zaměstnance",
-    "deleteEmployeeMessage": "Opravdu chcete smazat tohoto zaměstnance?",
-    "deleteEmployeeNote": "Tím odstraníte zaměstnance i jeho přiřazení.",
-    "editEmployee": "Upravit zaměstnance",
-    "newEmployee": "Přidat nového zaměstnance",
-    "createEmployee": "Vytvořit zaměstnance",
-    "password": "Heslo",
-    "positionsTitle": "Spravovat pozice"
+    "deletePositionNote": "Spolu s ní se smažou její nadcházející směny. Směny, které už začaly, zůstanou v rozvrhu pod jejím názvem a zaměstnanci, kteří ji mají, zůstanou bez pozice."
   },
   "profile": {
     "editProfile": "Upravit profil",
@@ -323,9 +293,7 @@
     "noBio": "Zatím žádný popis. {link}, ať ostatní vědí, kdo jste.",
     "addBio": "Přidejte ho",
     "memberSince": "Členem od",
-    "noFriends": "Zatím žádní přátelé.",
-    "email": "E-mail",
-    "friends": "Přátelé"
+    "noFriends": "Zatím žádní přátelé."
   },
   "friends": {
     "colleagues": "Všichni kolegové",
@@ -344,11 +312,7 @@
     "remove": "Odebrat přítele",
     "removeMessage": "Odebrat uživatele {name} z vašich přátel?",
     "removeNote": "Už neuvidí váš stav online ani váš e-mail.",
-    "yesRemove": "Ano, odebrat",
-    "addByEmail": "Přidat přítele podle e-mailu",
-    "emailPlaceholder": "kolega@example.com",
-    "send": "Poslat žádost",
-    "friends": "Přátelé"
+    "yesRemove": "Ano, odebrat"
   },
   "settings": {
     "viewProfile": "Zobrazit můj profil",
@@ -374,7 +338,7 @@
     "twoFactorIntro": "Po zadání hesla bude přihlášení vyžadovat ještě šestimístný kód z ověřovací aplikace v telefonu, například Google Authenticator, Microsoft Authenticator, 1Password nebo Authy. Kdo zjistí vaše heslo, se stejně nepřihlásí.",
     "setUpTwoFactor": "Nastavit dvoufázové ověření",
     "scanStep": "1. Naskenujte tento QR kód ověřovací aplikací.",
-    "qrAlt": "QR kód, který přidá PlanShift do ověřovací aplikace",
+    "qrAlt": "QR kód, který přidá ft_transcendence do ověřovací aplikace",
     "manualKey": "Nejde to naskenovat? Zadejte do aplikace tento klíč:",
     "codeStep": "2. Zadejte šestimístný kód, který aplikace teď zobrazuje.",
     "codeFromApp": "Kód z aplikace",
@@ -397,11 +361,36 @@
     "download": "Stáhnout",
     "copied": "Zkopírováno do schránky.",
     "savedThem": "Mám je uložené",
-    "codesFileHeading": "Záložní kódy PlanShift",
-    "title": "Nastavení účtu",
-    "passwordTitle": "Heslo",
-    "languageTitle": "Jazyk",
-    "languageHint": "V tomto jazyce se vám zobrazuje PlanShift, e-maily, které vám posílá, i vaše oznámení.",
-    "twoFactorTitle": "Dvoufázové ověření"
+    "codesFileHeading": "Záložní kódy ft_transcendence"
+  },
+  "requests": {
+    "title": "Žádosti o registraci",
+    "subtitle": "Lidé, kteří se zaregistrovali a čekají na roli. Schválením je pustíte dovnitř, zamítnutím žádost smažete.",
+    "requested": "Odesláno",
+    "empty": "Žádné čekající žádosti.",
+    "approve": "Schválit",
+    "decline": "Zamítnout",
+    "approveTitle": "Schválit žádost",
+    "approveMessage": "Zvolte, kým bude {name}.",
+    "declineTitle": "Zamítnout žádost",
+    "declineMessage": "Zamítnout tuto žádost o registraci?",
+    "declineNote": "Účet i vše, co do něj bylo zadáno, se smaže a dotyčný dostane e-mail.",
+    "yesDecline": "Ano, zamítnout"
+  },
+  "pending": {
+    "title": "Čeká na schválení",
+    "text": "Vaše žádost o registraci pro {email} byla odeslána administrátorovi.",
+    "sent": "Odesláno {time}.",
+    "hint": "Přístup získáte, jakmile bude schválena - tato stránka se pak sama přesune dál."
+  },
+  "passwordChange": {
+    "title": "Zvolte nové heslo",
+    "subtitle": "Vaše heslo nastavil administrátor. Pokračujte tím, že ho nahradíte vlastním.",
+    "given": "Heslo, které jste dostali"
+  },
+  "months": {
+    "placeholder": "MM.RRRR",
+    "format": "Měsíc a rok, např. 09.2026",
+    "pick": "Vybrat měsíc"
   }
 }

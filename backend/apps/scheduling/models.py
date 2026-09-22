@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -14,6 +14,7 @@ MIDNIGHT = time(0, 0)
 def clock(value: time, *, end: bool = False) -> str:
     """"09:30"; an end time of midnight is "24:00"."""
     return "24:00" if end and value == MIDNIGHT else f"{value:%H:%M}"
+
 
 class ShiftStatus(models.TextChoices):
     DRAFT = "draft", _("Draft")
@@ -49,7 +50,7 @@ class Shift(models.Model):
 
     def clean(self) -> None:
         errors = {}
-        if self.start_time and self.end_time and self.start_time >= self.end_time:
+        if self.start_time is not None and self.end_time not in (None, MIDNIGHT) and self.start_time >= self.end_time:
             errors["end_time"] = _("End time must be after start time.")
         if self.capacity is not None and self.capacity < 1:
             errors["capacity"] = _("Capacity must be at least 1.")
@@ -62,6 +63,11 @@ class Shift(models.Model):
             if kwargs.get("update_fields") is not None and "position" in kwargs["update_fields"]:
                 kwargs["update_fields"] = {*kwargs["update_fields"], "position_name"}
         super().save(*args, **kwargs)
+
+    @property
+    def duration(self) -> timedelta:
+        end = datetime.combine(self.date, self.end_time) + timedelta(days=self.end_time == MIDNIGHT)
+        return end - datetime.combine(self.date, self.start_time)
 
     @property
     def is_past(self) -> bool:

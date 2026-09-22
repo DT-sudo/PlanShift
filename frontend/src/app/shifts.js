@@ -6,6 +6,9 @@ export const statusOptions = () => [
   { id: 'published', name: t('status.published') },
 ];
 
+export const shiftTimes = (shift) => `${shift.start_time}-${shift.end_time}`;
+
+export const shiftTimeClass = (shift) => (shift.is_past ? 'shift-chip-past' : 'shift-chip-future');
 
 export function positionPalette(positionId) {
   const hue = (positionId * 47) % 360;
@@ -20,22 +23,20 @@ export function availabilityFromPayload(payload) {
   return new Map(Object.entries(payload).map(([id, days]) => [id, new Set(days)]));
 }
 
+export function withDay(days, date, unavailable) {
+  const next = new Set(days);
+  if (unavailable) next.add(date);
+  else next.delete(date);
+  return next;
+}
+
 export function withAvailabilityChange(availability, { employeeId, date, unavailable }) {
-  const days = new Set(availability.get(String(employeeId)));
-  if (unavailable) days.add(date);
-  else days.delete(date);
-  return new Map(availability).set(String(employeeId), days);
+  return new Map(availability).set(String(employeeId), withDay(availability.get(String(employeeId)), date, unavailable));
 }
 
 export function isUnavailable(availability, employeeId, date) {
   return availability.get(String(employeeId))?.has(date) ?? false;
 }
-
-export function unavailableDaysBetween(availability, employeeId, start, end) {
-  return [...(availability.get(String(employeeId)) || [])].filter((day) => day >= start && day <= end).sort();
-}
-
-// ── Calendar layout ─────────────────────────────────────────────────────────
 
 export function groupShiftsByDate(shifts) {
   const byDate = new Map();
@@ -62,14 +63,14 @@ export function computeLaneLayout(shifts) {
   return { laneById, laneCount: Math.max(1, laneEnds.length) };
 }
 
-const LANE_GAP_PX = 4;
+const LANE_GAP = '0.25rem';
 
 export function timedChipStyle(shift, lane, laneCount, hourHeightPx) {
   const width = 100 / laneCount;
   return {
     top: `${(minutesOf(shift.start_time) / 60) * hourHeightPx}px`,
     height: `${Math.max(18, (shiftDurationMinutes(shift) / 60) * hourHeightPx)}px`,
-    insetInlineStart: `calc(${lane * width}% + ${LANE_GAP_PX}px)`,
-    width: `calc(${width}% - ${LANE_GAP_PX * 2}px)`,
+    insetInlineStart: `calc(${lane * width}% + ${LANE_GAP})`,
+    width: `calc(${width}% - 2 * ${LANE_GAP})`,
   };
 }

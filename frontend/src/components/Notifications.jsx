@@ -13,6 +13,8 @@ const HistoryContext = createContext(null);
 
 export const useToast = () => useContext(ToastContext);
 
+export const requestError = (error) => error.message || t('common.requestFailed');
+
 function NotificationText({ entry }) {
   return (
     <div className="min-w-0">
@@ -31,7 +33,7 @@ export function ToastProvider({ initialMessages = [], notifications = null, chil
   const timers = useRef(new Map());
   const urls = notifications?.urls;
 
-  const showToast = useCallback((level, title, description = '') => {
+  const raiseToast = useCallback((level, title, description = '') => {
     const key = `${level}|${title}|${description}`;
 
     setToasts((current) =>
@@ -46,6 +48,25 @@ export function ToastProvider({ initialMessages = [], notifications = null, chil
     );
   }, []);
 
+  const recordError = useCallback(
+    (title, description) => {
+      if (!urls) return;
+      const [heading, text] = description ? [title, description] : ['', title];
+      postForm(urls.recordError, { title: heading === t('toast.error') ? '' : heading, text })
+        .then(({ notification }) => setHistory((current) => [notification, ...current]))
+        .catch(() => {});
+    },
+    [urls],
+  );
+
+  const showToast = useCallback(
+    (level, title, description = '') => {
+      raiseToast(level, title, description);
+      if (level === 'error') recordError(title, description);
+    },
+    [raiseToast, recordError],
+  );
+
   const reloadHistory = () =>
     getJSON(urls.list)
       .then((payload) => setHistory(payload.notifications))
@@ -56,7 +77,7 @@ export function ToastProvider({ initialMessages = [], notifications = null, chil
       if (event.type !== 'notification') return;
       const entry = event.notification;
       setHistory((current) => [entry, ...current.filter((item) => item.id !== entry.id)]);
-      showToast(entry.level, entry.title, entry.description);
+      raiseToast(entry.level, entry.title, entry.description);
     },
     { enabled: Boolean(urls), onReconnect: reloadHistory },
   );
@@ -74,7 +95,7 @@ export function ToastProvider({ initialMessages = [], notifications = null, chil
   }, [initialMessages, showToast]);
 
   const center = useMemo(() => {
-    const save = (url) => postForm(url, {}).catch(() => showToast('error', t('toast.error'), t('notifications.saveFailed')));
+    const save = (url) => postForm(url, {}).catch(() => raiseToast('error', t('toast.error'), t('notifications.saveFailed')));
     return {
       history,
       markAllRead: () => {
@@ -87,7 +108,7 @@ export function ToastProvider({ initialMessages = [], notifications = null, chil
         save(urls.clear);
       },
     };
-  }, [history, urls, showToast]);
+  }, [history, urls, raiseToast]);
 
   return (
     <ToastContext.Provider value={showToast}>
@@ -126,7 +147,6 @@ export function NotificationBell() {
         {unread ? <span className="notification-badge">{unread > 99 ? '99+' : unread}</span> : null}
       </button>
 
-      {/* Portalled: the sticky header is a stacking context the modal must not be trapped in. */}
       {open
         ? createPortal(
             <Modal

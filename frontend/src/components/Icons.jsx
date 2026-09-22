@@ -10,8 +10,9 @@ const base = {
 };
 
 function Icon({ size = 16, children, ...props }) {
+  const length = `${size / 16}rem`;
   return (
-    <svg {...base} width={size} height={size} {...props}>
+    <svg {...base} width={length} height={length} {...props}>
       {children}
     </svg>
   );
@@ -42,6 +43,12 @@ export const Plus = (props) => (
   </Icon>
 );
 
+export const Minus = (props) => (
+  <Icon {...props}>
+    <path d="M5 12h14" />
+  </Icon>
+);
+
 export const X = ({ size = 20, ...props }) => (
   <Icon size={size} {...props}>
     <line x1="18" x2="6" y1="6" y2="18" />
@@ -53,6 +60,15 @@ export const Bell = ({ size = 18, ...props }) => (
   <Icon size={size} {...props}>
     <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
     <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+  </Icon>
+);
+
+export const CalendarIcon = ({ size = 16, ...props }) => (
+  <Icon size={size} {...props}>
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <path d="M16 2v4" />
+    <path d="M8 2v4" />
+    <path d="M3 10h18" />
   </Icon>
 );
 
@@ -85,21 +101,6 @@ export const UserIcon = ({ size = 18, ...props }) => (
   <Icon size={size} {...props}>
     <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
     <circle cx="12" cy="7" r="4" />
-  </Icon>
-);
-
-export const UserPlus = ({ size = 18, ...props }) => (
-  <Icon size={size} {...props}>
-    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-    <circle cx="9" cy="7" r="4" />
-    <path d="M19 8v6" />
-    <path d="M22 11h-6" />
-  </Icon>
-);
-
-export const Check = ({ size = 18, ...props }) => (
-  <Icon size={size} {...props}>
-    <path d="M20 6 9 17l-5-5" />
   </Icon>
 );
 

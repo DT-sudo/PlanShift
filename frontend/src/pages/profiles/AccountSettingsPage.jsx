@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { formatDate } from '../../app/dates.js';
 import { getBootstrap, submitPost } from '../../app/http.js';
-import { AppShell } from '../../components/AppShell.jsx';
+import { AppShell, PageHeader } from '../../components/AppShell.jsx';
 import { Avatar } from '../../components/Avatar.jsx';
 import { EmailField, ErrorText, Field, FullNameField, PasswordChangeFields, PostForm } from '../../components/Field.jsx';
 import { Settings, Trash, UserIcon } from '../../components/Icons.jsx';

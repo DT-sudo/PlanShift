@@ -1,12 +1,10 @@
 import { useRef, useState } from 'react';
 
+import { formatDayMonthYear, formatMonthYear, parseDayMonthYear, parseMonthYear } from '../app/dates.js';
 import { getBootstrap } from '../app/http.js';
 import { statusOptions } from '../app/shifts.js';
 import { t } from '../i18n/index.js';
-export function CsrfInput() {
-  return <input type="hidden" name="csrfmiddlewaretoken" value={getBootstrap().csrfToken} readOnly />;
-}
-
+import { CalendarIcon } from './Icons.jsx';
 
 export function PostForm({ fields = {}, children, ...formProps }) {
   return (

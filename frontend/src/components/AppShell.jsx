@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { getBootstrap, submitPost } from '../app/http.js';
 import { useLiveEvents } from '../app/live.js';
+import { useSessionGuard } from '../app/session.js';
 import { t } from '../i18n/index.js';
 import { Avatar } from './Avatar.jsx';
 import { LanguageSwitcher } from './LanguageSwitcher.jsx';
@@ -84,12 +85,36 @@ export function Footer({ children }) {
   );
 }
 
+export function PageHeader({ icon: Icon, title, subtitle = null, children = null }) {
+  return (
+    <div className="card page-toolbar-card">
+      <div className="flex flex-wrap items-center gap-3">
+        <Icon size={20} className="text-muted-foreground" />
+        <div className="min-w-0 flex-1">
+          <h1 className="card-title">{title}</h1>
+          {subtitle ? <p className="text-sm text-muted-foreground">{subtitle}</p> : null}
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function PrivacyPolicyLink() {
+  return (
+    <a className="footer-link" href={getBootstrap().urls.privacy}>
+      {t('footer.privacyPolicy')}
+    </a>
+  );
+}
+
 export function AppShell({ children, footer }) {
   const { user, nav, urls, messages, notifications } = getBootstrap();
+  useSessionGuard();
 
   return (
     <ToastProvider initialMessages={messages} notifications={notifications}>
-      <div className="page-with-footer">
+      <div className="page-with-footer app-page">
         <Header user={user} nav={nav} urls={urls} />
         <div className="flex-1">{children}</div>
         <Footer>{footer}</Footer>

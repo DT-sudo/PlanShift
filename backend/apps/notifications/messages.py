@@ -31,23 +31,9 @@ def render(kind: str, params: dict) -> tuple[str, str]:
     return RENDERERS[kind](params)
 
 
-def shift_params(shift) -> dict:
-    """The facts a notification keeps about a shift; they outlive the shift itself."""
-    return {
-        "position": shift.position.name,
-        "date": shift.date.isoformat(),
-        "start": f"{shift.start_time:%H:%M}",
-        "end": f"{shift.end_time:%H:%M}",
-    }
-
-
 def _day(iso: str) -> str:
     """"Mon 14 Sep", with the weekday and month names of the active language."""
     return date_format(date.fromisoformat(iso), "D j M")
-
-
-def shift_label(params: dict) -> str:
-    return _("%(position)s, %(day)s, %(start)s–%(end)s") % {**params, "day": _day(params["date"])}
 
 
 def _shift_label(shift: dict) -> str:
@@ -135,26 +121,6 @@ def _password_reset(p):
     return _("Your password was reset"), _("%(by)s set a new password for your account.") % p
 
 
-@_renders("shift.published")
-def _shifts_published(p):
-    shifts = p["shifts"]
-    count = len(shifts)
-    if count == 1:
-        title = _("New shift published")
-    else:
-        title = ngettext("%(count)d new shift published", "%(count)d new shifts published", count) % {"count": count}
-    description = "; ".join(shift_label(shift) for shift in shifts[:MAX_LISTED_SHIFTS])
-    extra = count - MAX_LISTED_SHIFTS
-    if extra > 0:
-        description += "; " + ngettext("and %(count)d more", "and %(count)d more", extra) % {"count": extra}
-    return title, description
-
-
-@_renders("shift.assigned")
-def _shift_assigned(p):
-    return _("New shift assigned"), shift_label(p["shift"])
-
-
 @_renders("registration.requested")
 def _registration_requested(p):
     return _("New registration request"), _("%(name)s (%(email)s) is waiting for approval.") % p
@@ -229,6 +195,21 @@ def _shift_updated(p):
     }
 
 
+@_renders("shift.deleted")
+def _shift_deleted(p):
+    return _("%(by)s deleted a shift") % p, _shift_label(p["shift"])
+
+
+@_renders("shift.published")
+def _shift_published(p):
+    count = len(p["shifts"])
+    title = ngettext("%(by)s published %(count)d shift", "%(by)s published %(count)d shifts", count) % {
+        "by": p["by"],
+        "count": count,
+    }
+    return title, _shift_list(p["shifts"])
+
+
 @_renders("position.created")
 def _position_created(p):
     return _("Position created"), p["name"]
@@ -239,12 +220,30 @@ def _position_deleted(p):
     return _("Position deleted"), p["name"]
 
 
+@_renders("position.shifts_cancelled")
+def _position_shifts_cancelled(p):
+    """Told to the managers: the upcoming shifts that went with a deleted position."""
+    count = len(p["shifts"])
+    title = ngettext(
+        "%(count)d upcoming shift of %(name)s deleted", "%(count)d upcoming shifts of %(name)s deleted", count
+    ) % {"name": p["name"], "count": count}
+    return title, _shift_list(p["shifts"])
+
+
 @_renders("availability.changed")
 def _availability_changed(p):
     values = {"name": p["name"], "day": _day(p["date"])}
     if p["unavailable"]:
-        return _("Availability updated"), _("%(name)s is unavailable on %(day)s.") % values
-    return _("Availability updated"), _("%(name)s is available again on %(day)s.") % values
+        text = _("%(name)s is unavailable on %(day)s.") % values
+    else:
+        text = _("%(name)s is available again on %(day)s.") % values
+    return _("Availability updated"), text
+
+
+@_renders("error")
+def _error(p):
+    """An error the reader was shown as a toast, kept so it can be read again later."""
+    return p.get("title") or _("Error"), p["text"]
 
 
 @_renders("friend.requested")

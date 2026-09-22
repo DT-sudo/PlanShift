@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { getBootstrap } from '../app/http.js';
 import { changeLanguage, t, useLanguage } from '../i18n/index.js';
 import { Globe } from './Icons.jsx';
-import { useToast } from './Notifications.jsx';
+import { requestError, useToast } from './Notifications.jsx';
 
-export function LanguageSwitcher({ id = 'languageSwitcher', showLabel = false }) {
+export function LanguageSwitcher({ id = 'languageSwitcher' }) {
   const { languages } = getBootstrap();
   const current = useLanguage();
   const showToast = useToast();
@@ -16,7 +16,7 @@ export function LanguageSwitcher({ id = 'languageSwitcher', showLabel = false })
     try {
       await changeLanguage(event.target.value);
     } catch (error) {
-      showToast('error', t('toast.error'), error.message || t('common.requestFailed'));
+      showToast('error', t('toast.error'), requestError(error));
     } finally {
       setBusy(false);
     }
@@ -25,7 +25,7 @@ export function LanguageSwitcher({ id = 'languageSwitcher', showLabel = false })
   return (
     <div className="flex items-center gap-1.5">
       <Globe size={14} className="text-muted-foreground" />
-      <label className={showLabel ? 'form-label mb-0' : 'sr-only'} htmlFor={id}>
+      <label className="sr-only" htmlFor={id}>
         {t('language.label')}
       </label>
       <select id={id} className="form-select form-select-sm w-auto" value={current} onChange={change} disabled={busy}>

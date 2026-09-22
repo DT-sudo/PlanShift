@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { formatDate, pad2 } from '../../app/dates.js';
-import { getBootstrap, submitPost, urlFromTemplate } from '../../app/http.js';
+import { submitPost, urlFromTemplate } from '../../app/http.js';
 import { sendLive, useLiveEvents, useLivePageData } from '../../app/live.js';
-import { availabilityFromPayload, positionPalette, withAvailabilityChange } from '../../app/shifts.js';
+import { availabilityFromPayload, positionPalette, shiftTimes, withAvailabilityChange } from '../../app/shifts.js';
 import { AppShell } from '../../components/AppShell.jsx';
-import { ConfirmModal } from '../../components/Modal.jsx';
+import { DeleteConfirmModal } from '../../components/Modal.jsx';
 import { t } from '../../i18n/index.js';
 import { EmployeeSidebar } from './EmployeeSidebar.jsx';
 import { MonthGrid, WeekGrid } from './ShiftGrids.jsx';
@@ -17,7 +17,7 @@ const FLASH_MS = 1600;
 
 const NEW_SHIFT = { date: '', start_time: '09:00', end_time: '17:00', capacity: 1, position_id: '', assigned_employee_ids: [] };
 
-const oneHourLater = (time) => `${pad2((Number(time.slice(0, 2)) + 1) % 24)}:00`;
+const oneHourLater = (time) => `${pad2(Number(time.slice(0, 2)) + 1)}:00`;
 
 function useLiveAvailability(initial) {
   const [availability, setAvailability] = useState(() => availabilityFromPayload(initial));
@@ -97,7 +97,7 @@ function PositionLegend({ positions, shifts }) {
 }
 
 export function ManagerShiftsPage() {
-  const data = useLivePageData(getBootstrap().data);
+  const data = useLivePageData();
 
   return (
     <AppShell footer={<PositionLegend positions={data.positions} shifts={data.shifts} />}>
@@ -107,7 +107,7 @@ export function ManagerShiftsPage() {
 }
 
 function ManagerShiftsContent({ data }) {
-  const { view, anchor, start, end, today, shifts, employees, positions, urls } = data;
+  const { view, anchor, start, today, shifts, employees, positions, urls } = data;
 
   const [detailsShiftId, setDetailsShiftId] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -118,20 +118,12 @@ function ManagerShiftsContent({ data }) {
     [shifts, highlightedEmployeeId],
   );
 
-  // A page restored from the back/forward cache would show stale shifts.
-  useEffect(() => {
-    const onPageShow = (event) => event.persisted && window.location.reload();
-    window.addEventListener('pageshow', onPageShow);
-    return () => window.removeEventListener('pageshow', onPageShow);
-  }, []);
   const { availability, flashedEmployeeId } = useLiveAvailability(data.unavailability);
 
   const editingId = shiftForm?.shift.id ?? null;
   const people = usePresence(anchor.slice(0, 7), editingId);
   const editors = {};
   for (const person of people) if (person.editing) (editors[person.editing] ??= []).push(person.name);
-  // The live data no longer holds the version the form was opened on: someone else saved or deleted it.
-  const stale = editingId !== null && shifts.find((shift) => shift.id === editingId)?.version !== shiftForm.shift.version;
 
   const detailsShift = shifts.find((shift) => shift.id === detailsShiftId) || null;
   const detailsNames = employees.filter((e) => detailsShift?.assigned_employee_ids.includes(e.id)).map((e) => e.name);
@@ -147,6 +139,15 @@ function ManagerShiftsContent({ data }) {
     setShiftForm({ shift, action: urlFromTemplate(urls.update, shift.id) });
   };
 
+  const grid = {
+    todayISO: today,
+    shifts,
+    editors,
+    highlightedShiftIds,
+    onSelectShift: setDetailsShiftId,
+    onCreateSlot: openCreateForm,
+  };
+
   return (
     <>
       <main className="p-4 pt-0">
@@ -155,36 +156,13 @@ function ManagerShiftsContent({ data }) {
         <div className="manager-calendar-layout">
           <EmployeeSidebar
             employees={employees}
-            availability={availability}
-            periodStart={start}
-            periodEnd={end}
             flashedEmployeeId={flashedEmployeeId}
             highlightedEmployeeId={highlightedEmployeeId}
             onToggleEmployee={(id) => setHighlightedEmployeeId((current) => (current === id ? null : id))}
           />
 
           <div className="card calendar-fill mt-3">
-            {view === 'week' ? (
-              <WeekGrid
-                startISO={start}
-                todayISO={today}
-                shifts={shifts}
-                editors={editors}
-                highlightedShiftIds={highlightedShiftIds}
-                onSelectShift={setDetailsShiftId}
-                onCreateSlot={openCreateForm}
-              />
-            ) : (
-              <MonthGrid
-                anchorISO={anchor}
-                todayISO={today}
-                shifts={shifts}
-                editors={editors}
-                highlightedShiftIds={highlightedShiftIds}
-                onSelectShift={setDetailsShiftId}
-                onCreateSlot={openCreateForm}
-              />
-            )}
+            {view === 'week' ? <WeekGrid startISO={start} {...grid} /> : <MonthGrid anchorISO={anchor} {...grid} />}
           </div>
         </div>
       </main>
@@ -196,7 +174,6 @@ function ManagerShiftsContent({ data }) {
           positions={positions}
           employees={employees}
           availability={availability}
-          stale={stale}
           editors={editors[editingId] || []}
           onClose={() => setShiftForm(null)}
         />
@@ -213,21 +190,19 @@ function ManagerShiftsContent({ data }) {
           onDelete={() =>
             setPendingDelete({
               id: detailsShift.id,
-              label: `${detailsShift.position} • ${detailsShift.start_time}-${detailsShift.end_time} • ${formatDate(detailsShift.date)}`,
+              label: `${detailsShift.position} • ${shiftTimes(detailsShift)} • ${formatDate(detailsShift.date)}`,
             })
           }
         />
       ) : null}
 
       {pendingDelete ? (
-        <ConfirmModal
+        <DeleteConfirmModal
           title={t('shifts.deleteTitle')}
           message={t('shifts.deleteMessage')}
           detail={pendingDelete.label}
-          confirmText={t('common.yesDelete')}
-          destructive
+          action={urlFromTemplate(urls.delete, pendingDelete.id)}
           onCancel={() => setPendingDelete(null)}
-          onConfirm={() => submitPost(urlFromTemplate(urls.delete, pendingDelete.id))}
         />
       ) : null}
     </>

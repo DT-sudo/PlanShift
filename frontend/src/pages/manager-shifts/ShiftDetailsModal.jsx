@@ -1,4 +1,5 @@
 import { formatDate, formatDuration, shiftDurationMinutes } from '../../app/dates.js';
+import { shiftTimes } from '../../app/shifts.js';
 import { Modal } from '../../components/Modal.jsx';
 import { ShiftStatusBadge } from '../../components/ShiftStatusBadge.jsx';
 import { t } from '../../i18n/index.js';

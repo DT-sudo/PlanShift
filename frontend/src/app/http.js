@@ -2,7 +2,7 @@ let bootstrap;
 
 export function getBootstrap() {
   if (!bootstrap) {
-    bootstrap = JSON.parse(document.getElementById('planshift-bootstrap').textContent);
+    bootstrap = JSON.parse(document.getElementById('app-bootstrap').textContent);
   }
   return bootstrap;
 }
@@ -55,5 +55,5 @@ export async function postForm(url, data) {
   const payload = await response.json().catch(() => ({}));
   if (response.ok) return payload;
 
-  throw new Error(payload.error || '');
+  throw Object.assign(new Error(payload.error || ''), { payload });
 }

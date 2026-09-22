@@ -18,11 +18,6 @@ from .forms import ShiftForm
 from .models import MIDNIGHT, Assignment, EmployeeUnavailability, Shift, ShiftStatus, clock
 
 
-def position_options() -> list[dict]:
-    """Every position as `{id, name}`, for the React selects."""
-    return [{"id": p.id, "name": p.name} for p in Position.objects.order_by("name")]
-
-
 def shift_fields(shift: Shift) -> dict:
     """The fields every shift payload shares: its day, HH:MM times and position name."""
     return {
