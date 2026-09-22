@@ -6,7 +6,7 @@ import { useLivePageData } from '../../app/live.js';
 import { groupShiftsByDate, shiftTimeClass, shiftTimes, withDay } from '../../app/shifts.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { CalendarNav, CalendarToolbar, MonthCalendar } from '../../components/Calendar.jsx';
-import { useToast } from '../../components/Notifications.jsx';
+import { requestError, useToast } from '../../components/Notifications.jsx';
 import { t } from '../../i18n/index.js';
 
 export function EmployeeShiftsPage() {

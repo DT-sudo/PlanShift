@@ -5,6 +5,7 @@ import { postForm } from '../../app/http.js';
 import { isUnavailable } from '../../app/shifts.js';
 import { DateField, Field, PostForm, SelectField } from '../../components/Field.jsx';
 import { FormFooter, Modal } from '../../components/Modal.jsx';
+import { requestError } from '../../components/Notifications.jsx';
 import { intlLocale, t } from '../../i18n/index.js';
 
 const timeInput = ({ end = false } = {}) => ({

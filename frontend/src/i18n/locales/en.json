@@ -27,8 +27,7 @@
     "users": "Users",
     "myShifts": "My Shifts",
     "friends": "Friends",
-    "requests": "Requests",
-    "team": "Team"
+    "requests": "Requests"
   },
   "header": {
     "userMenu": "User menu",
@@ -102,8 +101,7 @@
     "passwordPlaceholder": "Enter your password",
     "submit": "Sign in",
     "newHere": "New here?",
-    "requestAccount": "Request an account",
-    "createManager": "Create a manager account"
+    "requestAccount": "Request an account"
   },
   "signup": {
     "subtitle": "An administrator approves your request and gives you your role",
@@ -117,9 +115,7 @@
     "submit": "Send request",
     "agree": "By sending a request you agree to our {terms} and {privacy}.",
     "haveAccount": "Already have an account?",
-    "employeesNote": "You can sign in straight away, but you reach the app once an administrator approves your request.",
-    "title": "Create your account",
-    "signIn": "Sign in"
+    "employeesNote": "You can sign in straight away, but you reach the app once an administrator approves your request."
   },
   "twoFactorLogin": {
     "title": "Two-factor authentication",
@@ -154,8 +150,7 @@
     "modalConfirm": "Permanently delete my account",
     "modalText": "This permanently deletes your account, your shift assignments and your unavailability records. There is no undo and no archive copy - see the {policy} (section 4) for exactly what that means.",
     "typeEmail": "Type your email ({email}) to confirm",
-    "confirmPassword": "Confirm your password",
-    "title": "Privacy & my data"
+    "confirmPassword": "Confirm your password"
   },
   "employeeShifts": {
     "calendar": "Month calendar",
@@ -203,10 +198,7 @@
     "endAfterStart": "End time must be after start time.",
     "inPast": "A shift can't start in the past. Choose a later date or start time.",
     "endTimeFormat": "24-hour time, e.g. 17:30; 24:00 is midnight",
-    "startedLocked": "This shift has already started, so it can no longer be changed or deleted.",
-    "unavailableDays": "Unavailable: {days}",
-    "createTitle": "Create shift",
-    "stale": "Someone else just changed or deleted this shift, so saving will be refused. Close and reopen it to see the latest version."
+    "startedLocked": "This shift has already started, so it can no longer be changed or deleted."
   },
   "search": {
     "placeholder": "Search by position or worker…",
@@ -221,12 +213,7 @@
     "nextPage": "Next page",
     "noResults": "No shifts match these filters.",
     "openInCalendar": "Open in calendar",
-    "unassigned": "Unassigned",
-    "date": "Date",
-    "time": "Time",
-    "position": "Position",
-    "workers": "Workers",
-    "staffed": "Staffed"
+    "unassigned": "Unassigned"
   },
   "analytics": {
     "workers": "Workers",
@@ -249,11 +236,7 @@
       "one": "{count} shift",
       "other": "{count} shifts"
     },
-    "noData": "No data for these filters.",
-    "shifts": "Shifts",
-    "byPosition": "Shifts by position",
-    "shiftStatus": "Shift status",
-    "total": "total"
+    "noData": "No data for these filters."
   },
   "team": {
     "addUser": "Add user",
@@ -294,20 +277,7 @@
     "deletePositionLabel": "Delete position {name}",
     "deletePosition": "Delete position",
     "deletePositionMessage": "Delete this position?",
-    "deletePositionNote": "Its upcoming shifts are deleted with it. Shifts that have already started stay on the schedule under its name, and employees who hold it are left without a position.",
-    "addEmployee": "Add employee",
-    "employeeList": "Employee list",
-    "fullName": "Full name",
-    "position": "Position",
-    "email": "Email",
-    "deleteEmployee": "Delete employee",
-    "deleteEmployeeMessage": "Are you sure you want to delete this employee?",
-    "deleteEmployeeNote": "This will remove the employee and their assignments.",
-    "editEmployee": "Edit employee",
-    "newEmployee": "Add new employee",
-    "createEmployee": "Create employee",
-    "password": "Password",
-    "positionsTitle": "Manage positions"
+    "deletePositionNote": "Its upcoming shifts are deleted with it. Shifts that have already started stay on the schedule under its name, and employees who hold it are left without a position."
   },
   "profile": {
     "editProfile": "Edit profile",
@@ -315,9 +285,7 @@
     "noBio": "No bio yet. {link} so people know who you are.",
     "addBio": "Add one",
     "memberSince": "Member since",
-    "noFriends": "No friends yet.",
-    "email": "Email",
-    "friends": "Friends"
+    "noFriends": "No friends yet."
   },
   "friends": {
     "colleagues": "All colleagues",
@@ -336,11 +304,7 @@
     "remove": "Remove friend",
     "removeMessage": "Remove {name} from your friends?",
     "removeNote": "They will no longer see your online status or your email.",
-    "yesRemove": "Yes, remove",
-    "addByEmail": "Add a friend by email",
-    "emailPlaceholder": "colleague@example.com",
-    "send": "Send request",
-    "friends": "Friends"
+    "yesRemove": "Yes, remove"
   },
   "settings": {
     "viewProfile": "View my profile",
@@ -387,12 +351,7 @@
     "download": "Download",
     "copied": "Copied to the clipboard.",
     "savedThem": "I've saved them",
-    "codesFileHeading": "ft_transcendence recovery codes",
-    "title": "Account settings",
-    "passwordTitle": "Password",
-    "languageTitle": "Language",
-    "languageHint": "PlanShift, the emails it sends you and your notifications use this language.",
-    "twoFactorTitle": "Two-factor authentication"
+    "codesFileHeading": "ft_transcendence recovery codes"
   },
   "requests": {
     "title": "Registration requests",
@@ -416,6 +375,12 @@
   },
   "passwordChange": {
     "title": "Choose a new password",
-    "subtitle": "Your password was set by an administrator. Replace it with your own to continue."
+    "subtitle": "Your password was set by an administrator. Replace it with your own to continue.",
+    "given": "Password you were given"
+  },
+  "months": {
+    "placeholder": "MM.YYYY",
+    "format": "Month and year, e.g. 09.2026",
+    "pick": "Choose a month"
   }
 }
