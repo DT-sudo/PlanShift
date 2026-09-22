@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { timeAgo } from '../../app/dates.js';
 import { submitPost, urlFromTemplate } from '../../app/http.js';
 import { DIRECTORY_CHANGED, useLivePageData } from '../../app/live.js';
-import { AppShell } from '../../components/AppShell.jsx';
+import { AppShell, PageHeader } from '../../components/AppShell.jsx';
 import { Avatar } from '../../components/Avatar.jsx';
 import { ListTable } from '../../components/ListTable.jsx';
 import { PostForm } from '../../components/Field.jsx';

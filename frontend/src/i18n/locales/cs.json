@@ -419,6 +419,13 @@
     "yesDecline": "Ano, zamítnout"
   },
   "pending": {
-    "title": "Čeká na schválení"
+    "title": "Čeká na schválení",
+    "text": "Vaše žádost o registraci pro {email} byla odeslána administrátorovi.",
+    "sent": "Odesláno {time}.",
+    "hint": "Přístup získáte, jakmile bude schválena - tato stránka se pak sama přesune dál."
+  },
+  "passwordChange": {
+    "title": "Zvolte nové heslo",
+    "subtitle": "Vaše heslo nastavil administrátor. Pokračujte tím, že ho nahradíte vlastním."
   }
 }

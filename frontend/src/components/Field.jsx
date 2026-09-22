@@ -4,6 +4,7 @@ import { formatDayMonthYear, formatMonthYear, parseDayMonthYear, parseMonthYear 
 import { getBootstrap } from '../app/http.js';
 import { statusOptions } from '../app/shifts.js';
 import { t } from '../i18n/index.js';
+import { CalendarIcon } from './Icons.jsx';
 
 export function PostForm({ fields = {}, children, ...formProps }) {
   return (

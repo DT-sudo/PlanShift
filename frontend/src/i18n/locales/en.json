@@ -409,6 +409,13 @@
     "yesDecline": "Yes, decline"
   },
   "pending": {
-    "title": "Waiting for approval"
+    "title": "Waiting for approval",
+    "text": "Your registration request for {email} was sent to an administrator.",
+    "sent": "Sent {time}.",
+    "hint": "You will get access as soon as it is approved - this page moves on by itself."
+  },
+  "passwordChange": {
+    "title": "Choose a new password",
+    "subtitle": "Your password was set by an administrator. Replace it with your own to continue."
   }
 }

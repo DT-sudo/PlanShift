@@ -11,10 +11,12 @@
 
 @layer base {
   html {
+    font-size: 80%;
     overflow-y: scroll;
   }
 
   body {
+    min-width: min-content;
     font-family: var(--font-sans);
     background-color: var(--color-background);
     color: var(--color-foreground);
