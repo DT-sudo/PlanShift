@@ -1,19 +1,6 @@
-*This project has been created as part of the 42 curriculum by dtereshc.*
+*This project has been created as part of the 42 curriculum by dtereshc, olcherno, ntsvetko.*
 
-<!-- TEAM: add the remaining logins above as `dtereshc, login2, login3, login4`, then
-     fill in the Team Information, Features List and Individual Contributions
-     tables below. Every team member must appear in all three. -->
-
-# PlanShift
-
-[![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![Django](https://img.shields.io/badge/Django-6.0-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
-[![SQLite](https://img.shields.io/badge/SQLite-3-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
-[![nginx](https://img.shields.io/badge/nginx-TLS-009639?logo=nginx&logoColor=white)](https://nginx.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+# ft_transcendence
 
 ## Table of contents
 
@@ -172,6 +159,59 @@ While `ENABLE_DEMO_LOGIN` is on, the login page also shows **Demo: Manager login
 
 ---
 
+## Resources
+
+### Documentation
+
+- [Django documentation](https://docs.djangoproject.com/en/stable/) — models, forms, auth, and the
+  [security topic guide](https://docs.djangoproject.com/en/stable/topics/security/)
+- [Django authentication](https://docs.djangoproject.com/en/stable/topics/auth/customizing/) —
+  custom user models and authentication backends
+- [React documentation](https://react.dev/learn) — hooks and component patterns
+- [Vite guide](https://vite.dev/guide/) — multi-entry builds and the manifest
+- [Tailwind CSS v4](https://tailwindcss.com/docs) — `@theme` tokens and the component layer
+- [nginx: configuring HTTPS servers](https://nginx.org/en/docs/http/configuring_https_servers.html)
+- [MDN Web Docs](https://developer.mozilla.org/) — CSS grid, container queries, the Fetch API
+- [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/) — authentication, password
+  storage and transport-security guidance
+- [GDPR text (gdpr-info.eu)](https://gdpr-info.eu/) — reference for the Privacy Policy
+
+### Articles and references
+
+- [Django's `SECURE_PROXY_SSL_HEADER`](https://docs.djangoproject.com/en/stable/ref/settings/#secure-proxy-ssl-header)
+  — the correct way to run behind a TLS-terminating proxy
+- [The Twelve-Factor App: Config](https://12factor.net/config) — the reasoning behind
+  environment-based configuration and `.env`
+- [WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/) — dialog and live-region patterns
+  used by the modals and toasts
+
+---
+
+## Known limitations
+
+- The TLS certificate is self-signed, so browsers show a warning. A real deployment would use a
+  certificate from a public CA (e.g. Let's Encrypt).
+- The Docker image runs Django's development server (`runserver`, served by Daphne). It is a
+  demo/evaluation environment; a production deployment would run Daphne or Uvicorn workers behind
+  the same proxy.
+- Live updates cover employee availability and the analytics numbers. Shift changes by other
+  managers still reach calendars and search on the next reload. The socket reconnects silently;
+  events sent while a page is offline are not replayed, so the calendar catches up on its next
+  reload, while the analytics page re-fetches as soon as it reconnects.
+- Notification history is kept in the browser (`localStorage`, per account), so it does not follow
+  a user to another device, and it only records what happened on pages that user had open.
+- There is no password-reset-by-email flow. A manager resets an employee's password and hands over
+  the new one; a manager who loses their own password needs `python manage.py changepassword <email>`.
+- Positions and employees form a single shared organisational directory rather than being scoped
+  per manager. Shifts are scoped per manager.
+- SQLite serialises writes. This is ample for the intended scale but would need PostgreSQL for a
+  large multi-tenant deployment — a configuration change, not a code change.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
 ## Technical Stack
 
 ### Frontend
@@ -482,56 +522,3 @@ python manage.py test apps
 
 ---
 
-## Resources
-
-### Documentation
-
-- [Django documentation](https://docs.djangoproject.com/en/stable/) — models, forms, auth, and the
-  [security topic guide](https://docs.djangoproject.com/en/stable/topics/security/)
-- [Django authentication](https://docs.djangoproject.com/en/stable/topics/auth/customizing/) —
-  custom user models and authentication backends
-- [React documentation](https://react.dev/learn) — hooks and component patterns
-- [Vite guide](https://vite.dev/guide/) — multi-entry builds and the manifest
-- [Tailwind CSS v4](https://tailwindcss.com/docs) — `@theme` tokens and the component layer
-- [nginx: configuring HTTPS servers](https://nginx.org/en/docs/http/configuring_https_servers.html)
-- [MDN Web Docs](https://developer.mozilla.org/) — CSS grid, container queries, the Fetch API
-- [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/) — authentication, password
-  storage and transport-security guidance
-- [GDPR text (gdpr-info.eu)](https://gdpr-info.eu/) — reference for the Privacy Policy
-
-### Articles and references
-
-- [Django's `SECURE_PROXY_SSL_HEADER`](https://docs.djangoproject.com/en/stable/ref/settings/#secure-proxy-ssl-header)
-  — the correct way to run behind a TLS-terminating proxy
-- [The Twelve-Factor App: Config](https://12factor.net/config) — the reasoning behind
-  environment-based configuration and `.env`
-- [WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/) — dialog and live-region patterns
-  used by the modals and toasts
-
----
-
-## Known limitations
-
-- The TLS certificate is self-signed, so browsers show a warning. A real deployment would use a
-  certificate from a public CA (e.g. Let's Encrypt).
-- The Docker image runs Django's development server (`runserver`, served by Daphne). It is a
-  demo/evaluation environment; a production deployment would run Daphne or Uvicorn workers behind
-  the same proxy.
-- Live updates cover employee availability and the analytics numbers. Shift changes by other
-  managers still reach calendars and search on the next reload. The socket reconnects silently;
-  events sent while a page is offline are not replayed, so the calendar catches up on its next
-  reload, while the analytics page re-fetches as soon as it reconnects.
-- Notification history is kept in the browser (`localStorage`, per account), so it does not follow
-  a user to another device, and it only records what happened on pages that user had open.
-- There is no password-reset-by-email flow. A manager resets an employee's password and hands over
-  the new one; a manager who loses their own password needs `python manage.py changepassword <email>`.
-- Positions and employees form a single shared organisational directory rather than being scoped
-  per manager. Shifts are scoped per manager.
-- SQLite serialises writes. This is ample for the intended scale but would need PostgreSQL for a
-  large multi-tenant deployment — a configuration change, not a code change.
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE).
