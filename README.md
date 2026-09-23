@@ -215,3 +215,23 @@ erDiagram
 | Shared UI components | Form controls, modals, menus, toasts, icons, app layout. | `olcherno` |
 | HTTPS and deployment | nginx with TLS, HTTP redirected to HTTPS, one-command Docker Compose stack. | `dtereshc` |
 
+## Modules
+
+**Total: 18 points** (5 Major × 2 + 8 Minor × 1). Minimum required: 14.
+
+| # | Module | Type | Pts | Justification | Implementation | Member(s) |
+|---|---|---|---|---|---|---|
+| 1 | Use a framework for both the frontend and backend | Major | 2 | A stateful calendar UI and a rule-heavy backend both benefit from mature frameworks. | React 19 for every page, Django 6 for routing, ORM, auth, forms and i18n. | `dtereshc` |
+| 2 | Implement real-time features using WebSockets | Major | 2 | Several users work on one schedule at the same time. | Django Channels consumer with a Redis channel layer; per-role, per-user and per-session groups; broadcasts after commit; client reconnects with backoff. | `dtereshc` |
+| 3 | Advanced permissions system | Major | 2 | Admins, managers and employees need different views and actions. | Four roles; admin CRUD on users; role-specific views and actions; session ended when a role changes. | `dtereshc`, `ntsvetko` |
+| 4 | Standard user management and authentication | Major | 2 | Colleagues need to recognise and reach each other. | Profile editing, avatar upload with default, friends with online status, profile page. | `ntsvetko`, `dtereshc` |
+| 5 | Advanced analytics dashboard with data visualization | Major | 2 | Managers need to track hours worked against the legal weekly limit. | SVG charts, KPIs, live updates, CSV and PDF export, date range and filters. | `ntsvetko` |
+| 6 | Use an ORM for the database | Minor | 1 | Explicit schema and safe queries. | Django ORM only, constraints and migrations. | `olcherno`, `dtereshc` |
+| 7 | A complete notification system for all creation, update, and deletion actions | Minor | 1 | Users must know when their shifts or account change. | Notification for every write, stored per user, delivered live and in a history. | `ntsvetko` |
+| 8 | Real-time collaborative features | Minor | 1 | Managers edit one shared schedule. | Shared calendar, presence of other managers, versioned saves that refuse conflicting edits. | `dtereshc` |
+| 9 | Implement advanced search functionality with filters, sorting, and pagination | Minor | 1 | Finding a shift in months of schedule. | Text search, filters, sorting, pagination, all applied server-side. | `olcherno`, `ntsvetko` |
+| 10 | Support for multiple languages (at least 3 languages) | Minor | 1 | Hourly teams are multilingual. | English, Czech, Arabic; gettext on the server, JSON catalogs in React; switcher on every page. | `olcherno`, `dtereshc` |
+| 11 | Right-to-left (RTL) language support | Minor | 1 | Arabic requires a mirrored layout. | `dir="rtl"`, CSS logical properties, flipped icons and charts, in-place switching. | `olcherno` |
+| 12 | Implement a complete 2FA (Two-Factor Authentication) system | Minor | 1 | A password alone should not open an account with access to personal data. | TOTP, QR setup, hashed recovery codes, lockout after failed attempts. | `dtereshc` |
+| 13 | GDPR compliance features | Minor | 1 | The application stores employees' personal data. | Data export in JSON, account deletion with confirmation, confirmation emails. | `olcherno`, `ntsvetko` |
+
