@@ -17,7 +17,7 @@ def set_language_cookie(response, code: str) -> None:
 
 
 class UserLanguageMiddleware:
-    """Signed-in users read PlanShift in the language saved on their account.
+    """Signed-in users read ft_transcendence in the language saved on their account.
 
     Runs after Django's LocaleMiddleware, which picks the language for everyone else
     (the language cookie, else the browser's Accept-Language). An account without a
@@ -34,8 +34,7 @@ class UserLanguageMiddleware:
         signed_in = user.is_authenticated
         if signed_in:
             if not is_supported(user.language):
-                user.language = request.LANGUAGE_CODE
-                user.save(update_fields=["language"])
+                user.save_language(request.LANGUAGE_CODE)
             translation.activate(user.language)
             request.LANGUAGE_CODE = user.language
 

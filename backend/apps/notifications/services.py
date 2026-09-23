@@ -9,6 +9,7 @@ from django.core.mail import send_mail
 from django.utils import translation
 
 from apps.accounts.models import MANAGER_ROLES, User, UserRole
+from apps.i18n.languages import speaking
 from apps.realtime.events import push_to_user
 
 from .messages import render
@@ -45,7 +46,8 @@ def notify(
     )
     languages = dict(User.objects.filter(pk__in=recipient_ids).values_list("pk", "language"))
     for notification in created:
-        payload = notification.as_dict()
+        with speaking(languages.get(notification.recipient_id)):
+            payload = notification.as_dict()
         push_to_user(notification.recipient_id, {"type": "notification", "notification": payload})
 
 

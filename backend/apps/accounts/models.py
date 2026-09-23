@@ -54,6 +54,11 @@ class User(AbstractUser):
     language = models.CharField(max_length=8, blank=True)
     must_change_password = models.BooleanField(default=False)
 
+    def save_language(self, code: str) -> None:
+        if self.language != code:
+            self.language = code
+            self.save(update_fields=["language"])
+
     @property
     def display_name(self) -> str:
         return self.get_full_name() or self.username

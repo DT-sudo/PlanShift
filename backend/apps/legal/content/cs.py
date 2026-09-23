@@ -4,18 +4,18 @@ from __future__ import annotations
 
 from .en import CONTACT_EMAIL
 
-LAST_UPDATED = "14. září 2026"
+LAST_UPDATED = "19. září 2026"
 
 PRIVACY_POLICY = {
     "title": "Zásady ochrany osobních údajů",
     "updated": LAST_UPDATED,
     "intro": [
-        "PlanShift je aplikace pro plánování směn týmů placených po hodinách. Tyto zásady přesně "
+        "ft_transcendence je aplikace pro plánování směn týmů placených po hodinách. Tyto zásady přesně "
         "vysvětlují, jaké osobní údaje aplikace uchovává, proč je uchovává, kdo je může vidět a o co "
         "nás můžete požádat.",
-        "PlanShift vznikl jako studentský projekt v rámci studijního programu školy 42. Provozuje se "
+        "ft_transcendence vznikl jako studentský projekt v rámci studijního programu školy 42. Provozuje se "
         "na vlastním serveru: správcem údajů je organizace, která provozuje instanci, kterou "
-        "používáte, a autoři PlanShiftu k ní nemají přístup.",
+        "používáte, a autoři ft_transcendence k ní nemají přístup.",
     ],
     "sections": [
         {
@@ -27,73 +27,97 @@ PRIVACY_POLICY = {
             ],
             "bullets": [
                 "Údaje o účtu — vaše celé jméno, e-mailová adresa (která je zároveň vaším přihlašovacím "
-                "jménem), systémem vygenerované ID zaměstnance, vaše role (manažer nebo zaměstnanec) "
-                "a u zaměstnanců pozice, na kterou jste kvalifikováni.",
+                "jménem), systémem vygenerované ID zaměstnance, vaše role (administrátor, manažer nebo "
+                "zaměstnanec, případně host, dokud vaše žádost o registraci čeká na schválení), u "
+                "zaměstnanců pozice, na které pracujete, a kdy byl účet vytvořen a kdy "
+                "jste se naposledy přihlásili.",
                 "Údaje profilu — volitelná profilová fotografie (převedená do malého formátu WebP, čímž "
                 "se odstraní veškerá metadata o fotoaparátu či poloze), volitelný krátký popis, vaši "
-                "přátelé a žádosti o přátelství a váš stav online: zda máte PlanShift otevřený a kdy "
+                "přátelé a žádosti o přátelství a váš stav online: zda máte ft_transcendence otevřený a kdy "
                 "jste ho měli otevřený naposledy.",
                 "Heslo — nikdy se neukládá jako text. Do databáze se zapisuje pouze solený hash "
                 "PBKDF2-SHA256, ze kterého nelze vaše heslo zpětně získat.",
                 "Dvoufázové ověření, pokud ho zapnete — tajný klíč, který vaše ověřovací aplikace "
-                "sdílí s PlanShiftem (server ho potřebuje ke kontrole vašich kódů), okamžik zapnutí a "
+                "sdílí s ft_transcendence (server ho potřebuje ke kontrole vašich kódů), okamžik zapnutí a "
                 "vaše záložní kódy, z nichž se uchovává pouze klíčovaný hash. Vypnutím dvoufázového "
                 "ověření se vše smaže.",
                 "Údaje o plánování — směny, ke kterým jste přiřazeni, jejich data, časy, pozice a "
-                "kapacita, a dny, které jste si označili jako nedostupné.",
+                "kapacita, a dny, které jste si označili jako nedostupné. U manažerů také směny, které "
+                "vytvořili.",
                 "Oznámení — zprávy v aplikaci o změnách provedených jinými lidmi, které se vás týkají, "
-                "například o směně, ke které jste byli přiřazeni. Uchovávají se, dokud je nevymažete "
-                "nebo dokud nebude váš účet smazán.",
-                "Jazyk — jazyk, ve kterém PlanShift používáte, uložený u vašeho účtu a v cookie, aby vám "
+                "například o směně, ke které jste byli přiřazeni, a chybová hlášení, která vám aplikace "
+                "zobrazila. Uchovávají se, dokud je nevymažete nebo dokud nebude váš účet smazán.",
+                "Jazyk — jazyk, ve kterém ft_transcendence používáte, uložený u vašeho účtu a v cookie, aby vám "
                 "aplikace, e-maily a oznámení přicházely v jazyce, který čtete.",
-                "Cookie relace — podepsaný identifikátor, díky kterému zůstáváte přihlášeni. Má "
-                "nastavené příznaky HttpOnly, SameSite=Lax a Secure, takže je pro JavaScript "
-                "nečitelný a nikdy se neposílá přes nešifrované spojení.",
-                "Cookie CSRF — náhodný token, který slouží k prokázání, že odeslaný formulář pochází ze "
-                "stránky, kterou jsme poskytli. Neobsahuje o vás žádné informace.",
+                "Bezpečnostní záznam — řádek za každé přihlášení (úspěšné i neúspěšné), odhlášení, "
+                "změnu účtu nebo role a ukončenou relaci, s číslem účtu, přihlašovacím e-mailem a IP "
+                "adresou, ze které požadavek přišel. Zapisuje se do logu serveru, ne do databáze, a "
+                "nikdy neobsahuje hesla ani kódy.",
+                "Cookies — cookie relace, díky které zůstáváte přihlášeni, cookie CSRF, která chrání "
+                "formuláře, cookie jazyka a cookie zpráv, která přenese jednorázové potvrzení nebo "
+                "chybové hlášení na další stránku. Popisuje je oddíl 7.",
             ],
         },
         {
             "heading": "2. Proč údaje zpracováváme",
             "bullets": [
                 "Abychom vás ověřili a udrželi vaši relaci otevřenou mezi požadavky.",
-                "Abychom mohli vytvářet, kontrolovat a zobrazovat pracovní rozpisy — včetně kontroly, "
-                "že se přiřazení nekryje s existující směnou nebo dnem, který jste označili jako "
-                "nedostupný.",
-                "Aby váš manažer viděl rozpis, za který odpovídá, a hodiny, které přiděluje jednotlivým "
-                "lidem.",
-                "Abychom udrželi aplikaci v bezpečí, například odmítáním požadavků z jiných webů.",
+                "Abychom mohli vytvářet, kontrolovat a zobrazovat pracovní rozpis — včetně kontroly, "
+                "že přiřazení odpovídá pozici zaměstnance a nekryje se s jinou směnou ani se dnem, "
+                "který označil jako nedostupný.",
+                "Aby manažeři viděli rozpis, který vedou, a hodiny, které přiděluje jednotlivým lidem, "
+                "a aby administrátor mohl udržovat účty a pozice aktuální.",
+                "Abychom vás informovali o změnách, které se vás týkají — v aplikaci, a u exportu "
+                "údajů, smazání účtu, zamítnuté žádosti o registraci a změn dvoufázového ověření "
+                "také e-mailem.",
+                "Abychom udrželi aplikaci v bezpečí: odmítáním požadavků z jiných webů, blokováním "
+                "opakovaně chybných kódů dvoufázového ověření a vedením bezpečnostního záznamu pro "
+                "vyšetření zneužití.",
             ],
             "paragraphs": [
                 "Právním základem je plnění vašeho pracovního vztahu s organizací, která instanci "
-                "provozuje, spolu s oprávněným zájmem této organizace na vedení pracovního rozpisu. "
-                "Vaše údaje nezpracováváme k žádnému jinému účelu než k vedení rozpisu.",
+                "provozuje, spolu s oprávněným zájmem této organizace na vedení pracovního rozpisu a "
+                "jeho zabezpečení. Vaše údaje nezpracováváme k žádnému jinému účelu než k vedení "
+                "rozpisu.",
             ],
         },
         {
             "heading": "3. Kdo vaše údaje vidí",
             "bullets": [
-                "Vy — svůj vlastní profil, své zveřejněné směny a svou nedostupnost.",
-                "Manažeři ve vaší organizaci — adresář týmu (jméno, e-mail, pozice) a celý rozpis včetně "
-                "konceptů směn, které zaměstnanci zatím nevidí.",
-                "Vaši přátelé — váš profil, e-mail, seznam přátel a stav online. Kdo s vámi má "
-                "nevyřízenou žádost o přátelství, vidí jen vaše jméno, fotografii, roli a popis.",
-                "Správci instance — technici s přístupem k serveru nebo databázi.",
+                "Vy — vše o svém vlastním účtu a jeho úplnou kopii na stránce „Soukromí a moje údaje“.",
+                "Kolegové — každý přihlášený manažer a zaměstnanec vidí na vašem profilu vaše jméno, "
+                "fotografii, roli nebo pozici a popis. Vaši přátelé navíc vidí váš e-mail, seznam "
+                "přátel a to, zda jste online.",
+                "Manažeři — celý rozpis včetně konceptů směn, které zaměstnanci zatím nevidí, bez "
+                "ohledu na to, který manažer směnu vytvořil; jméno, pozici a dny nedostupnosti "
+                "každého zaměstnance; a hodiny, na které je kdo naplánován.",
+                "Administrátoři — jméno, e-mail, ID zaměstnance, roli a pozici každého účtu a to, zda "
+                "má zapnuté dvoufázové ověření, a jméno a e-mail každého, kdo čeká na vyřízení své "
+                "žádosti o registraci. Tyto údaje mohou měnit, obnovit heslo nebo dvoufázové ověření, "
+                "schvalovat či zamítat žádosti a mazat účty.",
+                "Technici provozovatele — lidé s přístupem k serveru, jeho databázi a logům.",
             ],
             "paragraphs": [
-                "Vaše údaje se nikdy neprodávají, nepronajímají, nesdílejí s inzerenty ani nepředávají "
-                "žádné třetí straně. Nepoužívají se k trénování modelů strojového učení.",
+                "Vaše údaje se nikdy neprodávají, nepronajímají, nesdílejí s inzerenty ani nepoužívají "
+                "k trénování modelů strojového učení. Malou část z nich vidí dvě vnější služby: Google "
+                "Fonts obdrží vaši IP adresu, když si prohlížeč stahuje písmo, a poštovní server, který "
+                "provozovatel nastaví, doručuje výše popsané e-maily.",
             ],
         },
         {
             "heading": "4. Jak dlouho údaje uchováváme",
             "paragraphs": [
-                "Údaje o účtu a plánování se uchovávají, dokud váš účet v instanci existuje. Když "
-                "manažer smaže účet zaměstnance, záznam účtu, jeho přiřazení ke směnám a záznamy o "
-                "nedostupnosti se z databáze odstraní v rámci jedné transakce — neexistuje žádné "
-                "měkké smazání ani archivní kopie.",
-                "Jednorázově vygenerované heslo se uchovává v serverové relaci manažera jen po dobu "
-                "nutnou k jeho jedinému zobrazení a zahodí se, jakmile se stránka vykreslí.",
+                "Údaje o účtu a plánování se uchovávají, dokud váš účet v instanci existuje. Když je "
+                "váš účet smazán — vámi nebo administrátorem — záznam účtu, profilová fotografie, "
+                "přátelství, oznámení, údaje dvoufázového ověření, přiřazení ke směnám a záznamy o "
+                "nedostupnosti se z databáze okamžitě odstraní. Neexistuje žádné měkké smazání ani "
+                "archivní kopie. Směny, které vytvořil manažer, zůstávají ve sdíleném rozpisu, už bez "
+                "vazby na něj. Zamítnutá žádost o registraci se stejně tak okamžitě smaže.",
+                "Jednorázově vygenerované heslo se uchovává v serverové relaci administrátora jen po "
+                "dobu nutnou k jeho jedinému zobrazení a zahodí se, jakmile se stránka vykreslí; při "
+                "prvním přihlášení si ho účet musí nahradit vlastním. "
+                "Řádky bezpečnostního záznamu se uchovávají tak dlouho, jak dlouho provozovatel "
+                "uchovává logy serveru.",
             ],
         },
         {
@@ -107,8 +131,10 @@ PRIVACY_POLICY = {
                 "zablokuje ověření na pět minut a o každé jeho změně vás informujeme e-mailem.",
                 "Každý zápis je chráněn tokenem CSRF a každá stránka se odesílá s hlavičkami "
                 "X-Frame-Options: DENY a X-Content-Type-Options: nosniff.",
-                "Přístup je na serveru omezen podle rolí: zaměstnanec se nedostane ke koncovému bodu "
-                "manažera a pokus o zobrazení směny jiného manažera uhodnutím jejího ID vrátí chybu 404.",
+                "Přístup je na serveru omezen podle rolí: zaměstnanci se nedostanou k rozpisu ani ke "
+                "stránkám účtů a vždy dostávají jen své vlastní zveřejněné směny; účty může měnit jen "
+                "administrátor. Když se vám změní role nebo je obnoveno heslo, vaše otevřené relace "
+                "se odhlásí.",
                 "Databázové dotazy procházejí přes Django ORM, který parametrizuje každou hodnotu, a "
                 "veškerý vykreslovaný obsah je ve výchozím stavu escapován.",
             ],
@@ -119,18 +145,23 @@ PRIVACY_POLICY = {
                 "Podle GDPR můžete požádat o kopii údajů, které o vás uchováváme, o jejich opravu nebo "
                 "výmaz, vznést námitku proti jejich zpracování nebo požádat o omezení zpracování. Máte "
                 "také právo podat stížnost u svého národního úřadu pro ochranu osobních údajů.",
-                f"Kteroukoli z těchto žádostí zašlete na {CONTACT_EMAIL} nebo manažerovi své organizace, "
-                "který může váš účet přímo upravit nebo smazat.",
+                "Většinu z toho zvládnete sami. Na stránce „Soukromí a moje údaje“ si můžete stáhnout "
+                "vše, co o vás uchováváme, jako čitelný soubor JSON, a po potvrzení e-mailu a hesla "
+                "smazat svůj účet; obojí vám potvrdíme e-mailem. Jméno, e-mail, fotografii a popis "
+                "opravíte v Nastavení účtu. S čímkoli dalším se obraťte na "
+                f"{CONTACT_EMAIL} nebo na administrátora instance vaší organizace.",
             ],
         },
         {
             "heading": "7. Cookies",
             "paragraphs": [
-                "PlanShift nastavuje tři cookies, všechny nezbytně nutné pro fungování služby: cookie "
-                "relace, díky které zůstáváte přihlášeni, cookie CSRF, která chrání formuláře před "
-                "odesláním z cizích webů, a cookie jazyka, která si pamatuje zvolený jazyk. Žádná z nich "
-                "se nepoužívá ke sledování ani profilování, proto není potřeba lišta se souhlasem. "
-                "Pokud je zablokujete, nebudete se moci přihlásit.",
+                "ft_transcendence nastavuje čtyři cookies, všechny nezbytně nutné pro fungování služby: cookie "
+                "relace, díky které zůstáváte přihlášeni (nejdéle dva týdny, nebo dokud se "
+                "neodhlásíte), cookie CSRF, která chrání formuláře před odesláním z cizích webů, "
+                "cookie jazyka, která si pamatuje zvolený jazyk, a cookie zpráv, která přenese "
+                "potvrzení nebo chybové hlášení na další stránku a smaže se, jakmile se zobrazí. Žádná "
+                "z nich se nepoužívá ke sledování ani profilování, proto není potřeba lišta se "
+                "souhlasem. Pokud je zablokujete, nebudete se moci přihlásit.",
             ],
         },
         {
@@ -143,8 +174,8 @@ PRIVACY_POLICY = {
         {
             "heading": "9. Kontakt",
             "paragraphs": [
-                f"Dotazy k těmto zásadám: {CONTACT_EMAIL}. S čímkoli, co se týká přímo vašeho rozpisu "
-                "nebo účtu, se nejprve obraťte na svého manažera — spravuje instanci vaší organizace.",
+                f"Dotazy k těmto zásadám: {CONTACT_EMAIL}. S čímkoli, co se týká vašeho rozpisu, se "
+                "obraťte na svého manažera; s vaším účtem na administrátora instance vaší organizace.",
             ],
         },
     ],
@@ -154,54 +185,59 @@ TERMS_OF_SERVICE = {
     "title": "Podmínky používání",
     "updated": LAST_UPDATED,
     "intro": [
-        "Tyto podmínky upravují vaše používání PlanShiftu, webové aplikace pro plánování směn. "
+        "Tyto podmínky upravují vaše používání ft_transcendence, webové aplikace pro plánování směn. "
         "Vytvořením účtu nebo přihlášením s nimi souhlasíte. Pokud nesouhlasíte, službu nepoužívejte.",
     ],
     "sections": [
         {
             "heading": "1. Služba",
             "paragraphs": [
-                "PlanShift umožňuje manažerovi sestavit pracovní rozpis v kalendáři a zveřejnit ho "
-                "svému týmu a zaměstnancům umožňuje vidět směny, které jim byly přiřazeny, a označit "
-                "dny, kdy nejsou k dispozici. Je to nástroj pro plánování. Není to mzdový systém, "
-                "docházkový systém ani závazná evidence skutečně odpracovaných hodin.",
+                "ft_transcendence umožňuje manažerům sestavit v kalendáři jeden sdílený pracovní rozpis a "
+                "zveřejnit ho týmu, zaměstnancům vidět směny, které jim byly přiřazeny, a označit dny, "
+                "kdy nejsou k dispozici, a administrátorovi spravovat účty a pozice. Kolegové si mohou "
+                "prohlížet profily a přidávat se mezi přátele. Je to nástroj pro plánování. Není to "
+                "mzdový systém, docházkový systém ani závazná evidence skutečně odpracovaných hodin.",
             ],
         },
         {
             "heading": "2. Účty",
             "bullets": [
-                "Účty manažerů se zakládají přes registrační stránku. Registrací přebíráte odpovědnost "
-                "za tým, který následně vytvoříte.",
-                "Účty zaměstnanců vytváří manažer, který obdrží vygenerované heslo zobrazené právě "
-                "jednou a odpovídá za jeho bezpečné předání.",
+                "Registrací odesíláte žádost o registraci. Přihlásit se můžete hned, ale nedostanete se "
+                "nikam, dokud administrátor žádost neschválí a nepřidělí vám roli; zamítnutí žádosti "
+                "účet smaže. Prvního administrátora jmenuje provozovatel instance.",
+                "Účty, které založí administrátor, dostanou vygenerované heslo zobrazené "
+                "administrátorovi právě jednou; administrátor odpovídá za jeho bezpečné předání a vy "
+                "si ho při prvním přihlášení musíte nahradit vlastním.",
                 "Musíte uvést pravdivé jméno a funkční e-mailovou adresu a k držení účtu vám musí být "
                 "alespoň 16 let, nebo musíte mít souhlas zákonného zástupce.",
                 "Odpovídáte za vše, co se pod vaším účtem děje. Uchovávejte heslo v tajnosti, účet s "
                 "nikým nesdílejte, a pokud máte podezření, že k němu má přístup někdo jiný, ihned to "
-                "oznamte svému manažerovi.",
+                "oznamte svému administrátorovi.",
             ],
         },
         {
             "heading": "3. Přijatelné použití",
             "paragraphs": ["Zavazujete se, že nebudete:"],
             "bullets": [
-                "Přistupovat nebo se pokoušet přistupovat k účtu, směně nebo týmu, který není váš.",
+                "Přistupovat nebo se pokoušet přistupovat k účtům nebo údajům, ke kterým vám vaše role "
+                "přístup nedává.",
                 "Zkoumat, skenovat nebo testovat zabezpečení instance ani obcházet jakoukoli kontrolu "
                 "přístupu, omezení počtu požadavků nebo ověření.",
                 "Automatizovat požadavky způsobem, který zhoršuje službu ostatním uživatelům.",
                 "Nahrávat nebo zadávat nezákonný, urážlivý nebo záměrně zavádějící obsah, včetně "
-                "falešných jmen nebo údajů o plánování zadaných s cílem poškodit kolegu.",
+                "urážlivých profilových fotografií nebo popisů, falešných jmen nebo údajů o plánování "
+                "zadaných s cílem poškodit kolegu.",
                 "Kopírovat, stahovat nebo dále šířit údaje jiné organizace.",
             ],
         },
         {
-            "heading": "4. Povinnosti manažerů",
+            "heading": "4. Povinnosti administrátorů a manažerů",
             "paragraphs": [
-                "Pokud máte účet manažera, rozhodujete o tom, jaké osobní údaje o svých zaměstnancích "
-                "do instance zadáte, a jste pro ně správcem údajů. Odpovídáte za to, že máte k jejich "
-                "zpracování právní základ, že svůj tým informujete o používání PlanShiftu a že "
-                "vyhovíte jeho žádostem o přístup k údajům nebo jejich výmaz. Naše Zásady ochrany "
-                "osobních údajů vysvětlují, co aplikace vaším jménem ukládá.",
+                "Administrátoři a manažeři jednají za organizaci, která instanci provozuje a je "
+                "správcem všech údajů do ní zadaných. Odpovídají za to, že zadávají jen osobní údaje, "
+                "které rozpis potřebuje, že k jejich zpracování existuje právní základ, že tým ví o "
+                "používání ft_transcendence a že vyhoví jeho žádostem o přístup k údajům, jejich opravu nebo "
+                "výmaz. Naše Zásady ochrany osobních údajů vysvětlují, co aplikace ukládá.",
             ],
         },
         {
@@ -225,7 +261,7 @@ TERMS_OF_SERVICE = {
         {
             "heading": "7. Duševní vlastnictví",
             "paragraphs": [
-                "Zdrojový kód PlanShiftu je vydán pod licencí MIT a lze jej používat, upravovat a šířit "
+                "Zdrojový kód ft_transcendence je vydán pod licencí MIT a lze jej používat, upravovat a šířit "
                 "za jejích podmínek. Údaje o plánování a účtech uložené v instanci patří organizaci, "
                 "která ji provozuje, nikoli autorům softwaru.",
             ],
@@ -233,10 +269,12 @@ TERMS_OF_SERVICE = {
         {
             "heading": "8. Pozastavení a ukončení",
             "paragraphs": [
-                "Manažer může účet zaměstnance kdykoli deaktivovat nebo smazat, například když někdo z "
-                "týmu odejde. Provozovatel instance může pozastavit jakýkoli účet, který tyto podmínky "
-                "porušuje. Službu můžete kdykoli přestat používat a požádat manažera o smazání svého "
-                "účtu; smazáním se odstraní váš účet, přiřazení a záznamy o nedostupnosti.",
+                "Administrátor může kterýkoli účet kdykoli smazat, například když někdo z týmu odejde, "
+                "a provozovatel instance může pozastavit jakýkoli účet, který tyto podmínky porušuje. "
+                "Službu můžete kdykoli přestat používat a svůj účet sami smazat na stránce „Soukromí a "
+                "moje údaje“. Smazáním se odstraní váš účet, profil, přátelství, oznámení, přiřazení a "
+                "záznamy o nedostupnosti; směny, které jste vytvořili jako manažer, zůstanou ve "
+                "sdíleném rozpisu.",
             ],
         },
         {
@@ -265,7 +303,7 @@ TERMS_OF_SERVICE = {
         {
             "heading": "12. Upozornění na akademický projekt",
             "paragraphs": [
-                "PlanShift vznikl jako součást studijního programu školy 42. Jde o demonstrační "
+                "ft_transcendence vznikl jako součást studijního programu školy 42. Jde o demonstrační "
                 "projekt: neprošel formálním bezpečnostním auditem ani právní kontrolou, a než se na "
                 "něj budete spoléhat při skutečných rozhodnutích souvisejících se mzdami, měl by být "
                 "podle toho posouzen.",

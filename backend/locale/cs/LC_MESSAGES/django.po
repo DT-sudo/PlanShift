@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-14 21:33+0200\n"
+"POT-Creation-Date: 2026-09-24 12:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,10 +16,17 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=(n == 1 && n % 1 == 0) ? 0 : (n >= 2 && n <= 4 && n % 1 == 0) ? 1: (n % 1 != 0 ) ? 2 : 3;\n"
+"Plural-Forms: nplurals=4; plural=(n == 1 && n % 1 == 0) ? 0 : (n >= 2 && n "
+"<= 4 && n % 1 == 0) ? 1: (n % 1 != 0 ) ? 2 : 3;\n"
+
+msgid "Full name"
+msgstr "Celé jméno"
 
 msgid "Enter your full name."
 msgstr "Zadejte své celé jméno."
+
+msgid "An account with this email already exists."
+msgstr "Účet s tímto e-mailem už existuje."
 
 msgid "Email"
 msgstr "E-mail"
@@ -27,21 +34,20 @@ msgstr "E-mail"
 msgid "Incorrect email or password."
 msgstr "Nesprávný e-mail nebo heslo."
 
-msgid "Full name"
-msgstr "Celé jméno"
+msgid "Enter a position name."
+msgstr "Zadejte název pozice."
 
-msgid "An account with this email already exists."
-msgstr "Účet s tímto e-mailem už existuje."
+msgid "A position with this name already exists."
+msgstr "Pozice s tímto názvem už existuje."
 
 msgid "Employees need a position."
 msgstr "Zaměstnanec musí mít pozici."
 
-msgid ""
-"Reassign or remove this user's shifts before switching between employee and "
-"manager roles."
-msgstr ""
-"Než přepnete roli mezi zaměstnancem a manažerem, přeřaďte nebo odstraňte "
-"směny tohoto uživatele."
+msgid "Choose a password different from the one you were given."
+msgstr "Zvolte jiné heslo, než které jste dostali."
+
+msgid "Your role was changed. Please sign in again."
+msgstr "Vaše role byla změněna. Přihlaste se prosím znovu."
 
 msgid "Admin"
 msgstr "Administrátor"
@@ -52,24 +58,35 @@ msgstr "Manažer"
 msgid "Employee"
 msgstr "Zaměstnanec"
 
+msgid "Guest"
+msgstr "Host"
+
 msgid "Sign in"
 msgstr "Přihlášení"
 
 #, python-format
-msgid "Welcome, %(name)s. Your account is ready."
-msgstr "Vítejte, %(name)s. Váš účet je připraven."
+msgid ""
+"Welcome, %(name)s. Your registration request was sent to an administrator."
+msgstr ""
+"Vítejte, %(name)s. Vaše žádost o registraci byla odeslána administrátorovi."
 
 msgid "Create account"
 msgstr "Vytvořit účet"
+
+msgid "Password changed. You're all set."
+msgstr "Heslo změněno. Vše je připraveno."
+
+msgid "Choose a new password"
+msgstr "Zvolte nové heslo"
+
+msgid "Waiting for approval"
+msgstr "Čeká na schválení"
 
 msgid "Demo accounts are missing. Run `python manage.py seed_demo` first."
 msgstr "Ukázkové účty chybí. Nejprve spusťte `python manage.py seed_demo`."
 
 msgid "User Management"
 msgstr "Správa uživatelů"
-
-msgid "Employee Management"
-msgstr "Správa zaměstnanců"
 
 msgid "Please fix the errors and try again."
 msgstr "Opravte prosím chyby a zkuste to znovu."
@@ -97,16 +114,36 @@ msgid "Two-factor authentication reset for %(name)s."
 msgstr "Dvoufázové ověření pro %(name)s bylo zrušeno."
 
 #, python-format
-msgid ""
-"Cannot delete %(name)s: they still have shifts. Reassign or delete them "
-"first."
-msgstr ""
-"%(name)s nelze smazat: stále má přiřazené směny. Nejprve je přeřaďte nebo "
-"smažte."
-
-#, python-format
 msgid "Deleted %(role)s: %(name)s."
 msgstr "Smazáno (%(role)s): %(name)s."
+
+msgid "Registration requests"
+msgstr "Žádosti o registraci"
+
+msgid "Could not approve the request."
+msgstr "Žádost se nepodařilo schválit."
+
+#, python-format
+msgid "%(name)s approved as %(role)s."
+msgstr "%(name)s schválen(a) jako %(role)s."
+
+#, python-format
+msgid "Request from %(name)s declined."
+msgstr "Žádost od %(name)s zamítnuta."
+
+msgid "Could not create position."
+msgstr "Pozici se nepodařilo vytvořit."
+
+#, python-format
+msgid "Position created: %(name)s."
+msgstr "Pozice vytvořena: %(name)s."
+
+#, python-format
+msgid "Position deleted: %(name)s."
+msgstr "Pozice smazána: %(name)s."
+
+msgid "Shift created."
+msgstr "Směna byla vytvořena."
 
 msgid "That language is not available."
 msgstr "Tento jazyk není k dispozici."
@@ -114,6 +151,22 @@ msgstr "Tento jazyk není k dispozici."
 #, python-format
 msgid "%(position)s, %(day)s, %(start)s–%(end)s"
 msgstr "%(position)s, %(day)s, %(start)s–%(end)s"
+
+#, python-format
+msgid "and %(count)d more"
+msgid_plural "and %(count)d more"
+msgstr[0] "a %(count)d další"
+msgstr[1] "a %(count)d další"
+msgstr[2] "a %(count)d další"
+msgstr[3] "a %(count)d dalších"
+
+#, python-format
+msgid "%(by)s made you %(role)s, position “%(position)s”."
+msgstr "%(by)s vám přidělil(a) roli %(role)s, pozice „%(position)s“."
+
+#, python-format
+msgid "%(by)s made you %(role)s."
+msgstr "%(by)s vám nastavil(a) roli: %(role)s."
 
 #, python-format
 msgid "%(role)s added"
@@ -131,8 +184,32 @@ msgid "Your role was changed"
 msgstr "Vaše role byla změněna"
 
 #, python-format
-msgid "%(by)s made you %(role)s."
-msgstr "%(by)s vám nastavil(a) roli: %(role)s."
+msgid ""
+"%(by)s changed your role from %(was)s to %(role)s, position “%(position)s”."
+msgstr ""
+"%(by)s vám změnil(a) roli z %(was)s na %(role)s, pozice „%(position)s“."
+
+#, python-format
+msgid "%(by)s changed your role from %(was)s to %(role)s."
+msgstr "%(by)s vám změnil(a) roli z %(was)s na %(role)s."
+
+msgid "Your position was changed"
+msgstr "Vaše pozice byla změněna"
+
+#, python-format
+msgid "%(by)s changed your position to “%(position)s”."
+msgstr "%(by)s vám změnil(a) pozici na „%(position)s“."
+
+#, python-format
+msgid "%(by)s changed your position from “%(was)s” to “%(position)s”."
+msgstr "%(by)s vám změnil(a) pozici z „%(was)s“ na „%(position)s“."
+
+msgid "Your position was removed"
+msgstr "Vaše pozice byla zrušena"
+
+#, python-format
+msgid "The position “%(position)s” no longer exists."
+msgstr "Pozice „%(position)s“ už neexistuje."
 
 msgid "Your details were updated"
 msgstr "Vaše údaje byly upraveny"
@@ -148,27 +225,26 @@ msgstr "Vaše heslo bylo obnoveno"
 msgid "%(by)s set a new password for your account."
 msgstr "%(by)s nastavil(a) vašemu účtu nové heslo."
 
-msgid "New shift published"
-msgstr "Zveřejněna nová směna"
+msgid "New registration request"
+msgstr "Nová žádost o registraci"
 
 #, python-format
-msgid "%(count)d new shift published"
-msgid_plural "%(count)d new shifts published"
-msgstr[0] "Zveřejněna %(count)d nová směna"
-msgstr[1] "Zveřejněny %(count)d nové směny"
-msgstr[2] "Zveřejněno %(count)d nové směny"
-msgstr[3] "Zveřejněno %(count)d nových směn"
+msgid "%(name)s (%(email)s) is waiting for approval."
+msgstr "%(name)s (%(email)s) čeká na schválení."
 
-#, python-format
-msgid "and %(count)d more"
-msgid_plural "and %(count)d more"
-msgstr[0] "a %(count)d další"
-msgstr[1] "a %(count)d další"
-msgstr[2] "a %(count)d další"
-msgstr[3] "a %(count)d dalších"
+msgid "Your registration was approved"
+msgstr "Vaše registrace byla schválena"
 
 msgid "New shift assigned"
 msgstr "Přiřazena nová směna"
+
+#, python-format
+msgid "%(count)d new shift assigned"
+msgid_plural "%(count)d new shifts assigned"
+msgstr[0] "Přidělena %(count)d nová směna"
+msgstr[1] "Přiděleny %(count)d nové směny"
+msgstr[2] "Přiděleno %(count)d nové směny"
+msgstr[3] "Přiděleno %(count)d nových směn"
 
 msgid "Removed from a shift"
 msgstr "Odebrání ze směny"
@@ -183,14 +259,55 @@ msgstr "%(before)s je nyní %(after)s"
 msgid "Shift cancelled"
 msgstr "Směna zrušena"
 
+#, python-format
+msgid "Taken off %(count)d upcoming shift"
+msgid_plural "Taken off %(count)d upcoming shifts"
+msgstr[0] "Odebrání z %(count)d nadcházející směny"
+msgstr[1] "Odebrání z %(count)d nadcházejících směn"
+msgstr[2] "Odebrání z %(count)d nadcházející směny"
+msgstr[3] "Odebrání z %(count)d nadcházejících směn"
+
+#, python-format
+msgid "%(name)s came off %(count)d upcoming shift"
+msgid_plural "%(name)s came off %(count)d upcoming shifts"
+msgstr[0] "%(name)s byl odebrán z %(count)d nadcházející směny"
+msgstr[1] "%(name)s byl odebrán z %(count)d nadcházejících směn"
+msgstr[2] "%(name)s byl odebrán z %(count)d nadcházející směny"
+msgstr[3] "%(name)s byl odebrán z %(count)d nadcházejících směn"
+
+#, python-format
+msgid "%(by)s added a shift"
+msgstr "%(by)s přidal(a) směnu"
+
+#, python-format
+msgid "%(by)s edited a shift"
+msgstr "%(by)s upravil(a) směnu"
+
+#, python-format
+msgid "%(by)s deleted a shift"
+msgstr "%(by)s smazal(a) směnu"
+
+#, python-format
+msgid "%(by)s published %(count)d shift"
+msgid_plural "%(by)s published %(count)d shifts"
+msgstr[0] "%(by)s zveřejnil(a) %(count)d směnu"
+msgstr[1] "%(by)s zveřejnil(a) %(count)d směny"
+msgstr[2] "%(by)s zveřejnil(a) %(count)d směny"
+msgstr[3] "%(by)s zveřejnil(a) %(count)d směn"
+
 msgid "Position created"
 msgstr "Pozice vytvořena"
 
 msgid "Position deleted"
 msgstr "Pozice smazána"
 
-msgid "Availability updated"
-msgstr "Dostupnost změněna"
+#, python-format
+msgid "%(count)d upcoming shift of %(name)s deleted"
+msgid_plural "%(count)d upcoming shifts of %(name)s deleted"
+msgstr[0] "Smazána %(count)d nadcházející směna pozice %(name)s"
+msgstr[1] "Smazány %(count)d nadcházející směny pozice %(name)s"
+msgstr[2] "Smazáno %(count)d nadcházející směny pozice %(name)s"
+msgstr[3] "Smazáno %(count)d nadcházejících směn pozice %(name)s"
 
 #, python-format
 msgid "%(name)s is unavailable on %(day)s."
@@ -199,6 +316,12 @@ msgstr "%(name)s není %(day)s k dispozici."
 #, python-format
 msgid "%(name)s is available again on %(day)s."
 msgstr "%(name)s je %(day)s opět k dispozici."
+
+msgid "Availability updated"
+msgstr "Dostupnost změněna"
+
+msgid "Error"
+msgstr "Chyba"
 
 msgid "New friend request"
 msgstr "Nová žádost o přátelství"
@@ -225,8 +348,7 @@ msgid "Two-factor authentication turned on"
 msgstr "Dvoufázové ověření zapnuto"
 
 msgid ""
-"Signing in to your account now also takes a code from your authenticator "
-"app."
+"Signing in to your account now also takes a code from your authenticator app."
 msgstr "Přihlášení k vašemu účtu teď vyžaduje také kód z ověřovací aplikace."
 
 msgid "New recovery codes created"
@@ -254,47 +376,81 @@ msgstr ""
 "%(by)s vypnul(a) dvoufázové ověření vašeho účtu. Znovu ho zapnete v "
 "Nastavení účtu."
 
-msgid "Your PlanShift data export"
-msgstr "Export vašich údajů z PlanShiftu"
+msgid "Your ft_transcendence data export"
+msgstr "Export vašich údajů z ft_transcendence"
 
 #, python-format
 msgid ""
 "Hi %(name)s,\n"
 "\n"
-"A copy of your personal data was just downloaded from your PlanShift account (%(when)s).\n"
+"A copy of your personal data was just downloaded from your ft_transcendence account "
+"(%(when)s).\n"
 "\n"
-"If this wasn't you, someone else may have access to your account - sign in and change your password, or contact your manager immediately.\n"
+"If this wasn't you, someone else may have access to your account - sign in "
+"and change your password, or contact your manager immediately.\n"
 "\n"
-"— PlanShift"
+"— ft_transcendence"
 msgstr ""
 "Dobrý den, %(name)s,\n"
 "\n"
-"z vašeho účtu PlanShift byla právě stažena kopie vašich osobních údajů (%(when)s).\n"
+"z vašeho účtu ft_transcendence byla právě stažena kopie vašich osobních údajů "
+"(%(when)s).\n"
 "\n"
-"Pokud jste to nebyli vy, může mít k vašemu účtu přístup někdo jiný – přihlaste se a změňte si heslo, nebo okamžitě kontaktujte svého manažera.\n"
+"Pokud jste to nebyli vy, může mít k vašemu účtu přístup někdo jiný – "
+"přihlaste se a změňte si heslo, nebo okamžitě kontaktujte svého manažera.\n"
 "\n"
-"— PlanShift"
+"— ft_transcendence"
 
-msgid "Your PlanShift account has been deleted"
-msgstr "Váš účet PlanShift byl smazán"
+msgid "Your ft_transcendence registration was declined"
+msgstr "Vaše registrace do ft_transcendence byla zamítnuta"
 
 #, python-format
 msgid ""
 "Hi %(name)s,\n"
 "\n"
-"Your PlanShift account and the personal data associated with it (profile, shift assignments and unavailability) have been permanently deleted, as you requested.\n"
+"An administrator declined your request to join ft_transcendence, so the account you "
+"signed up with and everything you entered have been deleted.\n"
 "\n"
-"If you did not request this, contact your organisation's manager immediately.\n"
+"If you think this is a mistake, contact your organisation's manager.\n"
 "\n"
-"— PlanShift"
+"— ft_transcendence"
 msgstr ""
 "Dobrý den, %(name)s,\n"
 "\n"
-"váš účet PlanShift a osobní údaje s ním spojené (profil, přiřazení ke směnám a nedostupnost) byly na vaši žádost trvale smazány.\n"
+"administrátor zamítl vaši žádost o připojení k ft_transcendence, takže účet, se "
+"kterým jste se zaregistrovali, i vše, co jste zadali, bylo smazáno.\n"
+"\n"
+"Pokud si myslíte, že jde o omyl, obraťte se na manažera své organizace.\n"
+"\n"
+"— ft_transcendence"
+
+msgid "Your ft_transcendence account has been deleted"
+msgstr "Váš účet ft_transcendence byl smazán"
+
+#, python-format
+msgid ""
+"Hi %(name)s,\n"
+"\n"
+"Your ft_transcendence account and the personal data associated with it (profile, "
+"shift assignments and unavailability) have been permanently deleted, as you "
+"requested.\n"
+"\n"
+"If you did not request this, contact your organisation's manager "
+"immediately.\n"
+"\n"
+"— ft_transcendence"
+msgstr ""
+"Dobrý den, %(name)s,\n"
+"\n"
+"váš účet ft_transcendence a osobní údaje s ním spojené (profil, přiřazení ke směnám "
+"a nedostupnost) byly na vaši žádost trvale smazány.\n"
 "\n"
 "Pokud jste o to nežádali, okamžitě kontaktujte manažera své organizace.\n"
 "\n"
-"— PlanShift"
+"— ft_transcendence"
+
+msgid "You are the only admin. Make someone else an admin before deleting your account."
+msgstr "Jste jediný administrátor. Než svůj účet smažete, udělejte administrátorem někoho dalšího."
 
 msgid "uploaded (stored as a 256x256 WebP)"
 msgstr "nahrána (uložena jako WebP 256×256)"
@@ -304,13 +460,6 @@ msgstr "Soukromí a moje údaje"
 
 msgid "Email or password didn't match - account not deleted."
 msgstr "E-mail nebo heslo nesouhlasí – účet nebyl smazán."
-
-msgid ""
-"Your account can't be deleted while you still have shifts on the schedule. "
-"Reassign or delete them first, then try again."
-msgstr ""
-"Účet nelze smazat, dokud máte v rozpisu směny. Nejprve je přeřaďte nebo "
-"smažte a pak to zkuste znovu."
 
 msgid "Your account and all associated data have been deleted."
 msgstr "Váš účet a všechny související údaje byly smazány."
@@ -378,25 +527,16 @@ msgstr "Nastavení účtu"
 msgid "Friends"
 msgstr "Přátelé"
 
-msgid "That person was not found."
-msgstr "Tato osoba nebyla nalezena."
-
-msgid "No account uses that email address."
-msgstr "Žádný účet tuto e-mailovou adresu nepoužívá."
-
 #, python-format
 msgid "You and %(name)s are now friends."
 msgstr "S uživatelem %(name)s jste teď přátelé."
 
+msgid "That person was not found."
+msgstr "Tato osoba nebyla nalezena."
+
 #, python-format
 msgid "Friend request sent to %(name)s."
 msgstr "Žádost o přátelství byla odeslána uživateli %(name)s."
-
-msgid "Enter a position name."
-msgstr "Zadejte název pozice."
-
-msgid "A position with this name already exists."
-msgstr "Pozice s tímto názvem už existuje."
 
 msgid "Draft"
 msgstr "Koncept"
@@ -423,25 +563,24 @@ msgstr "Zaměstnanec není k dispozici: %(day)s."
 #, python-format
 msgid "Employee already assigned to: %(position)s %(start)s–%(end)s (%(day)s)"
 msgstr ""
-"Zaměstnanec je už přiřazen ke směně: %(position)s %(start)s–%(end)s "
-"(%(day)s)"
+"Zaměstnanec je už přiřazen ke směně: %(position)s %(start)s–%(end)s (%(day)s)"
 
 msgid ""
-"Someone else changed this shift while you were editing it. Your changes were"
-" not saved."
+"Someone else changed this shift while you were editing it. Your changes were "
+"not saved."
 msgstr "Tuto směnu mezitím změnil někdo jiný. Vaše změny nebyly uloženy."
 
-msgid "Please check the form fields."
-msgstr "Zkontrolujte prosím pole formuláře."
+msgid "A shift can't start in the past. Choose a later date or start time."
+msgstr "Směna nemůže začínat v minulosti. Zvolte pozdější datum nebo čas začátku."
 
 msgid "Shift Management"
 msgstr "Správa směn"
 
+msgid "This shift has already started, so it can't be changed."
+msgstr "Tato směna už začala, takže ji nelze změnit."
+
 msgid "Shift updated."
 msgstr "Směna byla upravena."
-
-msgid "Shift created."
-msgstr "Směna byla vytvořena."
 
 msgid "Shift deleted."
 msgstr "Směna byla smazána."
@@ -460,20 +599,6 @@ msgstr[3] "Zveřejněno %(count)d směn."
 msgid "No draft shifts to publish."
 msgstr "Žádné koncepty směn ke zveřejnění."
 
-msgid "Could not create position."
-msgstr "Pozici se nepodařilo vytvořit."
-
-#, python-format
-msgid "Position created: %(name)s."
-msgstr "Pozice vytvořena: %(name)s."
-
-msgid "Cannot delete position: it is referenced by existing data."
-msgstr "Pozici nelze smazat: používají ji existující data."
-
-#, python-format
-msgid "Position deleted: %(name)s."
-msgstr "Pozice smazána: %(name)s."
-
 msgid "Search Shifts"
 msgstr "Hledání směn"
 
@@ -491,9 +616,6 @@ msgstr "Konec"
 
 msgid "Position"
 msgstr "Pozice"
-
-msgid "Status"
-msgstr "Stav"
 
 msgid "Capacity"
 msgstr "Kapacita"
@@ -519,37 +641,34 @@ msgstr "Jako nedostupné lze označit jen dny od zítřka."
 msgid "You have a shift assigned on this day."
 msgstr "Na tento den máte přiřazenou směnu."
 
-msgid "Enter the code from your authenticator app, or a recovery code."
-msgstr "Zadejte kód z ověřovací aplikace nebo záložní kód."
-
 msgid "Enter the 6-digit code your app shows."
 msgstr "Zadejte šestimístný kód, který zobrazuje vaše aplikace."
 
 msgid ""
-"That code doesn't match. Check that your phone's clock is set automatically,"
-" then try the new code."
+"That code doesn't match. Check that your phone's clock is set automatically, "
+"then try the new code."
 msgstr ""
-"Kód nesouhlasí. Zkontrolujte, zda se čas v telefonu nastavuje automaticky, a"
-" zkuste nový kód."
+"Kód nesouhlasí. Zkontrolujte, zda se čas v telefonu nastavuje automaticky, a "
+"zkuste nový kód."
 
 msgid "Enter your password."
 msgstr "Zadejte své heslo."
 
-msgid "Enter a code from your app, or a recovery code."
-msgstr "Zadejte kód z aplikace nebo záložní kód."
-
 msgid "Your password is incorrect."
 msgstr "Vaše heslo je nesprávné."
-
-msgid "That code is not valid."
-msgstr "Tento kód není platný."
 
 msgid "Too many incorrect codes. Wait 5 minutes, then try again."
 msgstr "Příliš mnoho chybných kódů. Počkejte 5 minut a zkuste to znovu."
 
+msgid "Enter the code from your authenticator app, or a recovery code."
+msgstr "Zadejte kód z ověřovací aplikace nebo záložní kód."
+
+msgid "That code is not valid. Try again."
+msgstr "Tento kód není platný. Zkuste to znovu."
+
 #, python-format
-msgid "PlanShift: %(title)s"
-msgstr "PlanShift: %(title)s"
+msgid "ft_transcendence: %(title)s"
+msgstr "ft_transcendence: %(title)s"
 
 #, python-format
 msgid ""
@@ -557,17 +676,19 @@ msgid ""
 "\n"
 "%(detail)s\n"
 "\n"
-"If this wasn't you or someone you asked, change your password and contact your manager straight away.\n"
+"If this wasn't you or someone you asked, change your password and contact "
+"your manager straight away.\n"
 "\n"
-"— PlanShift"
+"— ft_transcendence"
 msgstr ""
 "Dobrý den, %(name)s,\n"
 "\n"
 "%(detail)s\n"
 "\n"
-"Pokud jste to nebyli vy ani nikdo, koho jste o to požádali, změňte si heslo a ihned kontaktujte svého manažera.\n"
+"Pokud jste to nebyli vy ani nikdo, koho jste o to požádali, změňte si heslo "
+"a ihned kontaktujte svého manažera.\n"
 "\n"
-"— PlanShift"
+"— ft_transcendence"
 
 msgid "Your sign-in timed out. Enter your password again."
 msgstr "Vaše přihlášení vypršelo. Zadejte znovu heslo."
@@ -583,17 +704,14 @@ msgstr[0] ""
 "Přihlásili jste se záložním kódem, který už neplatí. Zbývá %(count)d kód. "
 "Pokud vám docházejí, vytvořte si nové v Nastavení účtu."
 msgstr[1] ""
-"Přihlásili jste se záložním kódem, který už neplatí. Zbývají %(count)d kódy."
-" Pokud vám docházejí, vytvořte si nové v Nastavení účtu."
+"Přihlásili jste se záložním kódem, který už neplatí. Zbývají %(count)d kódy. "
+"Pokud vám docházejí, vytvořte si nové v Nastavení účtu."
 msgstr[2] ""
 "Přihlásili jste se záložním kódem, který už neplatí. Zbývá %(count)d kódu. "
 "Pokud vám docházejí, vytvořte si nové v Nastavení účtu."
 msgstr[3] ""
 "Přihlásili jste se záložním kódem, který už neplatí. Zbývá %(count)d kódů. "
 "Pokud vám docházejí, vytvořte si nové v Nastavení účtu."
-
-msgid "That code is not valid. Try again."
-msgstr "Tento kód není platný. Zkuste to znovu."
 
 msgid "Two-factor authentication"
 msgstr "Dvoufázové ověření"
