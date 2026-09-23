@@ -235,3 +235,15 @@ erDiagram
 | 12 | Implement a complete 2FA (Two-Factor Authentication) system | Minor | 1 | A password alone should not open an account with access to personal data. | TOTP, QR setup, hashed recovery codes, lockout after failed attempts. | `dtereshc` |
 | 13 | GDPR compliance features | Minor | 1 | The application stores employees' personal data. | Data export in JSON, account deletion with confirmation, confirmation emails. | `olcherno`, `ntsvetko` |
 
+## Individual Contributions
+
+### `dtereshc` — Tech Lead / Architect, Developer
+
+- **Contributed:** architecture and stack, the User model and authentication, the scheduling rule
+  engine, Docker and HTTPS, the WebSocket layer, presence and conflict detection, 2FA, the server
+  side of i18n, role-based access and session security.
+- **Modules:** 1, 2, 3, 8, 12; shared on 4, 6, 10.
+- **Challenges:** keeping validation consistent between browser and server — solved by making the
+  server the single authority and testing it with direct requests; avoiding broadcasts of writes
+  that were later rolled back — solved by sending events only after the transaction commits.
+
