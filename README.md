@@ -247,3 +247,12 @@ erDiagram
   server the single authority and testing it with direct requests; avoiding broadcasts of writes
   that were later rolled back — solved by sending events only after the transaction commits.
 
+### `olcherno` — Product Owner, Developer
+
+- **Contributed:** product backlog and priorities, the scheduling data model, shared UI components,
+  legal pages, demo data, shift search, the GDPR page, the front end of i18n and the RTL layout.
+- **Modules:** 11; shared on 6, 9, 10, 13.
+- **Challenges:** mirroring the layout for Arabic — solved with CSS logical properties while keeping
+  emails, times and codes left-to-right; keeping three translation catalogs in sync — solved with a
+  check that fails the build when they differ.
+
