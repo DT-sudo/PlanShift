@@ -128,6 +128,24 @@ AI was used only as a supporting tool, for:
 - **Bug checking** — reviewing code the team had written to point out possible bugs and edge cases;
   every fix was then written and tested by the team.
 
+## Team Information
+
+| Member | Role(s) | Responsibilities |
+|---|---|---|
+| `dtereshc` | Tech Lead / Architect, Developer | Defines the architecture and the technology stack, ensures code quality, reviews critical changes. Builds the User model, authentication, the scheduling rule engine, Docker/TLS, real-time, 2FA and the server side of i18n. |
+| `olcherno` | Product Owner, Developer | Defines the product vision, maintains the backlog, prioritises features and validates completed work. Builds the shared UI components, legal pages, shift search, the GDPR page and the front end of i18n and RTL. |
+| `ntsvetko` | Project Manager / Scrum Master, Developer | Organises meetings and planning, tracks progress and deadlines, manages blockers and team communication. Builds the calendar pages, shift editing, team and positions, profiles, analytics and notifications. |
+
+## Project Management
+
+- **Organisation of work.** The project was divided by feature, and each feature was taken end to
+  end by its owner (model, view, React page). Work was planned in weekly iterations.
+- **Meetings.** A short sync at the start of each working session and a weekly review to demo what
+  was finished and re-prioritise the backlog.
+- **Tools.** GitHub Issues and a project board for tasks; pull requests with a review by another
+  member before merging to `main`.
+- **Communication.** Discord for daily communication, plus in-person work at campus.
+
 ## Technical Stack
 
 | Layer | Technology | Why |
