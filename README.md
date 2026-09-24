@@ -256,3 +256,11 @@ erDiagram
   emails, times and codes left-to-right; keeping three translation catalogs in sync — solved with a
   check that fails the build when they differ.
 
+### `ntsvetko` — Project Manager / Scrum Master, Developer
+
+- **Contributed:** planning and progress tracking, the calendar pages, shift editing, the employee
+  calendar, team and positions management, profiles, analytics and notifications.
+- **Modules:** 5, 7; shared on 3, 4, 9, 13.
+- **Challenges:** correct hour counts in analytics — drafts are excluded on the server; showing
+  notifications in each reader's language — notifications are stored as a type plus parameters and
+  translated when read.
