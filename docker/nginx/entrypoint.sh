@@ -2,8 +2,8 @@
 set -eu
 
 CERT_DIR=/etc/nginx/certs
-CERT="$CERT_DIR/planshift.crt"
-KEY="$CERT_DIR/planshift.key"
+CERT="$CERT_DIR/transcendence.crt"
+KEY="$CERT_DIR/transcendence.key"
 
 mkdir -p "$CERT_DIR"
 
@@ -18,8 +18,8 @@ if [ ! -f "$CERT" ] || [ ! -f "$KEY" ]; then
         -days 365 \
         -keyout "$KEY" \
         -out "$CERT" \
-        -subj "/C=CZ/O=PlanShift/CN=localhost" \
-        -addext "subjectAltName=DNS:localhost,DNS:planshift.local,IP:127.0.0.1" \
+        -subj "/C=CZ/O=ft_transcendence/CN=localhost" \
+        -addext "subjectAltName=DNS:localhost,DNS:transcendence.local,IP:127.0.0.1" \
         2>/dev/null
     chmod 600 "$KEY"
 fi

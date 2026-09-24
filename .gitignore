@@ -24,6 +24,8 @@ wheels/
 .installed.cfg
 *.egg
 
+thisss.html
+
 .venv/
 venv/
 env/
@@ -44,6 +46,7 @@ local_settings.py
 .coverage.*
 htmlcov/
 .pytest_cache/
+.ruff_cache/
 .tox/
 .cache
 
@@ -53,6 +56,7 @@ yarn-error.log*
 
 .idea/
 .vscode/
+.claude/
 *.swp
 *.swo
 

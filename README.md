@@ -1,537 +1,266 @@
-*This project has been created as part of the 42 curriculum by dtereshc.*
+*This project has been created as part of the 42 curriculum by dtereshc, olcherno, ntsvetko.*
 
-<!-- TEAM: add the remaining logins above as `dtereshc, login2, login3, login4`, then
-     fill in the Team Information, Features List and Individual Contributions
-     tables below. Every team member must appear in all three. -->
-
-# PlanShift
-
-[![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![Django](https://img.shields.io/badge/Django-6.0-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
-[![SQLite](https://img.shields.io/badge/SQLite-3-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
-[![nginx](https://img.shields.io/badge/nginx-TLS-009639?logo=nginx&logoColor=white)](https://nginx.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
-## Table of contents
-
-- [Description](#description)
-- [Instructions](#instructions)
-- [Team Information](#team-information)
-- [Project Management](#project-management)
-- [Technical Stack](#technical-stack)
-- [Database Schema](#database-schema)
-- [Features List](#features-list)
-- [Architecture](#architecture)
-- [Security](#security)
-- [Modules](#modules)
-- [Individual Contributions](#individual-contributions)
-- [Tests](#tests)
-- [Resources](#resources)
-- [Known limitations](#known-limitations)
-- [License](#license)
-
----
+# ft_transcendence
 
 ## Description
 
-**PlanShift** is a shift-scheduling web application for hourly-employment teams — coffee shops,
-restaurants, retail. Managers build a schedule on an interactive calendar, the server enforces the
-scheduling rules, and employees see only what has been published to them.
+**ft_transcendence** is a shift-scheduling web application for hourly-employment teams such as coffee
+shops, restaurants and retail.
 
-**The goal.** Building a rota by hand is mostly conflict-checking: does this person hold the right
-position, are they already booked, did they ask for the day off, is the shift now over capacity?
-Every one of those checks is easy to get wrong at 6 a.m. on a Monday. PlanShift moves them into the
-application layer, inside the transaction that saves the shift, so an invalid schedule cannot be
-written to the database in the first place.
+**Goal.** Building a rota by hand is mostly conflict-checking: does this person hold the right
+position, are they already booked, did they ask for the day off, is the shift over capacity?
+ft_transcendence moves these checks to the server, inside the transaction that saves a shift, so an
+invalid schedule can never be written to the database.
 
-**Overview.** Two roles share one calendar. A manager drafts shifts privately, assigns staff to
-them, and publishes a date range in one action; employees then see their own shifts appear, and can
-mark days they are unavailable, which immediately blocks any assignment on that day.
+**Overview.** An admin manages accounts and approves registrations. Managers build one shared
+schedule on an interactive calendar, drafting shifts, assigning staff and publishing a date range
+in one action. Employees see only the published shifts they are assigned to and mark the days they
+are unavailable. Every change reaches the other connected users in real time.
 
 ### Key features
 
-- Monthly calendar overview with the team list beside it.
-- Draft/publish workflow — drafts are manager-only until published.
-- Four scheduling rules enforced server-side inside one transaction.
-- Team and position management, with one-time generated credentials.
-- Employee self-service unavailability, pushed live to open manager calendars over WebSockets.
-- Shift search with a text query, filters, sortable columns and pagination.
-- Analytics dashboard with KPIs, charts, top lists and CSV/PDF export, refreshed live when shifts change.
-- Notification bell: every toast is kept in a per-account history with an unread count.
-- Email + password sign-up and login, with passwords stored only as salted PBKDF2 hashes.
-- End-to-end HTTPS, with plain HTTP redirected to TLS.
-- Accessible Privacy Policy and Terms of Service.
-
----
+- Month and week calendar with a draft/publish workflow.
+- Four scheduling rules enforced server-side: position match, capacity, availability, no overlap.
+- Four roles (admin, manager, employee, guest), each with its own pages and actions.
+- Real-time updates over WebSockets: live schedule, presence of other managers, online status.
+- Shift search with filters, sorting and pagination.
+- Analytics dashboard with charts, CSV/PDF export and live refresh.
+- Notifications for every creation, update and deletion, with a history behind a bell.
+- Profiles with avatars, friends and online status.
+- Two-factor authentication (TOTP) with recovery codes.
+- English, Czech and Arabic, with a full right-to-left layout for Arabic.
+- GDPR self-service: data export and account deletion with email confirmation.
+- HTTPS everywhere; Privacy Policy and Terms of Service linked from every page.
 
 ## Instructions
 
 ### Prerequisites
 
-| Requirement | Version | Needed for |
+| Software | Version |
+|---|---|
+| Docker Engine | 24+ |
+| Docker Compose | v2 |
+
+Nothing else is needed: the image builds the front end, applies migrations, seeds demo data and
+generates a TLS certificate on first start.
+
+### Step by step
+
+1. Clone the repository and enter it:
+
+   ```bash
+   git clone <repository-url> ft_transcendence
+   cd ft_transcendence
+   ```
+
+2. Create the environment file from the template:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Replace `SECRET_KEY` in `.env` with a random value, for example the output of:
+
+   ```bash
+   python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+   ```
+
+4. Build and start the whole stack with one command:
+
+   ```bash
+   docker compose up --build
+   ```
+
+5. Open **<https://localhost:8443/>**. The certificate is self-signed, so the browser shows a
+   warning: choose **Advanced → Proceed to localhost**. Plain HTTP on port 8080 redirects to HTTPS.
+
+To stop: `Ctrl-C`, then `docker compose down` (add `-v` to also delete the database).
+
+### Environment variables (`.env`)
+
+`.env` is ignored by Git and Docker; `.env.example` is the committed template and works as-is.
+
+| Variable | Purpose |
+|---|---|
+| `SECRET_KEY` | Django signing key — must be changed |
+| `DEBUG` | `0` for evaluation |
+| `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS` | Hosts and origins the app accepts |
+| `TIME_ZONE` | Timezone of shift times |
+| `SECURE_COOKIES`, `SECURE_HSTS_SECONDS` | HTTPS-only cookies and HSTS lifetime |
+| `HTTPS_PORT`, `HTTP_PORT` | Ports published by the nginx proxy (8443 / 8080) |
+| `SEED_DEMO_DATA` | Create demo positions, staff and shifts on start |
+| `ENABLE_DEMO_LOGIN` | Show one-click demo login buttons |
+| `EMAIL_*`, `DEFAULT_FROM_EMAIL` | Email delivery; by default emails are printed to `docker compose logs web` |
+
+### Demo accounts
+
+Created on start while `SEED_DEMO_DATA=1`, all with the password `demo12345!`:
+
+| Role | Email |
+|---|---|
+| Admin | `admin_demo@example.com` |
+| Manager | `manager_demo@example.com` |
+| Employee | `employee_demo@example.com` |
+
+## Resources
+
+- [Django documentation](https://docs.djangoproject.com/en/stable/) — models, forms, authentication,
+  internationalisation and the [security guide](https://docs.djangoproject.com/en/stable/topics/security/)
+- [Django Channels documentation](https://channels.readthedocs.io/) — consumers, groups, channel layers
+- [React documentation](https://react.dev/learn)
+- [Vite guide](https://vite.dev/guide/)
+- [Tailwind CSS v4 documentation](https://tailwindcss.com/docs)
+- [nginx: configuring HTTPS servers](https://nginx.org/en/docs/http/configuring_https_servers.html)
+- [MDN Web Docs](https://developer.mozilla.org/) — WebSockets, CSS logical properties, `dir` attribute
+- [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/) — authentication and password storage
+- [RFC 6238 — TOTP](https://datatracker.ietf.org/doc/html/rfc6238)
+- [GDPR text](https://gdpr-info.eu/)
+- [The Twelve-Factor App: Config](https://12factor.net/config)
+
+### Use of AI
+
+AI was not used to write the project's code — all code was written by the team members themselves.
+AI was used only as a supporting tool, for:
+
+- **Research** — looking up and comparing approaches, and explaining documentation for the
+  technologies above (Django Channels, TOTP, RTL layout, GDPR requirements).
+- **Documentation** — help with structuring and wording this README and other project notes.
+- **Bug checking** — reviewing code the team had written to point out possible bugs and edge cases;
+  every fix was then written and tested by the team.
+
+## Team Information
+
+| Member | Role(s) | Responsibilities |
 |---|---|---|
-| Docker Engine | 24+ | The one-command run (recommended) |
-| Docker Compose | v2 | `docker compose` subcommand |
-| Python | 3.12+ | Local (non-Docker) run only |
-| Node.js | 20+ | Local (non-Docker) run only — builds the Vite bundle |
+| `dtereshc` | Tech Lead / Architect, Developer | Defines the architecture and the technology stack, ensures code quality, reviews critical changes. Builds the User model, authentication, the scheduling rule engine, Docker/TLS, real-time, 2FA and the server side of i18n. |
+| `olcherno` | Product Owner, Developer | Defines the product vision, maintains the backlog, prioritises features and validates completed work. Builds the shared UI components, legal pages, shift search, the GDPR page and the front end of i18n and RTL. |
+| `ntsvetko` | Project Manager / Scrum Master, Developer | Organises meetings and planning, tracks progress and deadlines, manages blockers and team communication. Builds the calendar pages, shift editing, team and positions, profiles, analytics and notifications. |
 
-Nothing else is required: the image builds the front end in its own stage, applies migrations and
-generates its TLS certificate on first boot.
+## Project Management
 
-### Step-by-step: running with Docker (recommended)
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/DT-sudo/planshift.git
-cd planshift
-
-# 2. Create your environment file from the template
-cp .env.example .env
-
-# 3. Generate a real secret key and put it in .env
-python3 -c "import secrets; print('SECRET_KEY=' + secrets.token_urlsafe(64))"
-#    ...then edit .env and replace the SECRET_KEY line with the output.
-
-# 4. Build and start the whole stack — this is the single command
-docker compose up --build
-```
-
-Then open **<https://localhost:8443/>**.
-
-> **The browser will warn about the certificate.** The proxy generates a *self-signed* certificate
-> on first boot, so no certificate authority vouches for it. Click **Advanced → Proceed to
-> localhost**. The connection is genuinely encrypted (TLS 1.3); only the issuer is untrusted.
-> Plain HTTP on <http://localhost:8080/> answers with a `301` to the HTTPS address and serves
-> nothing.
-
-To stop the stack, press `Ctrl-C`, then `docker compose down`. Add `-v` to also drop the database
-and TLS volumes and start completely fresh.
-
-### Configuration (`.env`)
-
-`.env` is git-ignored and never copied into the Docker image (see `.dockerignore`). `.env.example`
-is the committed template and documents every variable. Real environment variables always override
-the file.
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `SECRET_KEY` | dev placeholder | Django cryptographic signing key — **change this** |
-| `DEBUG` | `1` | Verbose errors and auto-reload; must be `0` in production |
-| `ALLOWED_HOSTS` | `localhost,127.0.0.1,web` | Hostnames Django answers for |
-| `CSRF_TRUSTED_ORIGINS` | `https://localhost:8443,...` | Origins allowed to POST |
-| `TIME_ZONE` | `UTC` | Timezone used for shift times |
-| `DB_ENGINE` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` / `DB_HOST` / `DB_PORT` | SQLite | Database connection |
-| `SECURE_COOKIES` | `1` | `Secure` flag on session and CSRF cookies |
-| `HTTPS_PORT` / `HTTP_PORT` | `8443` / `8080` | Ports the nginx proxy publishes |
-| `SECURE_HSTS_SECONDS` | `31536000` | HSTS lifetime (applied only when `DEBUG=0`) |
-| `SEED_DEMO_DATA` | `1` | Seed demo positions, staff and shifts on boot |
-| `ENABLE_DEMO_LOGIN` | value of `DEBUG` | Show the one-click demo login buttons |
-
-### Step-by-step: running locally without Docker
-
-```bash
-git clone https://github.com/DT-sudo/planshift.git
-cd planshift
-cp .env.example .env
-
-python3 -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-
-# The front end must be built once before the first run
-cd frontend && npm install && npm run build && cd ..
-
-python manage.py migrate
-python manage.py seed_demo         # optional: demo positions, staff and shifts
-python manage.py runserver
-```
-
-This serves plain HTTP on <http://127.0.0.1:8000/> for development only — it has no TLS, so set
-`SECURE_COOKIES=0` in `.env` or the browser will refuse to store the session cookie. **Use the
-Docker stack for anything that needs to match the deployed setup**, including evaluation.
-
-Rebuild the bundle (`npm run build`) after any change under `frontend/src`.
-
-### Accounts
-
-Anyone can open a **manager** account from the sign-up page. Employees do not self-register: their
-manager creates the account, and the generated password is displayed exactly once.
-
-`seed_demo` (run on every Docker boot while `SEED_DEMO_DATA=1`) creates two accounts you can sign in with:
-
-| Role | Email | Password |
-|---|---|---|
-| Manager | `manager_demo@example.com` | `demo12345!` |
-| Employee | `employee_demo@example.com` | `demo12345!` |
-
-While `ENABLE_DEMO_LOGIN` is on, the login page also shows **Demo: Manager login** and
-**Demo: Employee login** buttons that sign in as these accounts in one click.
-
----
+- **Organisation of work.** The project was divided by feature, and each feature was taken end to
+  end by its owner (model, view, React page). Work was planned in weekly iterations.
+- **Meetings.** A short sync at the start of each working session and a weekly review to demo what
+  was finished and re-prioritise the backlog.
+- **Tools.** GitHub Issues and a project board for tasks; pull requests with a review by another
+  member before merging to `main`.
+- **Communication.** Discord for daily communication, plus in-person work at campus.
 
 ## Technical Stack
 
-### Frontend
+| Layer | Technology | Why |
+|---|---|---|
+| Frontend | **React 19**, built with **Vite** | The calendar is a stateful UI (stacked modals, live updates), which fits React's component model. |
+| Styling | **Tailwind CSS 4** | Design tokens in one place drive both utility classes and custom CSS. |
+| Backend | **Django 6** | Provides session auth, CSRF protection, password hashing, ORM, migrations, forms and i18n out of the box. |
+| Real-time | **Django Channels + Daphne**, **Redis 7** | WebSockets on top of Django; Redis carries broadcasts between processes. |
+| Database | **SQLite** | The workload is a few managers writing a schedule, so a separate database server is not needed; the file lives on a Docker volume. All access goes through the ORM, so switching to PostgreSQL is a configuration change. |
+| Proxy | **nginx** | Terminates HTTPS and is the only service exposed; Django stays on the internal network. |
+| Deployment | **Docker Compose** | Runs the whole stack (web, redis, proxy) with one command. |
 
-| Technology | Why |
-|---|---|
-| **React 19** | The calendar is a genuinely stateful UI — modals stack, cells toggle asynchronously. Component state is the right model for that, and React's ecosystem is the one the team already knew. |
-| **Vite 8** | Near-instant dev server with HMR, and a manifest-based production build. One build input per page keeps each page's JavaScript to what it actually needs. |
-| **Tailwind CSS 4** | Required styling solution. v4 declares design tokens in `@theme`, so a single token drives both a utility class in JSX (`text-muted-foreground`) and hand-written CSS (`var(--color-muted-foreground)`) — no duplicated palette. |
-
-Layout, spacing and typography are Tailwind utilities in JSX. Recurring or structural pieces —
-buttons, form controls, cards, tables, menus, shift chips, the month grid — stay as component
-classes in `src/styles/components/`, where CSS does what utilities cannot: sticky grid headers,
-container queries that shed chip detail as a cell narrows, and scrollbar styling.
-
-### Backend
-
-| Technology | Why |
-|---|---|
-| **Django 6** | Batteries included, and every battery here is one the subject requires: session auth, CSRF middleware, password hashing and validators, an ORM with migrations, and form validation. Building the same guarantees on a microframework would have been the actual project. |
-| **nginx 1.27** | TLS terminator. Keeping TLS out of the application means Django never handles certificates, and the proxy is the only service that publishes a port. |
-| **Django Channels + Daphne** | WebSockets for live updates. Channels adds consumers and group broadcasting on top of Django. Daphne is its ASGI server and also sits behind `runserver`, so one process serves both HTTP and WebSockets. |
-| **Redis 7** | The channel layer that carries broadcasts between server processes. Pure pub/sub with persistence off. Without `REDIS_URL`, local runs and tests use an in-process layer. |
-
-The dependency list is deliberately short: Django, plus Channels, Daphne and channels-redis for
-WebSockets. Everything else — the `.env` loader, the email auth backend, the Vite manifest template
-tag — is ~30 lines of project code, which is easier to explain at evaluation than an extra
-dependency.
-
-### Database
-
-**SQLite**, chosen because the workload is a handful of managers writing a schedule: single-digit
-writes per minute, no sharding, no replication. It needs no separate service, so `docker compose up`
-brings up the whole stack with one image, and the database file lives on a named volume that
-survives restarts.
-
-Because access goes exclusively through the Django ORM, moving to PostgreSQL is a change to
-`DB_ENGINE` and five environment variables — no query rewriting. `.env.example` documents that
-configuration.
-
-### Significant technical choices
-
-- **No REST layer, no client-side router.** Each Django view renders one HTML shell that mounts a
-  single React entry and hands it a JSON payload (`render_app()` in `apps/shell.py`). The
-  page paints without a load-time API round trip, and the app keeps Django's session auth, CSRF
-  protection and POST-redirect-flash-message flow while the UI stays fully component-based.
-- **Forms stay native.** Every write is a real `<form method="post">` rendered by React, so Django's
-  form validation and CSRF middleware work unchanged. Search and analytics filters are plain GET
-  forms. The only `fetch` calls are the unavailability toggle, which must not reload the calendar,
-  and the analytics refresh.
-- **Live updates over one WebSocket per page.** Writes stay plain HTTP. Once a change commits, the
-  view broadcasts a small event (`notify_managers()` in `apps/realtime/events.py`, run from
-  `transaction.on_commit`), and open pages patch their state from it. When an employee changes
-  their availability, it reaches every open manager calendar without a reload. Every shift write
-  sends `shifts.changed`, and open analytics dashboards re-fetch their numbers.
-- **Rules live in one place.** All four scheduling rules and the transactional `save_shift()` are
-  functions in `services.py`. Views parse requests and render; they never contain business logic.
-
----
+**Main technical choices.** Each Django view renders one HTML shell and passes its data to a React
+page as a JSON payload, so there is no separate REST API and Django's session auth and CSRF
+protection work unchanged. All scheduling rules live in `services.py` and run inside one database
+transaction. Every write broadcasts an event over WebSockets only after the transaction commits.
 
 ## Database Schema
 
 ```mermaid
 erDiagram
-    Position ||--o{ User : "qualifies (SET_NULL)"
-    Position ||--o{ Shift : "required for (PROTECT)"
-    User ||--o{ Shift : "created by (PROTECT)"
-    User ||--o{ Assignment : "assigned (CASCADE)"
-    Shift ||--o{ Assignment : "staffed by (CASCADE)"
-    User ||--o{ EmployeeUnavailability : "declares (CASCADE)"
-
-    Position {
-        int id PK
-        string name UK
-    }
-    User {
-        int id PK
-        string username UK
-        string email
-        string password
-        string first_name
-        string last_name
-        string role
-        string employee_id UK
-        int position_id FK
-        bool is_active
-    }
-    Shift {
-        int id PK
-        date date
-        time start_time
-        time end_time
-        int capacity
-        string status
-        int position_id FK
-        int created_by FK
-    }
-    Assignment {
-        int id PK
-        int shift_id FK
-        int employee_id FK
-    }
-    EmployeeUnavailability {
-        int id PK
-        int employee_id FK
-        date date
-    }
+    Position ||--o{ User : "held by"
+    Position ||--o{ Shift : "required for"
+    User ||--o{ Shift : "created"
+    Shift ||--o{ Assignment : "staffed by"
+    User ||--o{ Assignment : "assigned to"
+    User ||--o{ EmployeeUnavailability : "declares"
+    User ||--o{ Notification : "receives"
+    User ||--o{ Friendship : "sends / receives"
+    User ||--o| TOTPDevice : "has"
+    TOTPDevice ||--o{ RecoveryCode : "has"
 ```
 
-### Tables and key fields
-
-| Table | Key fields | Notes |
+| Table | Key fields (type) | Relationships and constraints |
 |---|---|---|
-| `User` (`accounts.User`) | `username` (unique, mirrors `email`), `email`, `password` (PBKDF2 hash), `role` (`manager`/`employee`), `employee_id` (unique, auto-generated `EMP-######`), `position_id` (FK, nullable) | Extends `AbstractUser`, so Django's auth and password hashing work unchanged |
-| `Position` | `name` (unique, ≤25 chars) | The organisational directory of roles a shift can require |
-| `Shift` | `date`, `start_time`, `end_time`, `capacity` (positive int), `status` (`draft`/`published`), `position_id`, `created_by` | `Meta.ordering = ["date", "start_time"]` |
-| `Assignment` | `shift_id`, `employee_id` | Join table; unique together as `unique_employee_per_shift` |
-| `EmployeeUnavailability` | `employee_id`, `date` (indexed) | Unique together as `unique_employee_unavailability_day` |
-
-### Relationships and integrity
-
-Deletion behaviour is chosen per relationship rather than left at the default:
-
-- Removing a **position** leaves employee accounts intact (`SET_NULL`) but is **blocked** while
-  shifts still require it (`PROTECT`) — a shift with no position would be unschedulable.
-- Deleting an **employee** cascades to their assignments and unavailability, so no orphan rows
-  remain.
-- A **shift** cannot be created by a user who is later deleted (`PROTECT` on `created_by`).
-
-Two unique constraints keep the schedule coherent at the database level, not just in application
-code: one employee per shift, and one unavailability record per employee per day.
-
----
+| `User` | `email` (varchar), `password` (PBKDF2 hash), `role` (admin / manager / employee / guest), `employee_id` (varchar, unique), `bio` (varchar), `avatar` (image), `language` (varchar), `last_seen` (datetime), `must_change_password` (bool) | `position` → Position (SET NULL) |
+| `Position` | `name` (varchar 25, unique) | — |
+| `Shift` | `date` (date), `start_time`, `end_time` (time), `capacity` (int), `status` (draft / published), `position_name` (varchar), `version` (int) | `position` → Position (SET NULL), `created_by` → User (SET NULL) |
+| `Assignment` | — | `shift` → Shift, `employee` → User (CASCADE); unique (shift, employee) |
+| `EmployeeUnavailability` | `date` (date, indexed) | `employee` → User (CASCADE); unique (employee, date) |
+| `Notification` | `kind` (varchar), `params` (JSON), `level` (varchar), `created_at`, `read_at` (datetime) | `recipient` → User (CASCADE), `actor` → User (SET NULL); index (recipient, read_at) |
+| `Friendship` | `status` (pending / accepted), `created_at`, `accepted_at` (datetime) | `from_user`, `to_user` → User (CASCADE); one row per pair, no self-friendship |
+| `TOTPDevice` | `secret` (varchar), `last_used_step` (bigint), `failed_attempts` (int), `locked_until` (datetime) | `user` → User (one-to-one, CASCADE) |
+| `RecoveryCode` | `code_hash` (varchar), `used_at` (datetime) | `device` → TOTPDevice (CASCADE); unique (device, code_hash) |
 
 ## Features List
 
-<!-- TEAM: reassign the Owner column to reflect who actually wrote each feature. -->
-
-### Authentication and accounts
-
-| Feature | Description | Owner |
+| Feature | Description | Member(s) |
 |---|---|---|
-| Sign up | Public registration of a manager account with full name, email and password. Server validates uniqueness, format and password strength; the account is created and logged in atomically. | `dtereshc` |
-| Email + password login | Authentication by email address: every account's `username` mirrors its lowercased email, so the login form lowercases the input and Django's default backend does the rest. Case-insensitive, and the hasher runs even for unknown addresses so response time does not reveal whether an account exists. | `dtereshc` |
-| Logout | POST-based logout from the user menu. | `dtereshc` |
-| Role-based routing | After login, managers land on the schedule and employees on their own calendar; every view is gated by a role decorator. | `<login2>` |
+| Sign up and login | Email + password; sign-up creates a guest that waits for an admin's approval; passwords stored as salted hashes. | `dtereshc` |
+| Roles and access control | Admin, manager, employee and guest each have their own pages; every view is protected by a role check. | `dtereshc`, `ntsvetko` |
+| Account management | Admin creates, edits and deletes accounts, assigns roles, resets passwords and 2FA, approves or declines registrations. | `ntsvetko`, `dtereshc` |
+| Positions | Create and delete the positions employees hold and shifts require. | `ntsvetko` |
+| Calendar | Month and week view of the shared schedule; drafts visible only to managers. | `ntsvetko` |
+| Shift editing and publishing | Create, edit and delete shifts, assign staff, publish a date range in one action. | `ntsvetko` |
+| Scheduling rules | Position match, capacity, availability and overlap checked in one transaction. | `dtereshc` |
+| Employee calendar and availability | Employees see their own published shifts and mark days as unavailable. | `ntsvetko` |
+| Real-time updates and presence | Live schedule, availability and counters; shows which managers view or edit a shift; refuses conflicting edits. | `dtereshc` |
+| Shift search | Text search, filters, sortable columns, pagination. | `olcherno`, `ntsvetko` |
+| Analytics | Charts of shifts and hours per worker, filters, CSV/PDF export, live refresh. | `ntsvetko` |
+| Notifications | A notification for every creation, update and deletion, live and in a history. | `ntsvetko` |
+| Profiles and friends | Profile page, editable details, avatar upload, friend requests, online status. | `ntsvetko`, `dtereshc` |
+| Two-factor authentication | TOTP with QR setup and recovery codes. | `dtereshc` |
+| Languages and RTL | English, Czech and Arabic with a language switcher and right-to-left layout. | `olcherno`, `dtereshc` |
+| GDPR | Export of personal data, account deletion, confirmation emails. | `olcherno`, `ntsvetko` |
+| Legal pages | Privacy Policy and Terms of Service linked from every page. | `olcherno` |
+| Shared UI components | Form controls, modals, menus, toasts, icons, app layout. | `olcherno` |
+| HTTPS and deployment | nginx with TLS, HTTP redirected to HTTPS, one-command Docker Compose stack. | `dtereshc` |
 
-### Manager
+## Modules
 
-| Feature | Description | Owner |
-|---|---|---|
-| Monthly calendar | Month overview: published shifts coloured by position, with the colour key in the pinned footer; drafts dashed and grey. | `<login2>` |
-| Create / edit / delete shifts | Modal form for date, times, position and capacity, with client and server validation. | `<login3>` |
-| Draft and publish workflow | Shifts start as drafts visible only to managers; publishing pushes a date range to employee calendars in one action. | `<login3>` |
-| Employee assignment | Staff are assigned inline; the server rejects any combination that breaks a rule and explains why. | `dtereshc` |
-| Team management | Create, edit and delete employees; reset a password. Generated passwords are shown exactly once and stored only as a hash. | `<login4>` |
-| Position management | Create and delete the positions employees can hold, with deletion blocked while shifts require them. | `<login4>` |
-| Team sidebar | Lists active employees with their position and their unavailable days in the visible month. | `<login2>` |
-| Live availability | When an employee marks or clears a day, open manager calendars update within a second. The sidebar lists that employee's unavailable days, the shift form greys them out for that date, and a toast says who changed what. | `dtereshc` |
-| Shift search | A table of all the manager's shifts: free-text search over position and worker names, position/worker/status/date filters, sortable columns and 25-per-page pagination. Each date links to that month in the calendar. | `<login2>` |
-| Analytics dashboard | KPIs (shifts, workers, hours, open shifts), shifts over time, by position and by status, hours per worker, and top workers/positions, over a date range (last 30 days by default) and the same filters as search. A worker filter isolates that worker's hours. Export as CSV (raw rows) or PDF (the browser's print dialog). Numbers refresh live whenever a shift is written. | `<login3>` |
+**Total: 18 points** (5 Major × 2 + 8 Minor × 1). Minimum required: 14.
 
-### Employee
+| # | Module | Type | Pts | Justification | Implementation | Member(s) |
+|---|---|---|---|---|---|---|
+| 1 | Use a framework for both the frontend and backend | Major | 2 | A stateful calendar UI and a rule-heavy backend both benefit from mature frameworks. | React 19 for every page, Django 6 for routing, ORM, auth, forms and i18n. | `dtereshc` |
+| 2 | Implement real-time features using WebSockets | Major | 2 | Several users work on one schedule at the same time. | Django Channels consumer with a Redis channel layer; per-role, per-user and per-session groups; broadcasts after commit; client reconnects with backoff. | `dtereshc` |
+| 3 | Advanced permissions system | Major | 2 | Admins, managers and employees need different views and actions. | Four roles; admin CRUD on users; role-specific views and actions; session ended when a role changes. | `dtereshc`, `ntsvetko` |
+| 4 | Standard user management and authentication | Major | 2 | Colleagues need to recognise and reach each other. | Profile editing, avatar upload with default, friends with online status, profile page. | `ntsvetko`, `dtereshc` |
+| 5 | Advanced analytics dashboard with data visualization | Major | 2 | Managers need to track hours worked against the legal weekly limit. | SVG charts, KPIs, live updates, CSV and PDF export, date range and filters. | `ntsvetko` |
+| 6 | Use an ORM for the database | Minor | 1 | Explicit schema and safe queries. | Django ORM only, constraints and migrations. | `olcherno`, `dtereshc` |
+| 7 | A complete notification system for all creation, update, and deletion actions | Minor | 1 | Users must know when their shifts or account change. | Notification for every write, stored per user, delivered live and in a history. | `ntsvetko` |
+| 8 | Real-time collaborative features | Minor | 1 | Managers edit one shared schedule. | Shared calendar, presence of other managers, versioned saves that refuse conflicting edits. | `dtereshc` |
+| 9 | Implement advanced search functionality with filters, sorting, and pagination | Minor | 1 | Finding a shift in months of schedule. | Text search, filters, sorting, pagination, all applied server-side. | `olcherno`, `ntsvetko` |
+| 10 | Support for multiple languages (at least 3 languages) | Minor | 1 | Hourly teams are multilingual. | English, Czech, Arabic; gettext on the server, JSON catalogs in React; switcher on every page. | `olcherno`, `dtereshc` |
+| 11 | Right-to-left (RTL) language support | Minor | 1 | Arabic requires a mirrored layout. | `dir="rtl"`, CSS logical properties, flipped icons and charts, in-place switching. | `olcherno` |
+| 12 | Implement a complete 2FA (Two-Factor Authentication) system | Minor | 1 | A password alone should not open an account with access to personal data. | TOTP, QR setup, hashed recovery codes, lockout after failed attempts. | `dtereshc` |
+| 13 | GDPR compliance features | Minor | 1 | The application stores employees' personal data. | Data export in JSON, account deletion with confirmation, confirmation emails. | `olcherno`, `ntsvetko` |
 
-| Feature | Description | Owner |
-|---|---|---|
-| Personal calendar | Monthly view containing only published shifts the employee is assigned to. | `<login3>` |
-| Unavailability toggle | Mark or clear a future day as unavailable in one click; saved asynchronously and immediately blocks assignment on that day. | `<login3>` |
+## Individual Contributions
 
-### Cross-cutting
+### `dtereshc` — Tech Lead / Architect, Developer
 
-| Feature | Description | Owner |
-|---|---|---|
-| Scheduling rule engine | Position match, capacity, availability and overlap checks, all inside the transaction that saves the shift. | `dtereshc` |
-| Two-sided form validation | The browser enforces `required`, `type="email"` and `minLength` before submitting; Django validates everything again and re-renders field errors inline. | `dtereshc` |
-| HTTPS everywhere | nginx terminates TLS with a self-signed certificate generated on first boot; HTTP is redirected; cookies are `Secure`. | `dtereshc` |
-| Privacy Policy & Terms | Public, project-specific legal pages linked from the footer of every page. | `<login4>` |
-| Notifications | Django flash messages and client events (such as marking a day unavailable) show as toasts and go into a per-account history behind the header bell, with an unread badge. Repeats collapse into one entry with a counter. | `<login4>` |
+- **Contributed:** architecture and stack, the User model and authentication, the scheduling rule
+  engine, Docker and HTTPS, the WebSocket layer, presence and conflict detection, 2FA, the server
+  side of i18n, role-based access and session security.
+- **Modules:** 1, 2, 3, 8, 12; shared on 4, 6, 10.
+- **Challenges:** keeping validation consistent between browser and server — solved by making the
+  server the single authority and testing it with direct requests; avoiding broadcasts of writes
+  that were later rolled back — solved by sending events only after the transaction commits.
 
-### Scheduling rules in detail
+### `olcherno` — Product Owner, Developer
 
-Every assignment passes four checks in `backend/apps/scheduling/services.py`:
+- **Contributed:** product backlog and priorities, the scheduling data model, shared UI components,
+  legal pages, demo data, shift search, the GDPR page, the front end of i18n and the RTL layout.
+- **Modules:** 11; shared on 6, 9, 10, 13.
+- **Challenges:** mirroring the layout for Arabic — solved with CSS logical properties while keeping
+  emails, times and codes left-to-right; keeping three translation catalogs in sync — solved with a
+  check that fails the build when they differ.
 
-| Rule | Behaviour |
-|---|---|
-| `_check_position_match` | An employee may only be assigned to a shift for the position they hold — a barista cannot fill a head-chef shift. |
-| `_check_capacity` | The number of assignees may not exceed the shift's capacity. |
-| `_check_availability` | An employee marked unavailable for that date cannot be assigned. |
-| `_check_no_overlap` | An employee cannot hold two shifts whose time ranges overlap; back-to-back shifts are allowed. |
+### `ntsvetko` — Project Manager / Scrum Master, Developer
 
-If any check fails, `ValidationError` propagates out of the `transaction.atomic()` block in
-`save_shift()` and the whole write is rolled back, so a shift is never left half-assigned.
-
----
-
-## Architecture
-
-```
-├── backend/
-│   ├── config/
-│   │   ├── settings.py         # env-driven config, TLS/cookie hardening
-│   │   ├── env.py              # minimal .env loader (no dependency)
-│   │   ├── asgi.py             # HTTP + WebSocket routing (Channels)
-│   │   └── urls.py             # root URLconf
-│   └── apps/
-│       ├── accounts/           # custom User, roles, signup/login
-│       │   ├── forms.py        # SignUpForm, EmailAuthenticationForm, EmployeeForm
-│       │   ├── views.py        # role decorators, auth, demo logins, employee directory
-│       │   └── tests.py        # auth, validation and legal-page tests
-│       ├── shell.py            # render_app(): page shell + JSON payload; flash redirects
-│       ├── legal/
-│       │   ├── documents.py    # Privacy Policy / Terms content
-│       │   └── views.py
-│       ├── realtime/
-│       │   ├── consumers.py    # WebSocket consumer + /ws/schedule/ route
-│       │   └── events.py       # notify_managers(): broadcast once the write commits
-│       └── scheduling/
-│           ├── models.py       # Position, Shift, Assignment, EmployeeUnavailability
-│           ├── services.py     # the four scheduling rules, save/publish, search/analytics queries
-│           ├── tests.py        # rule, visibility, search and analytics tests
-│           └── views.py        # manager calendar + writes, positions, search, analytics, employee calendar
-├── frontend/
-│   ├── templates/app.html      # the one Django template: <div id="root"> + payload
-│   ├── vite.config.js          # one build input: src/main.jsx
-│   └── src/
-│       ├── main.jsx            # mounts the page named in the payload
-│       ├── pages/              # auth, legal, calendar, search, analytics, team table, modals
-│       ├── components/         # shell + footer, fields, modals, menus, notifications, hooks
-│       ├── app/                # dates, shifts (availability, per-employee stats), http, live socket
-│       └── styles/             # Tailwind theme tokens + component layer
-├── docker/
-│   ├── entrypoint.sh           # migrate + seed, then start the server
-│   └── nginx/                  # TLS terminator: config template + cert generation
-├── Dockerfile                  # stage 1 builds the bundle, stage 2 runs Django
-├── docker-compose.yml          # web + redis + proxy, one command
-├── .env.example                # committed template; .env itself is ignored
-└── manage.py                   # Django CLI, run from the project root
-```
-
-### Notable implementation details
-
-- **State injection instead of a load-time API round trip.** `render_app()` serialises the user,
-  navigation, flash messages, CSRF token, action URLs and the page's own data into one
-  `<script type="application/json">` block, read synchronously on boot.
-- **One dismissal stack for overlays.** Modals and the user menu register in a shared layer stack
-  (`src/components/hooks.js`), so Escape and backdrop clicks always resolve the top-most layer
-  first.
-
----
-
-## Security
-
-- **HTTPS end to end.** nginx terminates TLS 1.2/1.3 and is the only service that publishes a port;
-  Django listens solely on the internal compose network. Plain HTTP returns `301` to HTTPS.
-  `SECURE_PROXY_SSL_HEADER` lets Django trust the proxy's `X-Forwarded-Proto`.
-- **Password storage.** Salted PBKDF2-SHA256 only. Django's length, common-password, numeric and
-  user-similarity validators run on every registration; `SignUpForm._post_clean` populates the
-  instance first so the similarity check can actually see the name and email.
-- **Cookies.** Session and CSRF cookies are `Secure` and `SameSite=Lax`; the session cookie is
-  additionally `HttpOnly`.
-- **Headers.** `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`,
-  `Referrer-Policy: same-origin`, and HSTS when `DEBUG=0`.
-- **Object-level authorisation.** Manager endpoints resolve a shift with
-  `get_object_or_404(Shift.objects, pk=shift_id, created_by=request.user)`, so guessing another
-  manager's shift ID returns 404 rather than granting access.
-- **Role-gated views.** `manager_required` / `employee_required` guard every view; unauthenticated
-  access redirects to login.
-- **WebSocket access.** Sockets authenticate with the same session cookie. Anonymous sockets and
-  sockets opened from another site (Origin not in `ALLOWED_HOSTS`) are refused, and so are
-  employees: only managers' pages listen for schedule changes. Under Docker, the socket goes through the same TLS
-  proxy (`wss://`).
-- **Secrets.** `SECRET_KEY`, database credentials and host configuration come from `.env`, which is
-  ignored by both Git and Docker. The built-in defaults are development-only.
-- **Demo logins are opt-in.** The one-click demo buttons bypass password entry, so they are gated
-  behind `ENABLE_DEMO_LOGIN` and default to off whenever `DEBUG=0`.
-
----
-
-## Tests
-
-```bash
-# With the stack running
-docker compose exec web python manage.py test apps
-
-# Or locally, inside the virtualenv
-python manage.py test apps
-```
-
-47 tests covering:
-
-- **Scheduling rules** — all four checks, including the boundary case that back-to-back shifts are
-  permitted while overlapping ones are not, and that duplicate IDs are deduplicated before the
-  capacity check.
-- **Visibility** — the draft/published split between the manager and employee views.
-- **Search and analytics** — text query over positions and worker names, combined filters,
-  sorting, pagination, scoping to the manager's own shifts, per-worker KPI isolation, and the CSV
-  export.
-- **Sign-up** — role assignment, email normalisation and uniqueness, password hashing, rejection of
-  weak and mismatched passwords.
-- **Login** — email authentication, case-insensitivity, wrong password, unknown address, and
-  inactive accounts.
-- **Server-side validation** — invalid email, missing position and duplicate email posted directly
-  to the endpoint, bypassing the browser.
-- **Legal pages** — public reachability, non-placeholder content, and footer links on every page.
-- **Live updates** — the WebSocket consumer (anonymous refused, managers receive events, employees
-  don't), a broadcast on every successful availability toggle and none on a rejected one, a
-  broadcast on shift writes, and the availability data in the manager page.
-
----
-
-## Resources
-
-### Documentation
-
-- [Django documentation](https://docs.djangoproject.com/en/stable/) — models, forms, auth, and the
-  [security topic guide](https://docs.djangoproject.com/en/stable/topics/security/)
-- [Django authentication](https://docs.djangoproject.com/en/stable/topics/auth/customizing/) —
-  custom user models and authentication backends
-- [React documentation](https://react.dev/learn) — hooks and component patterns
-- [Vite guide](https://vite.dev/guide/) — multi-entry builds and the manifest
-- [Tailwind CSS v4](https://tailwindcss.com/docs) — `@theme` tokens and the component layer
-- [nginx: configuring HTTPS servers](https://nginx.org/en/docs/http/configuring_https_servers.html)
-- [MDN Web Docs](https://developer.mozilla.org/) — CSS grid, container queries, the Fetch API
-- [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/) — authentication, password
-  storage and transport-security guidance
-- [GDPR text (gdpr-info.eu)](https://gdpr-info.eu/) — reference for the Privacy Policy
-
-### Articles and references
-
-- [Django's `SECURE_PROXY_SSL_HEADER`](https://docs.djangoproject.com/en/stable/ref/settings/#secure-proxy-ssl-header)
-  — the correct way to run behind a TLS-terminating proxy
-- [The Twelve-Factor App: Config](https://12factor.net/config) — the reasoning behind
-  environment-based configuration and `.env`
-- [WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/) — dialog and live-region patterns
-  used by the modals and toasts
-
----
-
-## Known limitations
-
-- The TLS certificate is self-signed, so browsers show a warning. A real deployment would use a
-  certificate from a public CA (e.g. Let's Encrypt).
-- The Docker image runs Django's development server (`runserver`, served by Daphne). It is a
-  demo/evaluation environment; a production deployment would run Daphne or Uvicorn workers behind
-  the same proxy.
-- Live updates cover employee availability and the analytics numbers. Shift changes by other
-  managers still reach calendars and search on the next reload. The socket reconnects silently;
-  events sent while a page is offline are not replayed, so the calendar catches up on its next
-  reload, while the analytics page re-fetches as soon as it reconnects.
-- Notification history is kept in the browser (`localStorage`, per account), so it does not follow
-  a user to another device, and it only records what happened on pages that user had open.
-- There is no password-reset-by-email flow. A manager resets an employee's password and hands over
-  the new one; a manager who loses their own password needs `python manage.py changepassword <email>`.
-- Positions and employees form a single shared organisational directory rather than being scoped
-  per manager. Shifts are scoped per manager.
-- SQLite serialises writes. This is ample for the intended scale but would need PostgreSQL for a
-  large multi-tenant deployment — a configuration change, not a code change.
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+- **Contributed:** planning and progress tracking, the calendar pages, shift editing, the employee
+  calendar, team and positions management, profiles, analytics and notifications.
+- **Modules:** 5, 7; shared on 3, 4, 9, 13.
+- **Challenges:** correct hour counts in analytics — drafts are excluded on the server; showing
+  notifications in each reader's language — notifications are stored as a type plus parameters and
+  translated when read.
